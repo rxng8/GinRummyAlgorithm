@@ -106,7 +106,7 @@ class KuhnCFRTrainer():
 # %%
 
 
-num_iterations = 1000000
+num_iterations = 100
 np.set_printoptions(precision=2, floatmode='fixed', suppress=True)
 
 cfr_trainer = KuhnCFRTrainer()

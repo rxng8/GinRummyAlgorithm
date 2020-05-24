@@ -33,12 +33,6 @@ class Card:
     def getId(self) -> int:
         return suit * n_ranks + rank
 
-    # Shuffle in place
-    @staticmethod
-    def shuffle(seed: int) -> List[Card]:
-        deck = all_cards[:]
-        random.shuffle(deck, seed)
-        return deck
 # %%
 
 # CONSTANT
@@ -55,6 +49,17 @@ for suit in range(n_suit):
         str_to_card[c.toString()] = c
         str_to_id[c.toString()] = c.getId()
         id_to_str[c.getId()] = c.toString()
+DISCARD_ACTIONS = [c.toString() for c in all_cards]
+
+# Shuffle in place
+def shuffle() -> List[Card]:
+    deck = all_cards[:]
+    random.shuffle(deck)
+    return deck
+
+shuffled_deck = shuffle()
+# %%
+
 
 # %%
 
@@ -90,29 +95,36 @@ In the Deepstack paper:
 
     I think this is where we dont actually need to use information Set to actually store all the combination of data case.
 '''
-class InformationSet:
-    def __init__(self):
-        self.infoSet = ''
-        self.regret_sum = np.zeros(N_ACTIONS)
-        self.strategy = np.zeros(N_ACTIONS)
-        self.strategy_sum = np.zeros(N_ACTIONS)
-        
+'''
+params:
+    1. S: PublicState. S is a public state
+'''
+class InfoSet:
+    def __init__(self, S):
+        self.infoSet: str
+        self.regret_sum: List[float]
+        self.strategy: List[float]
+        self.strategy_sum: List[float]
+        self.op_cfr_values: List[float]
+        self.n: int
+
+        self.S = S
 
     def normalize(self, vector: List[float]) -> List[float]:
-        normalized_vector = np.zeros(N_ACTIONS)
+        normalized_vector = np.zeros(self.n)
         n_sum = sum(vector)
-        for i in range(N_ACTIONS):
+        for i in range(self.n):
             if n_sum > 0:
                 normalized_vector[i] = vector[i] / n_sum
             else:
-                normalized_vector[i] = 1.0 / N_ACTIONS
+                normalized_vector[i] = 1.0 / self.n
         return normalized_vector
 
     def get_strategy (self, reach_probability : float) -> List[float] :
-        for i in range (N_ACTIONS):
+        for i in range (self.n):
             self.strategy[i] = self.regret_sum[i] if self.regret_sum[i] > 0 else 0
         self.strategy = self.normalize(self.strategy)
-        for i in range(N_ACTIONS):
+        for i in range(self.n):
             self.strategy_sum[i] += reach_probability * self.strategy[i]
         return self.strategy
 
@@ -121,3 +133,86 @@ class InformationSet:
 
     def toString (self) -> str :
         return "{}: {}".format(self.infoSet, self.get_average_strategy())
+'''
+1. What determine our strategy to pick card? Either draw face down or draw face up?
+    - Whether we see that the card in the discarded pile benefit us (Form meld)? How much benefit? Probabilities?
+    - Whether the it increase the deadwood point or not ?
+'''
+class DrawInfoSet (InfoSet):
+    def __init__(self):
+        self.infoSet = ''
+        self.n = len(DRAW_ACTIONS)
+        self.regret_sum = np.zeros(self.n)
+        self.strategy = np.zeros(self.n)
+        self.strategy_sum = np.zeros(self.n)
+        self.op_cfr_values: List[float] = np.zeros(self.n)
+
+
+'''
+2. What determine our strategy to discard card? Either discard 1 card in our 11 cards?
+    - Whether it decreases as much deadwood point as we want?
+    - History of the discarded pile? So that opponent cannot form a meld when we discard? Probability? 
+'''
+class DiscardInfoSet (InfoSet):
+    def __init__(self):
+        self.infoSet = ''
+        self.n = len(DISCARD_ACTIONS)
+        self.regret_sum = np.zeros(self.n)
+        self.strategy = np.zeros(self.n)
+        self.strategy_sum = np.zeros(self.n)
+        self.op_cfr_values: List[float] = np.zeros(self.n)
+
+'''
+Data Structure of a public state.
+Params:
+    1. Cards: List[Card]: List of Cards in hands
+    2. Discards: List[Card]. List of cards in the discarded pile.
+'''
+class PublicState:
+    def __init__(self, cards: List[Card], discards: List[Card]):
+        self.cards = cards
+        self.discards = discards
+
+# %%
+
+class GinTrainer:
+    def __init__(self, n_iter: int=1):
+        self.n_iter = n_iter
+
+    '''
+    INPUT: Public state S, player range r1 over our information sets in S, opponent counterfactual values
+        v2 over their information sets in S, and player information set I ∈ S
+    OUTPUT: Chosen action a, and updated representation after the action (S(a), r1(a), v2(a))
+    (a range is the probability distribution over the player’s possible hands given that the public state is reached)
+    '''
+    def resolves (self, S, r1, v2, I):
+
+        # Using arbitrary initial strategy profile for player
+
+        # Using arbitrary opponent
+
+        # Initialize regret
+
+        # For each timestep:
+        #   Give counterfactual values of the player
+        #   Update subtree strategy with regret matching
+        #   Range Gadget (CFR-D? CFR+?)
+
+        pass
+
+    def train(self):
+        node_value = 0.0
+        for _ in range(self.n_iter):
+            node_value = cfr()
+        
+        pass
+
+# %%
+
+class Util:
+    def __init__(self) :
+        pass
+
+    @staticmethod
+    def get_deadwood_point(cards: List[Card]):
+        pass

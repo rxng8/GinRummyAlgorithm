@@ -76,7 +76,19 @@ Should we use hands as information in each different hand we have a different in
     when we draw an additional card, we have 11 cards in hand, so there will be a total of 52C11 = 60 billions set more.
     So we will have roughly 75 billions different information set?
 
-In the Deepstack paper, can we limit the depth lookahead via intuition?
+In the Deepstack paper:
+        "Suppose we have taken actions according to a particular solution strategy but then in some public state forget this strategy. 
+    Can we reconstruct a solution strategy for the subtree without having to solve the entire game again? We can, 
+    through the process of re-solving (17). We need to know both our range at the public state and a vector of expected
+    values achieved by the opponent under the previous solution for each opponent hand (24). With
+    these values, we can reconstruct a strategy for only the remainder of the game, which does not
+    increase our overall exploitability. Each value in the opponent’s vector is a counterfactual value,
+    a conditional “what-if” value that gives the expected value if the opponent reaches the public
+    state with a particular hand. The CFR algorithm also uses counterfactual values, and if we use
+    CFR as our solver, it is easy to compute the vector of opponent counterfactual values at any
+    public state."
+
+    I think this is where we dont actually need to use information Set to actually store all the combination of data case.
 '''
 class InformationSet:
     def __init__(self):

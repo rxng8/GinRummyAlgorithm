@@ -136,7 +136,7 @@ class InfoSet:
 '''
 1. What determine our strategy to pick card? Either draw face down or draw face up?
     - Whether we see that the card in the discarded pile benefit us (Form meld)? How much benefit? Probabilities?
-    - Whether the it increase the deadwood point or not ?
+    - Whether it increase the deadwood point or not ?
 '''
 class DrawInfoSet (InfoSet):
     def __init__(self):
@@ -200,10 +200,49 @@ class GinTrainer:
 
         pass
 
+    '''
+    Evaluate one step of a current player's turn.
+    Params:
+        1.
+        2.
+        3.
+    Return:
+    '''
+    def evaluate_step(self):
+        pass
+
+
+    '''
+    Get draw action base on Information Set's strategy vector
+    params:
+        1.
+    return: 
+    '''
+    def get_draw_action(self):
+        pass
+
+    '''
+    Get discard action base on Information Set's strategy vector
+    params:
+        1.
+    return: 
+    '''
+    def get_discard_action(self):
+        pass
+
+    '''
+    Params:
+        1. 
+        2.
+    Return: Node actual value (utility)
+    '''
+    def cfr(self) -> float:
+        return 0.0
+
     def train(self):
         node_value = 0.0
         for _ in range(self.n_iter):
-            node_value = cfr()
+            node_value = self.cfr()
         
         pass
 
@@ -215,4 +254,7 @@ class Util:
 
     @staticmethod
     def get_deadwood_point(cards: List[Card]):
+        pass
+
+    def get_best_meld(self):
         pass

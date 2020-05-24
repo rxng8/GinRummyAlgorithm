@@ -11,7 +11,7 @@ from typing import Dict, List
 import numpy as np
 import random
 
-
+# CONSTANT
 PASS = 0
 BET = 1
 N_ACTIONS = 2

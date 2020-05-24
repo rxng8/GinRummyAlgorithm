@@ -207,9 +207,12 @@ class KuhnTrainer:
 
 # %%
 
-CARDS = [1,2,3]
+CARDS = [1,2,3,4,5,6,7,8,9]
 
-trainer = KuhnTrainer(CARDS, n_iter=10000)
+trainer = KuhnTrainer(CARDS, n_iter=1)
 
 trainer.train()
 
+# %%
+
+trainer.get_info_set("3P").regret_sum

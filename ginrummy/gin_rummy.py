@@ -216,6 +216,7 @@ class GinTrainer:
 
         pass
 
+
     '''
     Given a public state, evaluate a current player's turn with a tree builder within a certain depth.
     Params:
@@ -224,19 +225,64 @@ class GinTrainer:
         3.
     Return:
     '''
-    def evaluate_step(self, depth_limit=2):
+    def evaluate_step(self, cards:List[int], history:str, reach_probability: List[float], active_player: int, will_draw: bool, depth_limit=1):
 
         # If it is the terminal states, get payoff function (different in deadwood point! Or gin point!)
+        if GinTrainer.isTerminal(history):
+            return GinTrainer.get_payoff()
 
-        # If not, then use strategy vector from information set to have specific draw action.
+        # Else if, reach max depth, evaluate the payoff values with pretrained neural network model.
+        elif depth_limit == 0:
+            return self.neural_net_evaluate()
 
-        # After drawing, re-evaluate opponent counterfactual values, strategy, regrets? - not by evaluating recursively - but by the given public state and value function (Deep Stack Paper)? trained model CNN, RNN, LSTM, GRU? 
+        # If not, then if will_draw is True, use strategy vector from information set to have specific DRAW action.
+        if will_draw:
+            # Re-compute strategy with current node reach probability and information set
+
+            # For each draw action, compute node utility by traversing
+            nodeUtil = 0.0
+            for i in range(DRAW_ACTIONS):
+                action = self.get_draw_action()
+                
+                # compute new reach probability vector with regard to that action
+                new_reach_probability: List[float]
+
+                nodeUtil += self.evaluate_step(cards, history + action, new_reach_probability, active_player, not will_draw, depth_limit - 1)
+                pass
+
+        # After drawing, re-evaluate opponent counterfactual values, strategy, regrets? - but by the given public state 
+        #   and value function (Deep Stack Paper)? trained model CNN, RNN, LSTM, GRU? 
+        #   (If terminal then get payoff, else if reach max depth limit and predict the payoff or utility with neural nets)
         #   - Base on the just-drawn card and the given data in the public state, determine what card opponent should have?
         #   - What melds opponent should have.
+        #   - Since computing cfv and cfr, we have to traverse the entire game tree, so I'm thinking about each decision is a node, 
+        #       and we traverse 2 consecutive time step for each player, and update 2 different vector of strategy, regret cfv for each player
 
-        # After that, 
+        # Else, use strategy vector from information set to have specific DISCARD action.
+        else:
+            # Re-compute strategy with current node reach probability and information set
 
-        # Given the public states, decide if 
+            # For each discard action, compute node utility by traversing
+            nodeUtil = 0.0
+            for i in range(DISCARD_ACTIONS):
+                action = self.get_discard_action()
+                
+                # compute new reach probability vector with regard to that action
+                new_reach_probability: List[float]
+
+                nodeUtil += self.evaluate_step(cards, history + action, new_reach_probability, 1 - active_player, not will_draw, depth_limit - 1)
+                pass
+
+            pass
+
+
+        # After discarding, re-evaluate opponent counterfactual values, strategy, regrets? Similar to above?
+
+        # Evaluate node_actual_utility and regret. Regret = personal_counter_factual value[] - node actual utility
+
+        # Update strategy and regret by regret matching algorithm
+
+        # Return node_actual_utility. 
 
         pass
 
@@ -251,6 +297,7 @@ class GinTrainer:
     def get_draw_action(self):
         pass
 
+
     '''
     Get discard action base on Information Set's strategy vector
     params:
@@ -260,52 +307,13 @@ class GinTrainer:
     def get_discard_action(self):
         pass
 
+
     '''
-    Params:
-        1. 
-        2.
-    Return: Node actual value (utility)
+    Return an infoset
     '''
-    # def cfr(self) -> float:
-    #     # Get player?
-    #     opponent = 1 - active_player
+    def get_info_set(self, information: str) -> InformationSet:
+        pass
 
-    #     # Return payoff if state is terminal
-    #     if self.isTerminal(S: PublicState):
-    #         payoff = self.get_payoff(history, cards, active_player)
-    #         return payoff
-        
-    #     # new information and convert to public state to put in information set?
-    #     information = str(cards[active_player]) + history
-
-    #     # Get information set base on the public state or create if non-existed
-    #     infoSet = self.get_info_set(information)
-    #     infoSet.infoSet = information
-
-    #     # Get each strategy from the information set
-    #     strategy = infoSet.get_strategy(reach_probability_p0 if active_player == 0 else reach_probability_p1)
-
-    #     # For each action, call cfr with newer public state
-        
-    #     counterfactual_values = np.zeros(N_ACTIONS)
-    #     node_actual_value = 0
-
-    #     for i in range(N_ACTIONS):
-
-    #         if len(history) == 3:
-    #             return KuhnTrainer.get_payoff(history, cards, active_player)
-
-    #         counterfactual_values[i] =\
-    #             - self.cfr(cards, history + action, reach_probability_p0 * strategy[i], reach_probability_p1, opponent) if active_player == 0 else \
-    #             - self.cfr(cards, history + action, reach_probability_p0, reach_probability_p1 * strategy[i], opponent)
-    #         node_actual_value += strategy[i] * counterfactual_values[i]
-
-    #     # For each action, compute and accumulate counterfactual regret. (Regret Matching)
-    #     for i in range(N_ACTIONS):
-    #         counterfactual_regret = counterfactual_values[i] - node_actual_value
-    #         infoSet.regret_sum[i] += (reach_probability_p0 if active_player == 0 else reach_probability_p1) * counterfactual_regret
-        
-    #     return node_actual_value
 
     '''
     Check if a state is a terminal state
@@ -313,8 +321,9 @@ class GinTrainer:
     return: (bool) Whether it is a terminal state
     '''
     @staticmethod
-    def is_terminal():
+    def isTerminal(history: str) -> bool :
         pass
+
 
     '''
     Reward function for the specified tree.
@@ -324,9 +333,22 @@ class GinTrainer:
     return: 
     '''
     @staticmethod
-    def get_payoff():
+    def get_payoff(history: str, cards: List[int], active_player: int) -> int:
         pass
 
+    '''
+    Predict utility for an actual node
+    params:
+        1.
+        2.
+    return:
+    '''
+    def neural_net_evaluate() -> float:
+        pass
+
+    '''
+    Train
+    '''
     def train(self):
         node_value = 0.0
         # for _ in range(self.n_iter):

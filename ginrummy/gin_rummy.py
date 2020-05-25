@@ -218,38 +218,25 @@ class GinTrainer:
 
 
     '''
-    Given a public state, evaluate a current player's turn with a tree builder within a certain depth.
+    Given a public state, evaluate a current player's turn with a tree builder within a certain depth, 
+    compute the cfvs, update regrets by regret matching, and re-compute strategy each turn.
+    NOTE: This method is not taking into account the start of the game where each player decide to pass.
+    NOTE: This method is not taking into account the end of the game where each player decide to knock or go gin.
     Params:
-        1. depth_limit: int. This is the depth limit of the tree.
-        2.
-        3.
-    Return:
+        1. cards: List[int]. The deck of cards in play. In this case, array of 52 cards.
+        2. history: str. The string representation of the game state, including both public state and private state. 
+            TODO: Need to find a more efficient way of storing state.
+        3. reach_probability: List[float]. Reach probability of the actual current node of each player. 
+            In this case the length of the array is 2 because there are 2 players.
+        4. active_player: int. Current active player in the form 0 or 1.
+        5. will_draw: bool. This is a boolean telling the recursive method which strategy to evaluate. 
+            This is to ensure going through each state in order (Each player draw and then discard respectively).
+        6. depth_limit: int. This is the depth limit of the tree, if a certain depth is reach, we will use a pretrained neural network 
+            to predict the payoff right away so we don't have to find our way to the terminal state.
+    Return: nodeUtil: float. This an actual node utility computed from traversing to terminal state or certain max tree depth.
     '''
-    def evaluate_step(self, cards:List[int], history:str, reach_probability: List[float], active_player: int, will_draw: bool, depth_limit=1):
-
-        # If it is the terminal states, get payoff function (different in deadwood point! Or gin point!)
-        if GinTrainer.isTerminal(history):
-            return GinTrainer.get_payoff()
-
-        # Else if, reach max depth, evaluate the payoff values with pretrained neural network model.
-        elif depth_limit == 0:
-            return self.neural_net_evaluate()
-
-        # If not, then if will_draw is True, use strategy vector from information set to have specific DRAW action.
-        if will_draw:
-            # Re-compute strategy with current node reach probability and information set
-
-            # For each draw action, compute node utility by traversing
-            nodeUtil = 0.0
-            for i in range(DRAW_ACTIONS):
-                action = self.get_draw_action()
-                
-                # compute new reach probability vector with regard to that action
-                new_reach_probability: List[float]
-
-                nodeUtil += self.evaluate_step(cards, history + action, new_reach_probability, active_player, not will_draw, depth_limit - 1)
-                pass
-
+    def evaluate_step(self, cards:List[int], history:str, reach_probability: List[float], active_player: int, will_draw: bool, depth_limit=10):
+        # FOOD FOR THOUGHTS:
         # After drawing, re-evaluate opponent counterfactual values, strategy, regrets? - but by the given public state 
         #   and value function (Deep Stack Paper)? trained model CNN, RNN, LSTM, GRU? 
         #   (If terminal then get payoff, else if reach max depth limit and predict the payoff or utility with neural nets)
@@ -258,54 +245,84 @@ class GinTrainer:
         #   - Since computing cfv and cfr, we have to traverse the entire game tree, so I'm thinking about each decision is a node, 
         #       and we traverse 2 consecutive time step for each player, and update 2 different vector of strategy, regret cfv for each player
 
-        # Else, use strategy vector from information set to have specific DISCARD action.
-        else:
-            # Re-compute strategy with current node reach probability and information set
+        # If it is the terminal states, get payoff function (different in deadwood point! Or gin point!)
+        if GinTrainer.isTerminal(history):
+            return GinTrainer.get_payoff()
 
-            # For each discard action, compute node utility by traversing
-            nodeUtil = 0.0
-            for i in range(DISCARD_ACTIONS):
-                action = self.get_discard_action()
+        # Else if, reach max depth, evaluate the payoff values with pretrained neural network model.
+        elif depth_limit == 0:
+            return self.neural_net_evaluate()
+        # If not:
+
+        # Initiate the node util value (delta(action)).
+        nodeUtil = 0.0
+
+        # then if will_draw is True, use strategy vector from information set to have specific DRAW action.
+        if will_draw:
+            
+            # Get information set and re-compute strategy with current node reach probability and information set
+            strategy: List[float]
+
+            # Initiate the node util value (delta(action)).
+            cfvs = np.zeros(len(DRAW_ACTIONS))
+
+            # For each draw action, compute node utility by traversing
+            for i in range(len(DRAW_ACTIONS)):
+                action = DRAW_ACTIONS[i]
                 
                 # compute new reach probability vector with regard to that action
                 new_reach_probability: List[float]
 
+                # Traversal-y compute and update strategy, regrets, cfvs, and cfrs with respect to DISCARD action.
+                cfvs[i] = self.evaluate_step(cards, history + action, new_reach_probability, active_player, not will_draw, depth_limit - 1)
+
+                # Add the utility of each action to this node's utility
+                nodeUtil += cfvs[i] * strategy[i]
+                pass # End for
+            
+
+            # Evaluate node_actual_utility and regret. Regret = personal_counter_factual value[] - node actual utility
+
+
+            # Update strategy and regret by regret matching algorithm
+
+
+            # Return node_actual_utility.                
+
+            pass # end first part of if
+
+        # Else, use strategy vector from information set to have specific DISCARD action.
+        else:
+            # Get information set and re-compute strategy with current node reach probability and information set
+            strategy: List[float]
+
+            # Initiate the node util value (delta(action)).
+            cfvs = np.zeros(len(DRAW_ACTIONS))
+            
+            # For each draw action, compute node utility by traversing
+            for i in range(len(DISCARD_ACTIONS)):
+                action = DRAW_ACTIONS[i]
+                
+                # compute new reach probability vector with regard to that action
+                new_reach_probability: List[float]
+
+                # Traversal-y compute and update strategy, regrets, cfvs, and cfrs with respect to DISCARD action.
                 nodeUtil += self.evaluate_step(cards, history + action, new_reach_probability, 1 - active_player, not will_draw, depth_limit - 1)
-                pass
 
-            pass
-
-
-        # After discarding, re-evaluate opponent counterfactual values, strategy, regrets? Similar to above?
-
-        # Evaluate node_actual_utility and regret. Regret = personal_counter_factual value[] - node actual utility
-
-        # Update strategy and regret by regret matching algorithm
-
-        # Return node_actual_utility. 
-
-        pass
+                # Add the utility of each action to this node's utility
+                nodeUtil += cfvs[i] * strategy[i]
+                pass # End for
+            
+            # Evaluate node_actual_utility and regret. Regret = personal_counter_factual value[] - node actual utility
 
 
-
-    '''
-    Get draw action base on Information Set's strategy vector
-    params:
-        1.
-    return: 
-    '''
-    def get_draw_action(self):
-        pass
+            # Update strategy and regret by regret matching algorithm
 
 
-    '''
-    Get discard action base on Information Set's strategy vector
-    params:
-        1.
-    return: 
-    '''
-    def get_discard_action(self):
-        pass
+            # Return node_actual_utility. 
+            pass # End else
+
+        return nodeUtil
 
 
     '''

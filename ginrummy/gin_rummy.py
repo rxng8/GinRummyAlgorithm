@@ -10,6 +10,7 @@ Gin Rummy Game and Trainer
 from typing import Dict, List
 import random
 import numpy as np
+
 # %%
 # CONSTANT
 DRAW_ACTIONS = ['U', 'D'] # U = Draw face up, D = draw face down
@@ -133,6 +134,7 @@ class InfoSet:
 
     def toString (self) -> str :
         return "{}: {}".format(self.infoSet, self.get_average_strategy())
+        
 '''
 1. What determine our strategy to pick card? Either draw face down or draw face up?
     - Whether we see that the card in the discarded pile benefit us (Form meld)? How much benefit? Probabilities?
@@ -174,10 +176,13 @@ class DiscardInfoSet (InfoSet):
 
 '''
 Data Structure of a public state.
-If so, we can have 52C10 * (52!) public states
+If so, we can have 52C10 * (52!) different public states
 Params:
-    1. Cards: List[Card]: List of Cards in hands
-    2. Discards: List[Card]. List of cards in the discarded pile.
+    1. Cards: List[Card]: List of Cards in hands.
+    2. Top Discards: List[Card]. The top card of the discard pile
+    2. Discards: List[Card]. List of cards in the discarded pile but not the top card.
+    4. Opponent known cards: List[Card]. cards picked up from discard pile, but not discarded
+    5. The unknown cards: List[Card]. cards in stockpile or in opponent hand (but not known)
 '''
 class PublicState:
     def __init__(self, cards: List[Card], discards: List[Card]):
@@ -220,11 +225,18 @@ class GinTrainer:
     Return:
     '''
     def evaluate_step(self, depth_limit=2):
-        # Build a tree with specified depth from a public state.
 
-        # Run cfr algorithm within a certain depth:
-        #
+        # If it is the terminal states, get payoff function (different in deadwood point! Or gin point!)
 
+        # If not, then use strategy vector from information set to have specific draw action.
+
+        # After drawing, re-evaluate opponent counterfactual values, strategy, regrets? - not by evaluating recursively - but by the given public state and value function (Deep Stack Paper)? trained model CNN, RNN, LSTM, GRU? 
+        #   - Base on the just-drawn card and the given data in the public state, determine what card opponent should have?
+        #   - What melds opponent should have.
+
+        # After that, 
+
+        # Given the public states, decide if 
 
         pass
 
@@ -254,53 +266,51 @@ class GinTrainer:
         2.
     Return: Node actual value (utility)
     '''
-    def cfr(self) -> float:
-        # Get player?
-        opponent = 1 - active_player
+    # def cfr(self) -> float:
+    #     # Get player?
+    #     opponent = 1 - active_player
 
-        # Return payoff if state is terminal
-        if self.isTerminal(S: PublicState):
-            payoff = self.get_payoff(history, cards, active_player)
-            return payoff
+    #     # Return payoff if state is terminal
+    #     if self.isTerminal(S: PublicState):
+    #         payoff = self.get_payoff(history, cards, active_player)
+    #         return payoff
         
-        # new information and convert to public state to put in information set?
-        information = str(cards[active_player]) + history
+    #     # new information and convert to public state to put in information set?
+    #     information = str(cards[active_player]) + history
 
-        # Get information set base on the public state or create if non-existed
-        infoSet = self.get_info_set(information)
-        infoSet.infoSet = information
+    #     # Get information set base on the public state or create if non-existed
+    #     infoSet = self.get_info_set(information)
+    #     infoSet.infoSet = information
 
-        # Get each strategy from the information set
-        strategy = infoSet.get_strategy(reach_probability_p0 if active_player == 0 else reach_probability_p1)
+    #     # Get each strategy from the information set
+    #     strategy = infoSet.get_strategy(reach_probability_p0 if active_player == 0 else reach_probability_p1)
 
-        # For each action, call cfr with newer public state
+    #     # For each action, call cfr with newer public state
         
-        counterfactual_values = np.zeros(N_ACTIONS)
-        node_actual_value = 0
+    #     counterfactual_values = np.zeros(N_ACTIONS)
+    #     node_actual_value = 0
 
-        for i in range(N_ACTIONS):
+    #     for i in range(N_ACTIONS):
 
-            if len(history) == 3:
-                return KuhnTrainer.get_payoff(history, cards, active_player)
+    #         if len(history) == 3:
+    #             return KuhnTrainer.get_payoff(history, cards, active_player)
 
-            counterfactual_values[i] =\
-                - self.cfr(cards, history + action, reach_probability_p0 * strategy[i], reach_probability_p1, opponent) if active_player == 0 else \
-                - self.cfr(cards, history + action, reach_probability_p0, reach_probability_p1 * strategy[i], opponent)
-            node_actual_value += strategy[i] * counterfactual_values[i]
+    #         counterfactual_values[i] =\
+    #             - self.cfr(cards, history + action, reach_probability_p0 * strategy[i], reach_probability_p1, opponent) if active_player == 0 else \
+    #             - self.cfr(cards, history + action, reach_probability_p0, reach_probability_p1 * strategy[i], opponent)
+    #         node_actual_value += strategy[i] * counterfactual_values[i]
 
-        # For each action, compute and accumulate counterfactual regret. (Regret Matching)
-        for i in range(N_ACTIONS):
-            counterfactual_regret = counterfactual_values[i] - node_actual_value
-            infoSet.regret_sum[i] += (reach_probability_p0 if active_player == 0 else reach_probability_p1) * counterfactual_regret
+    #     # For each action, compute and accumulate counterfactual regret. (Regret Matching)
+    #     for i in range(N_ACTIONS):
+    #         counterfactual_regret = counterfactual_values[i] - node_actual_value
+    #         infoSet.regret_sum[i] += (reach_probability_p0 if active_player == 0 else reach_probability_p1) * counterfactual_regret
         
-        return node_actual_value
+    #     return node_actual_value
 
     '''
     Check if a state is a terminal state
     params:
-        1.
-        2.
-    return:
+    return: (bool) Whether it is a terminal state
     '''
     @staticmethod
     def is_terminal():
@@ -319,10 +329,10 @@ class GinTrainer:
 
     def train(self):
         node_value = 0.0
-        for _ in range(self.n_iter):
-            node_value = self.cfr()
+        # for _ in range(self.n_iter):
+            # node_value = self.cfr()
         
-        return node_value
+        # return node_value
 
 # %%
 
@@ -345,3 +355,5 @@ Main game environment, with data generation (State) process
 class GinGame:
     def __init__(self):
         pass
+
+    

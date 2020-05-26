@@ -12,5 +12,12 @@ When you get to the file please search for evaluate_step to find the method.
 2. Deep Stack Poker. https://static1.squarespace.com/static/58a75073e6f2e1c1d5b36630/t/58b7a3dce3df28761dd25e54/1488430045412/DeepStack.pdf
 3. Deep Stack Poker Supplementary. https://static1.squarespace.com/static/58a75073e6f2e1c1d5b36630/t/58bed28de3df287015e43277/1488900766618/DeepStackSupplement.pdf
 -----------------
+
+### Future Work:
+1. [Deep Q-Learning](https://arxiv.org/abs/1312.5602)
+2. [Deep Reinforcement Learning from Self-Play in Imperfect-Information Games](https://arxiv.org/abs/1603.01121)
+3. [Deep Counterfactual Regret Minimization](https://arxiv.org/abs/1811.00164)
+
+-----------
 ## Author: Alex Nguyen
 ## Gettysburg College

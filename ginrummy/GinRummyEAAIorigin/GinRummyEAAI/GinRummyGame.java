@@ -43,7 +43,7 @@ public class GinRummyGame {
 	/**
 	 * Whether or not to print information during game play
 	 */
-	private static boolean playVerbose = false;
+	public static boolean playVerbose = false;
 	
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
@@ -345,7 +345,7 @@ public class GinRummyGame {
 //		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
 //		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
 //		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
-//		
+		
 	}
 	
 }

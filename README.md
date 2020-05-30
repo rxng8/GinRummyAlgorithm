@@ -36,6 +36,8 @@ So far I have written a light version of the new bot, the current base of the bo
     * Perform masking processes so that we can just discard legally and discard the card not in melds.
     * After masking, choose the cards with highest probability as candidate cards.
     * Choose the highest rank card in the candidate cards list to minimize deadwood point.
+* After that, we report discard in the `reportDiscard(int playerNum, Card discarded card)`: Have not implemented:
+    * TODO: Divide into 2 cases: This player's discard, and opponent's discard
 
 -------------
 ### Consider the paper:

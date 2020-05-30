@@ -313,7 +313,7 @@ public class GinRummyUtil {
 	 * @param args (unused)
 	 */
 	public static void main(String[] args) {
-		String cardNames = "AD AS AH AC 2C 3C 4C 4H 4D 4S"; // adding these (impossible in Gin Rummy) causes great combinatorial complexity: 3S 5S 6S 7S 7D 7C 7H 8H 9H TH TC TS TD 9D JD QD KD KS KH KC";
+		String cardNames = "AD AS AH AC 2C 3C 4C 4H 4D 4S 8D 8S 8H"; // adding these (impossible in Gin Rummy) causes great combinatorial complexity: 3S 5S 6S 7S 7D 7C 7H 8H 9H TH TC TS TD 9D JD QD KD KS KH KC";
 //		String cardNames = "AC AH AS 2C 2H 2S 3C 3H 3S KD"; 
 //		String cardNames = "AC AH AS 2C 2H 2S 3C 3H 3S 4H"; 
 
@@ -323,7 +323,7 @@ public class GinRummyUtil {
 			cards.add(Card.strCardMap.get(cardName));
 		System.out.println("Hand: " + cards);
 		System.out.println("Bitstring representation as long: " + cardsToBitstring(cards));
-		System.out.println("All melds:");
+		System.out.println("All melds: ");
 		for (ArrayList<Card> meld : cardsToAllMelds(cards))
 			System.out.println(meld);
 		System.out.println("Maximal meld sets:");

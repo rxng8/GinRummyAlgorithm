@@ -25,7 +25,7 @@ public class CFRPlayer implements GinRummyPlayer {
 	
 	// Card Matrix
 	// Discarded pile
-	Stack<Card> discardPile;
+//	Stack<Card> discardPile;
 	// ArrayList of probabilities of unknown cards in draw pile
 	ArrayList<Double> draw_pile;
 	// ArrayList of probabilities expected cards in opponent hand.
@@ -47,13 +47,13 @@ public class CFRPlayer implements GinRummyPlayer {
 		
 		info_set_map = new HashMap<String, InfoSet>();
 		
-		discardPile = new Stack<>();
+//		discardPile = new Stack<>();
 		draw_pile = new ArrayList<Double>();
 		op_cards = new ArrayList<Double>();
 		dis_strategy = new ArrayList<Double>();
 		for (int i = 0; i < Card.NUM_CARDS; i++) {
-			this.draw_pile.add(1.0/42); // There is 1/42 chance of each card is in the draw pile.
-			this.op_cards.add(1.0/42); // There is 1/42 chance of each card is in the opponent hand.
+			this.draw_pile.add(1.0/unknown_cards); // There is 1/42 chance of each card is in the draw pile.
+			this.op_cards.add(1.0/unknown_cards); // There is 1/42 chance of each card is in the opponent hand.
 			dis_strategy.add(1.0/52); // Discard strategy
 		}
 		
@@ -70,6 +70,7 @@ public class CFRPlayer implements GinRummyPlayer {
 	public boolean willDrawFaceUpCard(Card card) {
 		// Return true if max value function, false otherwise
 		unknown_cards --;
+//		discardPile.push(card);
 		// Bait Draw Strategy
 		
 		// Collecting meld strategy
@@ -78,9 +79,6 @@ public class CFRPlayer implements GinRummyPlayer {
 		@SuppressWarnings("unchecked")
 		ArrayList<Card> newCards = (ArrayList<Card>) cards.clone();
 		newCards.add(card);
-		
-		
-		
 		
 		// First, look at the card, and see how it rearrange the probability of my matrix
 		// Base on those matrix, look to see how picking up the card rearrange the matrix
@@ -94,10 +92,27 @@ public class CFRPlayer implements GinRummyPlayer {
 		this.draw_pile = normalize(this.draw_pile);
 		this.op_cards = normalize(this.op_cards);
 		
-		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards))
-			if (meld.contains(card)) {
-				return true;
+		
+		// Draft Function
+		ArrayList<Card> allCards = new ArrayList<>();
+		for (Card c : Card.allCards) {
+			allCards.add(c);
+		}
+		for (Card c : this.cards) {
+			for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(allCards)) {
+				if (meld.size() < 4 && meld.contains(card) && meld.contains(c)) {
+					return true;
+				}
 			}
+		}
+		
+	
+//		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards)) {
+//			if (meld.contains(card)) {
+//				return true;
+//			}
+//		}
+			
 		return false;
 	}
 
@@ -140,28 +155,32 @@ public class CFRPlayer implements GinRummyPlayer {
 				ArrayList<ArrayList<Card>> totalMelds = GinRummyUtil.cardsToAllMelds(totalCards);
 				for (int i = 0; i < probs_op_card_this_turn.size(); i++) {
 					int count_meld_containing_face_up = 0;
-					for (ArrayList<Card> meld : totalMelds) { 
+					for (ArrayList<Card> meld : totalMelds) {
 						if (meld.contains(this.faceUpCard) && meld.contains(Card.getCard(i))) {
 							count_meld_containing_face_up ++;
 						}
 					}
 					
 					double probs = (double) count_meld_containing_face_up / totalMelds.size();
-//					System.out.print(probs + " ");
+//					System.out.print("Meld Faced Up: " + count_meld_containing_face_up + " ");
 //					probs_op_card_this_turn.set(i, probs_op_card_this_turn.get(i) + probs * probs_op_card_this_turn.get(i) / 1);
 					probs_op_card_this_turn.set(i, probs_op_card_this_turn.get(i) - probs / 1);
 				}
+//				System.out.println("Total meld size: " + totalMelds.size());
 				
 				this.op_cards = normalize(probs_op_card_this_turn);
 				
 				// Debugging
-				System.out.println("Op_cards vector:");
-				for (int i = 0; i <  op_cards.size(); i++) {
-					// Debugging
-					System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
-//					System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
+				if (GinRummyGame.playVerbose) {
+					System.out.println("Op_cards vector:");
+					for (int i = 0; i <  op_cards.size(); i++) {
+						// Debugging
+						System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
+//						System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
+					}
+					System.out.println();
 				}
-				System.out.println();
+
 				
 				return;
 			}
@@ -172,16 +191,20 @@ public class CFRPlayer implements GinRummyPlayer {
 			cards.add(drawnCard);
 			this.drawnCard = drawnCard;
 			op_cards.set(drawnCard.getId(), 0.0);
-			// If we draw face down
-			// Update
-			// If the card we actually have drawn is actually the faceupcard, then we have to edit our strategy vector?
-			// If not, the then we did draw from the pile, make change to draw_pile and op_matrix.
-			
-			
 			// If we draw face up
+			if (this.drawnCard.getId() == this.faceUpCard.getId()) {
+				// Update
+				// If the card we actually have drawn is actually the faceupcard, then we have to edit our strategy vector?
+				// If not, the then we did draw from the pile, make change to draw_pile and op_matrix.
+//				discardPile.push(drawnCard);
+			}
+			else {
+				// If we draw face down
+			}
 		} else {
 			// opponent draw face up
 			op_cards.set(drawnCard.getId(), 1.0);
+//			discardPile.pop();
 			
 			
 			// Bayes theorem -> P (A|B) = P (B|A)P(A) / P(B) = P(B|A)
@@ -217,21 +240,27 @@ public class CFRPlayer implements GinRummyPlayer {
 				}
 				
 				double probs = (double) count_meld_containing_face_up / totalMelds.size();
-				System.out.print(probs + " ");
+//				System.out.print(probs + " ");
 //				probs_op_card_this_turn.set(i, probs_op_card_this_turn.get(i) + probs * probs_op_card_this_turn.get(i) / 1);
 				probs_op_card_this_turn.set(i, probs_op_card_this_turn.get(i) + probs / 1);
 			}
 			
 			this.op_cards = normalize(probs_op_card_this_turn);
 			
+			
 			// Debugging
-			System.out.println("Op_cards vector:");
-			for (int i = 0; i <  op_cards.size(); i++) {
-				// Debugging
-				System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
-//				System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
+			if (GinRummyGame.playVerbose) {
+				System.out.println("Op_cards vector:");
+				for (int i = 0; i <  op_cards.size(); i++) {
+					// Debugging
+					System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
+//					System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
+				}
+				System.out.println();
 			}
-			System.out.println();
+
+			
+			
 		}
 	}
 
@@ -240,7 +269,7 @@ public class CFRPlayer implements GinRummyPlayer {
 	public Card getDiscard() {
 		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
 		int minDeadwood = Integer.MAX_VALUE;
-		ArrayList<Card> candidateCards = new ArrayList<Card>();
+		
 		for (Card card : cards) {
 			// Cannot draw and discard face up card.
 			if (card == drawnCard && drawnCard == faceUpCard)
@@ -251,28 +280,22 @@ public class CFRPlayer implements GinRummyPlayer {
 			drawDiscard.add(card);
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
-			
-			// Creating meld set
-//			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
-//			remainingCards.remove(card);
-//			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
-//			int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards)
-//					: GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), remainingCards);
-//			if (deadwood <= minDeadwood) {
-//				if (deadwood < minDeadwood) {
-//					minDeadwood = deadwood;
-//					candidateCards.clear();
-//				}
-//				candidateCards.add(card);
-//			}
 		}
 //		Card discard = candidateCards.get(random.nextInt(candidateCards.size()));
 		updateDiscardStrategy();
 		
 		ArrayList<Double> discard_strategy = (ArrayList<Double>) this.dis_strategy.clone();
-		// Debugging
-		System.out.println("Discard strategy vector:");
 		
+		
+		// Debugging
+		if (GinRummyGame.playVerbose) {
+			System.out.println("Discard strategy before masking!");
+			for (int i = 0; i < discard_strategy.size(); i++) {
+				System.out.printf("%s: %.5f ", Card.getCard(i), discard_strategy.get(i));
+			}
+			System.out.println();
+		}
+
 		// Masking
 		for (int i = 0; i < discard_strategy.size(); i++) {
 			boolean inHand = false;
@@ -287,6 +310,26 @@ public class CFRPlayer implements GinRummyPlayer {
 			}
 		}
 		discard_strategy.set(drawnCard.getId(), 0.0);
+
+		// Creating meld set
+		//Mask the cards in my hand which is not in melds out to form a discard candidate list.
+		ArrayList<Card> candidateCards = new ArrayList<Card>(this.cards);
+		ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(candidateCards);
+		for (Card c : this.cards) {
+			for (ArrayList<Card> meld : melds) {
+				if (meld.contains(c)) {
+					candidateCards.remove(c);
+				}
+			}
+		}
+		
+		
+		// Mask the card not in candidate cards list.
+		for (int i = 0; i < discard_strategy.size(); i++) {
+			if (!candidateCards.contains(Card.getCard(i))) {
+				discard_strategy.set(i, 0.0);
+			}
+		}
 		
 		
 		// Debugging
@@ -294,27 +337,39 @@ public class CFRPlayer implements GinRummyPlayer {
 		
 		// Getting the max probability for the discarding strategy.
 		double max_probs = Double.NEGATIVE_INFINITY;
-		int index_max_probs = -1;
+		
 		for (int i = 0; i < discard_strategy.size(); i++) {
 			double probs = discard_strategy.get(i);
 			if (probs >= max_probs) {
 				max_probs = probs;
-				index_max_probs = i;
 			}
-			
-			// Debugging
-			System.out.printf("%s: %.5f ", Card.getCard(i).toString(), probs);
 		}
-		System.out.println();
 		
-		// TODO: Is there another way to get strategy from the discarding strategy?
+		// Debugging
+		if (GinRummyGame.playVerbose) {
+			System.out.println("Discard strategy vector after masking:");
+			for (int i = 0; i < discard_strategy.size(); i++) {
+				double probs = discard_strategy.get(i);
+				System.out.printf("%s: %.5f ", Card.getCard(i).toString(), probs);
+			}
+			System.out.println();
+		}
 		
-		Card discard;
-		if (index_max_probs != -1) {
-			discard = Card.getCard(index_max_probs);
-		} else {
-			// TODO: There can't be index_max_probs = -1
-			discard = this.cards.get(0);
+		// In the set of all maximum probability, pick the card that minimize deadwood point
+		ArrayList<Card> finalCandidateCards = new ArrayList<Card>();
+		for (int i = 0; i < discard_strategy.size(); i++) {
+			double probs = discard_strategy.get(i);
+			if (probs == max_probs) {
+				finalCandidateCards.add(Card.getCard(i));
+			}
+		}
+		
+		// finalCandidateCards is guaranteed to have at least 1 card.
+		Card discard = finalCandidateCards.get(0);
+		for (Card c : finalCandidateCards) {
+			if (c.getRank() > discard.getRank()) {
+				discard = c;
+			}
 		}
 		
 		// Prevent future repeat of draw, discard pair.
@@ -332,7 +387,7 @@ public class CFRPlayer implements GinRummyPlayer {
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
-		discardPile.push(discardedCard);
+//		discardPile.push(discardedCard);
 		// Ignore other player discards.  Remove from cards if playerNum is this player.
 		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
@@ -398,30 +453,72 @@ public class CFRPlayer implements GinRummyPlayer {
 		double normalizing_sum = 0;
 		ArrayList<Double> newVector = new ArrayList<Double>();
 		Iterator<Double> it = vector.iterator();
-		while (it.hasNext()) { 
-			normalizing_sum += it.next();
+		while (it.hasNext()) {
+			double prob = it.next();
+			if (prob < 0) {
+				prob = 0;
+			}
+			normalizing_sum += prob;
 		}
 		
 		it = vector.iterator();
 		while (it.hasNext()) {
 			if (normalizing_sum != 0) {
-				newVector.add(it.next() / normalizing_sum);
+				newVector.add(Math.max(0.0, it.next()) / normalizing_sum);
 			} else {
-				newVector.add(1.0 / vector.size());
+				newVector.add(1.0 / unknown_cards);
 			}
 		}
 		
 		return newVector;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void updateDiscardStrategy() {
 		
+		// From op_cards (expected card opponent has in hand, assess what card to discard! in the strategy vector!)
+		
+		// Get all value > 0 from opponent hand vector to form a candidate assessment of opponent hands.
+		HashMap<Card, Double> map = new HashMap<Card, Double>();
+		ArrayList<Double> op_expecting = (ArrayList<Double>) op_cards.clone();
+		for (int i = 0; i < op_expecting.size(); i++) {
+			double prob = op_expecting.get(i);
+			if (prob > 0) {
+				map.put(Card.getCard(i), prob);
+			}
+		}
+		
+		ArrayList<Card> opponentHand;
+		
+		for (int i = 0; i < op_expecting.size(); i++) {
+			double prob = op_expecting.get(i);
+			if (prob == 0.0) {
+				Card thisCard = Card.getCard(i);
+				opponentHand = new ArrayList<>();
+				opponentHand.addAll(map.keySet());
+				opponentHand.add(thisCard);
+				ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(opponentHand);
+				if (melds.size() == 0) {
+					// If there is no melds can be form, the opponent doesn't expect to form any meld from this card.
+					continue;
+				}
+				int count_existence = 0;
+				for (ArrayList<Card> meld : melds) {
+					if (meld.contains(thisCard)) {
+						count_existence ++;
+					}
+				}
+				op_expecting.set(i, (double) count_existence / melds.size());
+			}
+		}
+		
+		// Flip
 		for (int i = 0; i < this.dis_strategy.size(); i++) {
-			double counter_op_value = 1.0 - this.op_cards.get(i);
-			System.out.printf("%s: %.5f", Card.getCard(i).toString(), this.dis_strategy.get(i) + counter_op_value);
+			double counter_op_value = 1.0 - op_expecting.get(i);
+//			System.out.printf("%s: %.5f", Card.getCard(i).toString(), this.dis_strategy.get(i) + counter_op_value);
 			this.dis_strategy.set(i, this.dis_strategy.get(i) + counter_op_value);
 		}
-		System.out.println();
+//		System.out.println();
 		this.dis_strategy = normalize (this.dis_strategy);		
 	}
 	

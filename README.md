@@ -39,6 +39,17 @@ So far I have written a light version of the new bot, the current base of the bo
 * After that, we report discard in the `reportDiscard(int playerNum, Card discarded card)`: Have not implemented:
     * TODO: Divide into 2 cases: This player's discard, and opponent's discard
 
+### 3. Question:
+* I concern a lot about how I compute the probability of what card opponent have in hand. It is the probability of forming meld containing the picked card with the specific card that I want to assess, over the total number of melds formed by all deck.
+* Can I approach this by another method:
+    * I will write a payoff method that return the utility of hand after an action. (Reward method).
+    * I will write an observation method that return some kind of public state generalization. (Observation method).
+    * I will then let the computer player and continually save data as following:
+        * We have the game data of one action step as an array [observation, action]
+        * If the reward satisfy some conditions, then save the data.
+        * Get all the observation as input, all the one-hot-encoded action as output.
+        * Train by neural network or something.
+
 -------------
 ### Consider the paper:
 1. Neller. "An introduction to counterfactual regret minimalization." http://modelai.gettysburg.edu/2013/cfr/cfr.pdf

@@ -10,16 +10,4 @@ env.close()
 
 # %%
 
-from rlcard.games.gin_rummy import Game
-from rlcard.games.gin_rummy.utils import action_event
-
-game = Game(True)
-
-
-# %%
-
-game.init_game()
-
-# %%
-
-game.step(action=game.decode_action(73))
+import tensorflow as tf

@@ -5,9 +5,18 @@
 Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
 
 ------------
-## Report:
+# Report:
 
-### Report 2, date: June 2, 2020
+## Report 3, date: June 9, 2020
+### 1. Modeling the abstraction of the public state.
+* The public state is defined by a tuple S = (P, D, H) where P is a vector of player's hand, D is the vector of discarded pile, and H is the history of the game.
+* Feature Analysis:
+    * TODO
+    * TODO
+* Public state abstraction: 
+
+
+## Report 2, date: June 2, 2020
 So far I have written a light version of the new bot, the current base of the bot depends on computing probability of strategy and the probability of which card is in the opponent's hand.
 
 ### 1. Player's variables:
@@ -55,12 +64,20 @@ So far I have written a light version of the new bot, the current base of the bo
 1. Neller. "An introduction to counterfactual regret minimalization." http://modelai.gettysburg.edu/2013/cfr/cfr.pdf
 2. Deep Stack Poker. https://static1.squarespace.com/static/58a75073e6f2e1c1d5b36630/t/58b7a3dce3df28761dd25e54/1488430045412/DeepStack.pdf
 3. Deep Stack Poker Supplementary. https://static1.squarespace.com/static/58a75073e6f2e1c1d5b36630/t/58bed28de3df287015e43277/1488900766618/DeepStackSupplement.pdf
+4. Abstraction for Solving Large Incomplete-Information Games. https://www.cs.cmu.edu/~sandholm/game%20abstraction.aaai15SMT.pdf
+5. Automated Action Abstraction of Imperfect Information Extensive-Form Games. https://poker.cs.ualberta.ca/publications/AAAI11.pdf
+6. Evaluating State-Space Abstractions in Extensive-Form Games. https://poker.cs.ualberta.ca/publications/AAMAS13-abstraction.pdf
+
 -----------------
 
 ### Future Work:
 1. [Deep Q-Learning](https://arxiv.org/abs/1312.5602)
 2. [Deep Reinforcement Learning from Self-Play in Imperfect-Information Games](https://arxiv.org/abs/1603.01121)
 3. [Deep Counterfactual Regret Minimization](https://arxiv.org/abs/1811.00164)
+
+#### To knock or not: The game of pig. Play to maximize utility from hand, not for the whole game. Figure out whether to knock, to do undercut, or to go gin?
+
+#### Comparing the to game of pig, maximize hand score.early game: maximize hand score, as the game goes by, player need to tkae greter risk, change play method to win game. => Non-linear policy of strategy.
 
 -----------
 ## Author: Alex Nguyen

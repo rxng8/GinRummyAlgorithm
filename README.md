@@ -17,6 +17,7 @@ Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to
 
 ### 2. Hand Estimation using reinforcement learning:
 * Using reinforcement learning to estimate opponent's hand.
+* Bug fixing, the probability of estimating the opponent hand suit would be much more lower than the 
 
 ### 3. Improving in-game hand estimation and strategy of the written player.
 

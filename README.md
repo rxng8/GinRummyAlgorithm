@@ -15,6 +15,26 @@ Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to
     * TODO
 * Public state abstraction: 
 
+### 2. Hand Estimation using reinforcement learning:
+* Using reinforcement learning to estimate opponent's hand.
+
+### 3. Improving in-game hand estimation and strategy of the written player.
+
+### 4. Improving Policy evaluation function. \(Discarding strategy vector\).
+* Improve `updateStrategy()` method, not just by flipping.
+* Is there a supervised learning, or reinforcement learning to learn the function mapping from `op_cards` to `strategy`
+* Navigate to #5.
+
+### 5. Estimate the hand value function?
+* The task is to learn the value function based only on the
+results of self-play. Except for the value function, the
+details of the above policy are implemented in discrete
+program logic. The value function has only the input of
+the game state and generates a single numeric evaluation
+of it. There is no knowledge of the rules of the game built
+into the value function. There is no notion of sequences,
+sets or deadwood. \(TD-Rummy paper\).
+* Currently, I am using the `updateStrategy()` using simple flipping method, however, we need to use ANN? CNN? to estimate the value function, which estimate the value of each discarding cards.
 
 ## Report 2, date: June 2, 2020
 So far I have written a light version of the new bot, the current base of the bot depends on computing probability of strategy and the probability of which card is in the opponent's hand.
@@ -67,6 +87,8 @@ So far I have written a light version of the new bot, the current base of the bo
 4. Abstraction for Solving Large Incomplete-Information Games. https://www.cs.cmu.edu/~sandholm/game%20abstraction.aaai15SMT.pdf
 5. Automated Action Abstraction of Imperfect Information Extensive-Form Games. https://poker.cs.ualberta.ca/publications/AAAI11.pdf
 6. Evaluating State-Space Abstractions in Extensive-Form Games. https://poker.cs.ualberta.ca/publications/AAMAS13-abstraction.pdf
+7. WAVEFORM CLUSTERING AS AN EXTENSIVE FORM ABSTRACTION
+TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/theses/kevin-kauth-digipen-master-of-science-in-computer-science-thesis-waveform-clustering-as-an-extensive-form-abstraction-technique-for-poker.pdf
 
 -----------------
 

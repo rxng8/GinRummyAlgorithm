@@ -8,13 +8,26 @@ import java.util.ArrayList;
 
 public class PlayerModel {
 
+	// Input value for curent state. Probability matrix of 52
 	public ArrayList<Double> X;
+	
+	// The weights of X
 	public ArrayList<Double> weights;
+	
+	// Randome seed
 	int seed;
+	
+	// Learning rate
 	double lr;
+	
+	// Number of training iterations
 	double n_iter;
 	
 	
+	/**
+	 * Initialize the model with saved file
+	 * @param filename (String): The path the saved model.
+	 */
 	@SuppressWarnings("unchecked")
 	public PlayerModel (String filename) {
 		try {
@@ -31,8 +44,20 @@ public class PlayerModel {
 		}
 	}
 	
-	public PlayerModel () {}
+	/**
+	 * Initialize a new model
+	 */
+	public PlayerModel () {
+		// Have top call __init__ if model is new.
+	}
 	
+	/**
+	 * Initialize data for a new model
+	 * @param weights (ArrayList<Double>): Probability vector of length 52.
+	 * @param seed (int): Random seed.
+	 * @param lr (double): Leanring rate.
+	 * @param n_iter (int): Number of iterations.
+	 */
 	public void __init__(ArrayList<Double> weights, int seed, double lr, int n_iter) {
 		this.X = new ArrayList<Double>();
 		this.weights = weights;
@@ -41,12 +66,21 @@ public class PlayerModel {
 		this.n_iter = n_iter;
 	}
 	
-	// Wikipedia
+	/**
+	 * Perform a sigmoid activation function
+	 * @param x (double) param
+	 * @return (double) the result of the sigmoid function.
+	 */
 	public static double sigmoid(double x) {
 		return 1 / (1 + Math.exp(x));
 	}
 	
-	// Normal Math
+	/**
+	 * Perform a dot product of 2 vectors with the same dimension.
+	 * @param X (ArrayList<Double>): Param
+	 * @param weights (ArrayList<Double>): Param
+	 * @return (double) The dot product of the two vectors.
+	 */
 	public static double dot(ArrayList<Double> X, ArrayList<Double> weights) {
 		assert X.size() == weights.size();
 		
@@ -57,12 +91,27 @@ public class PlayerModel {
 		return sum;
 	}
 	
-	// Normal feed-forward ANN computation
+	/**
+	 * Normal feed-forward ANN computation for one node.
+	 * @param inputs
+	 * @param weights
+	 * @return
+	 */
 	public static double compute_value(ArrayList<Double> inputs, ArrayList<Double> weights) {
 		return sigmoid(dot(inputs, weights));
 	}
 	
-	// https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf
+	/**
+	 * Perform custom back propagation according to https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf, update new weights.
+	 * @param weights
+	 * @param lr
+	 * @param gamma
+	 * @param reward_next_state
+	 * @param value_current_state
+	 * @param value_next_state
+	 * @param eligibility_trace
+	 * @return (ArrayList<Double>) new weights.
+	 */
 	public static ArrayList<Double> back_propagation(ArrayList<Double> weights, 
 			double lr, 
 			double gamma, 
@@ -80,7 +129,14 @@ public class PlayerModel {
 		return new_weights;
 	}
 	
-	// https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf
+	/**
+	 * compute_eligibility_trace based on paper https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf
+	 * @param gamma
+	 * @param delta
+	 * @param prev_eligibility_trace
+	 * @param value_current_state
+	 * @return
+	 */
 	public static ArrayList<Double> compute_eligibility_trace(double gamma, double delta, ArrayList<Double> prev_eligibility_trace, double value_current_state) {
 		@SuppressWarnings("unchecked")
 		ArrayList<Double> eligibility_trace = (ArrayList<Double>) prev_eligibility_trace.clone();
@@ -93,6 +149,8 @@ public class PlayerModel {
 	/**
 	 * evaluate a full step of the network and save new weights.
 	 * @param value_next_state (double): The value of the next state =))
+	 * @param prev_eligibility_trace
+	 * @param reward_next_state
 	 */
 	public void evaluate_step(double value_next_state, ArrayList<Double> prev_eligibility_trace, double reward_next_state) {
 		// Compute value
@@ -105,6 +163,10 @@ public class PlayerModel {
 		this.weights = new_weights;
 	}
 	
+	/**
+	 * Save model, in this case, save weights.
+	 * @param filename
+	 */
 	public void save(String filename) {
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));

@@ -2,8 +2,8 @@
 
 ## Current Work:
 
-Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
-Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/PlayerModel.java` to see what I'm working on.
+* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
+* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/PlayerModel.java` to see what I'm working on.
 
 ------------
 # Report:

@@ -169,22 +169,20 @@ public class CFRPlayer implements GinRummyPlayer {
 //				System.out.println("Total meld size: " + totalMelds.size());
 				
 				this.op_cards = normalize(probs_op_card_this_turn);
-				
 				// Debugging
 				if (GinRummyGame.playVerbose) {
-					System.out.println("Op_cards vector:");
-					for (int i = 0; i <  op_cards.size(); i++) {
-						// Debugging
-						System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
-//						System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
-					}
-					System.out.println();
+					this.print_vector(op_cards, "Opponent Card's Estimation");
 				}
-
-				
 				return;
 			}
-			else return; // Nothing to do if we pass the first round
+			else {
+				// Debugging
+				if (GinRummyGame.playVerbose) {
+					this.print_vector(op_cards, "Opponent Card's Estimation");
+				}
+				return;
+			} // Nothing to do if we pass the first round
+			
 		}
 		draw_pile.get(drawnCard.getId());
 		if (playerNum == this.playerNum) {
@@ -250,18 +248,10 @@ public class CFRPlayer implements GinRummyPlayer {
 			
 			// Debugging
 			if (GinRummyGame.playVerbose) {
-				System.out.println("Op_cards vector:");
-				for (int i = 0; i <  op_cards.size(); i++) {
-					// Debugging
-					System.out.printf("%s: %.5f ",Card.getCard(i).toString(), op_cards.get(i));
-//					System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
-				}
-				System.out.println();
+				this.print_vector(op_cards, "Opponent Card's Estimation");
 			}
-
-			
-			
 		}
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -289,11 +279,12 @@ public class CFRPlayer implements GinRummyPlayer {
 		
 		// Debugging
 		if (GinRummyGame.playVerbose) {
-			System.out.println("Discard strategy before masking!");
-			for (int i = 0; i < discard_strategy.size(); i++) {
-				System.out.printf("%s: %.5f ", Card.getCard(i), discard_strategy.get(i));
-			}
-			System.out.println();
+//			System.out.println("Discard strategy before masking!");
+//			for (int i = 0; i < discard_strategy.size(); i++) {
+//				System.out.printf("%s: %.5f ", Card.getCard(i), discard_strategy.get(i));
+//			}
+//			System.out.println();
+			this.print_vector(discard_strategy, "Discard strategy before masking!");
 		}
 
 		// Masking
@@ -347,12 +338,13 @@ public class CFRPlayer implements GinRummyPlayer {
 		
 		// Debugging
 		if (GinRummyGame.playVerbose) {
-			System.out.println("Discard strategy vector after masking:");
-			for (int i = 0; i < discard_strategy.size(); i++) {
-				double probs = discard_strategy.get(i);
-				System.out.printf("%s: %.5f ", Card.getCard(i).toString(), probs);
-			}
-			System.out.println();
+//			System.out.println("Discard strategy vector after masking:");
+//			for (int i = 0; i < discard_strategy.size(); i++) {
+//				double probs = discard_strategy.get(i);
+//				System.out.printf("%s: %.5f ", Card.getCard(i).toString(), probs);
+//			}
+//			System.out.println();
+			this.print_vector(discard_strategy, "Discard strategy vector after masking");
 		}
 		
 		// In the set of all maximum probability, pick the card that minimize deadwood point
@@ -520,6 +512,25 @@ public class CFRPlayer implements GinRummyPlayer {
 		}
 //		System.out.println();
 		this.dis_strategy = normalize (this.dis_strategy);		
+	}
+	
+	
+	//Debug method
+	public void print_vector(ArrayList<Double> list, String name) {
+		System.out.println();
+		System.out.println(name + ": ");
+		int a = 0;
+		for (int i = 0; i <  list.size(); i++) {
+			// Debugging
+			System.out.printf("%s: %.5f ",Card.getCard(i).toString(), list.get(i));
+//			System.out.printf("%.5f ", probs_op_card_this_turn.get(i));
+			a++;
+			if(a == 13) {
+				a = 0;
+				System.out.println();
+			}
+		}
+		System.out.println();
 	}
 	
 //	public static void main(String[] args) {

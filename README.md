@@ -1,42 +1,70 @@
 # Algorithm of Reinforment Leanring for Imperfect Information Card Game: Gin Rummy
 
-## Current Work:
+## Current Work and Code:
 
 * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
+    * This player use simple probability estimation algorithm stated from `week 2 report` including opponent hand estimation by Bayes Theorem. And Flipping and Masking to map that estimation to strategy.
+    
+    * Currently, this player has win rate of 30% matches over simple player in ONE game. And over the course of 1000 games, this player won 0 game over simple player.
+
 * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/PlayerModel.java` to see what I'm working on.
+
+    * This is the model I write based on what I read about Temporal Difference technique in Reinforcement leanring in Gin Rummy according to [TD-Rummy paper](https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf).
+
+    * This file includes a feed forward ANN with input is state vector in `Report 3, part 1, bullet point 1,` and the output is one simple value determine the value of that state.
+
+    * Through the course of the game, the player will learn this value function and base on that to determine each action.
+
+    * Read more about this on `Report 3, part 4.`
 
 ------------
 # Report:
 
 ## Report 3, date: June 9, 2020
-### 1. Modeling the abstraction of the public state.
-* The public state is defined by a tuple S = (P, D, H) where P is a vector of player's hand, D is the vector of discarded pile, and H is the history of the game.
-* Feature Analysis:
-    * TODO
-    * TODO
-* Public state abstraction: 
+### 1. Modeling the abstraction of the public state. State Representation.
 
-### 2. Hand Estimation using reinforcement learning:
-* Using reinforcement learning to estimate opponent's hand.
-* Bug fixing, the probability of estimating the opponent hand suit would be much more lower than the 
+* The state will be a vector of length 52. Each element is a card. Each element have 4 state, `in-player-hand`, `in-opponent-hand`, `in-discard-pile`, and `unknown`. Each card will be represented by 1 in these 4 states, with `integer` representation. So there are roughly 2x10^31 different states. NOTE: the card is only considered to be in opponent hand if it is picked by opponent from the discard pile. Other cards are unknown.
 
-### 3. Improving in-game hand estimation and strategy of the written player.
+* One other way we can represent states is probability representation. The state can be presented as a vector of length 52 with each element is a card. Each element have 4 state, `in-player-hand`, `in-opponent-hand`, `in-discard-pile`, `in-draw-pile`, and `unknown`, and we will represent each state with some kind of a distance between states, like in K-Mean clustering. (Have not researched)
 
-### 4. Improving Policy evaluation function. \(Discarding strategy vector\).
+
+### 2. Hand Estimation using Bayes Theorem or Supervised Learning?:
+* There are 2 approaches: 
+    * Using Bayes Theorem to estimate opponent hand. P(A|B) = P(B|A) * P(A) / P(B). We can say that the probability of opponent having this card `X` in hand given that the opponent have picked an actual card `C` is the probability of the opponent should picked the card `C` if they has the card `X` in hand. Multiply with the probability of the card `X` exists in opponent hand, over 1 (The probability of opponent just pick the card.) => This estimation fails for phishing strategy.
+
+    * Use Collected pick-up-and-discard data from playing games to do a supervised learning to estimate the probability of each card existing in opponent hand. => This estimation also fails for strategies of players other than SimplePlayer (Because we collect data from Simple Players' games).
+
+### 3. Improving Policy evaluation function. \(Strategy about which to draw and which to discard\).
 * Improve `updateStrategy()` method, not just by flipping.
-* Is there a supervised learning, or reinforcement learning to learn the function mapping from `op_cards` to `strategy`
-* Navigate to #5.
 
-### 5. Estimate the hand value function?
+* Currently, my player have win rate of 30% in one game vs the SimplePlayer.
+
+* Navigate to #4.
+
+### 4. Estimate the state value function? (According to [TD-Rummy](https://www.aaai.org/Papers/ICML/2003/ICML03-050.pdf) paper)
 * The task is to learn the value function based only on the
-results of self-play. Except for the value function, the
-details of the above policy are implemented in discrete
-program logic. The value function has only the input of
+results of self-play. The value function has only the input of
 the game state and generates a single numeric evaluation
 of it. There is no knowledge of the rules of the game built
 into the value function. There is no notion of sequences,
 sets or deadwood. \(TD-Rummy paper\).
-* Currently, I am using the `updateStrategy()` using simple flipping method, however, we need to use ANN? CNN? to estimate the value function, which estimate the value of each discarding cards.
+
+* Currently, I am using the `updateStrategy()` using simple flipping method to map `opponent hand estimation` to `discarding strategy`. However I am expected to modify this method with a feed-forward ANN with custom back-propagation (According to TD-Rummy Paper):
+    * The input of the ANN model is a vector of length 52. Each element in vector represent a value telling that it is in `1 in 4 states: in player hand, in opponent hand, in discard pile, and unknown card`
+
+    * The vector is then passed through some combination of nodes with `sigmoid` activation function.
+
+    * The last layer will be the expected value of that hand.
+
+    * Now we perform action based on the value we got after considering every available actions.
+
+    * We now have new state and new input, so we need to update weights by performing back-propagation. This will then evaluate the reward and value of the current state by the old weights and compute the new weights.
+
+    * Therefore, we update weights every turns until the end of the game.
+
+    * NOTE: Proving that using an ANN is possible to estimate the value of hand: (Unproved.)
+
+----------
 
 ## Report 2, date: June 2, 2020
 So far I have written a light version of the new bot, the current base of the bot depends on computing probability of strategy and the probability of which card is in the opponent's hand.

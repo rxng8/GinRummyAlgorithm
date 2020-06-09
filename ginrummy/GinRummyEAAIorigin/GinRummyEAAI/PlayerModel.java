@@ -14,6 +14,9 @@ public class PlayerModel {
 	// The weights of X
 	public ArrayList<Double> weights;
 	
+	// Eligibility_trace of one game
+	public ArrayList<Double> eligibility_trace;
+
 	// Randome seed
 	int seed;
 	
@@ -22,6 +25,9 @@ public class PlayerModel {
 	
 	// Number of training iterations
 	double n_iter;
+
+	// End game?
+	public boolean end;
 	
 	
 	/**
@@ -48,7 +54,7 @@ public class PlayerModel {
 	 * Initialize a new model
 	 */
 	public PlayerModel () {
-		// Have top call __init__ if model is new.
+		// Have to call __init__ if model is new.
 	}
 	
 	/**
@@ -58,12 +64,17 @@ public class PlayerModel {
 	 * @param lr (double): Leanring rate.
 	 * @param n_iter (int): Number of iterations.
 	 */
-	public void __init__(ArrayList<Double> weights, int seed, double lr, int n_iter) {
+	public void __init__(ArrayList<Double> weights, int seed, double lr, int n_iter, boolean end) {
 		this.X = new ArrayList<Double>();
 		this.weights = weights;
 		this.seed = seed;
 		this.lr = lr;
 		this.n_iter = n_iter;
+		this.end = end;
+		this.eligibility_trace = new ArrayList<Double>();
+
+		// Debugging
+		assert this.eligibility_trace.size() == X.size();
 	}
 	
 	/**
@@ -152,15 +163,20 @@ public class PlayerModel {
 	 * @param prev_eligibility_trace
 	 * @param reward_next_state
 	 */
-	public void evaluate_step(double value_next_state, ArrayList<Double> prev_eligibility_trace, double reward_next_state) {
+	public void evaluate_step(double value_next_state, double reward_next_state, boolean end) {
 		// Compute value
 		double value_current_state = compute_value(this.X, this.weights);
 		double gamma = 1.0;
 		double delta = 1.0;
+
+		// debugging
+		assert this.eligibility_trace.size() == X.size();
+
+		this.eligibility_trace = compute_eligibility_trace(gamma, delta, this.eligibility_trace, value_current_state);
+		this.weights = back_propagation(this.weights, this.lr, gamma, reward_next_state, value_current_state, value_next_state, this.eligibility_trace);
 		
-		ArrayList<Double> eligibility_trace = compute_eligibility_trace(gamma, delta, prev_eligibility_trace, value_current_state);		
-		ArrayList<Double> new_weights = back_propagation(this.weights, this.lr, gamma, reward_next_state, value_current_state, value_next_state, eligibility_trace);
-		this.weights = new_weights;
+		// If end game then reset eligibility trace.
+		if (end) this.eligibility_trace = new ArrayList<>();
 	}
 	
 	/**

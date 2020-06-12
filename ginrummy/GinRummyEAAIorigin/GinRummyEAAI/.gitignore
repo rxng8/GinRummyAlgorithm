@@ -6,3 +6,10 @@
 /SimpleGinRummyPlayer.class
 /InfoSet.class
 /PlayerModel.class
+/RLPlayer.class
+/HandEstimationModel.class
+/DataCollector.class
+/DeepFeedForwardTest.class
+/HandEstimationModel$Layer.class
+/HandEstimationModel$Neuron.class
+/HESimpleModel.class

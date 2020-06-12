@@ -131,6 +131,22 @@ TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/the
 
 #### Comparing the to game of pig, maximize hand score.early game: maximize hand score, as the game goes by, player need to tkae greter risk, change play method to win game. => Non-linear policy of strategy.
 
+* Tabular rl/ml approach.
+* ml is not deep leanring, ml is about statistic, learn better function model, not just neural network. Leveraging the data to give better action.
+
+* Combination of algorithms: 
+    * Hand estimator function
+    * Given estimation try to predict other card unknown?
+    * Try to predict safety discard?
+
+* Bayesian Network? Monte Carlo? Markup chain.
+
+* Want to have some kind of a data-driven bot that takes the time off line to learn.
+
+* collect a lot of playing data, learn from that, like supervised learning.
+
+* Number of seed ? and dive deep down into the things.
+
 -----------
 ## Author: Alex Nguyen
 ## Gettysburg College

@@ -294,6 +294,9 @@ public class GinRummyGame {
 				System.out.printf("Player\tScore\n0\t%d\n1\t%d\n", scores[0], scores[1]);
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
+			
+			break;
+			
 		}
 		if (playVerbose)
 			System.out.printf("Player %s wins.\n", scores[0] > scores[1] ? 0 : 1);

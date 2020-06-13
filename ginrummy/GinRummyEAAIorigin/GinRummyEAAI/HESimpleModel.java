@@ -192,17 +192,32 @@ public class HESimpleModel {
 	}
 	
 	/**
-	 * Normal feed-forward ANN computation for one layer.
-	 * @param inputs.
-	 * @param weights. 
+	 * Custom categorical cross entropy loss
+	 * @param 
+	 * @param 
 	 * @return
 	 */
 	public static float categorical_crossentropy(float[] output, float[] label) {
 		assert output.length == label.length : "output length and label length cannot be different!";
 		
+		// Count non-zero label
+		int non_zeros = 0;
+		for (float l : label) {
+			if (l != 0) non_zeros ++;
+		}
 		
+		// Scale factor
+		float scale_factor = 1f / non_zeros;
 		
-		return 0;
+		// Compute log loss
+		float log_loss = 0;
+		for (int i = 0; i < label.length; i++) {
+			if (label[i] != 0) { // Positive class.
+				log_loss += -Math.log10(output[i]) * label[i] * scale_factor;
+			}
+		}
+		
+		return log_loss;
 	}
 	
 	/**

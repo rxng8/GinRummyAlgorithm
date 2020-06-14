@@ -2,6 +2,22 @@
 
 ## Current Work and Code:
 
+* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HESimpleModel.java` to see what I'm working on with hand estimation simple model.
+    * This is the custom simple fully connected (feed-forward, back-propagation) artificial neural network model (2 layers) that I have written from scratch (no library use).
+    
+    * This model takes an input of observation of the opponent move, and output an estimated opponent hand. (For more information, please navigate to the documentation I have written in the file or navigate to report 4).
+
+    * This file is being debugged and finished.
+
+* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HElstm.java` to see what I'm working on with hand estimation lstm model.
+
+    * This is the custom lstm model that I am about to research in.
+
+    * (For more information, please navigate to the documentation I have written in the file or navigate to report 4)
+
+-------------
+## Past Work and Code:
+
 * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
     * This player use simple probability estimation algorithm stated from `week 2 report` including opponent hand estimation by Bayes Theorem. And Flipping and Masking to map that estimation to strategy.
     
@@ -20,6 +36,29 @@
 ------------
 # Report:
 
+## Report 4, date: June 17, 2020
+### 1. Observation Representation:
+
+* TODO:
+
+    * TODO:
+    
+    * TODO:
+
+* TODO:
+
+    * TODO:
+    
+    * TODO:
+
+* TODO:
+
+    * TODO:
+    
+    * TODO:
+
+
+------------
 ## Report 3, date: June 9, 2020
 ### 1. Modeling the abstraction of the public state. State Representation.
 

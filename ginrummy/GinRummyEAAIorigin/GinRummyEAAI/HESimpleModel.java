@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class HESimpleModel {
 	
@@ -25,6 +26,14 @@ public class HESimpleModel {
 	 * @param: seed (int): Random seed for nothing =))
 	 * @param: lr (float): the learning rate!
 	 * @param: n_iter (int): number of episode to be trained.
+	 */
+	
+	/**
+	 * TODO:
+	 * 		1. Add bias variables for every weights.
+	 * 		2. Working on back-propagation method:
+	 * 			- Solve the dE/dW in the first layer where having to differentiate sigmoid function.
+	 * 		3. Test thoroughly.
 	 */
 	
 	// Input value for curent state. Probability matrix of 52
@@ -101,7 +110,7 @@ public class HESimpleModel {
 		this.Y = Y;
 		assert X.length == Y.length : "The number of training items from input and output must match!";
 		this.weights1 = new float[X[0].length][64];
-		this.weights2 = new float[weights1[0].length][1];
+		this.weights2 = new float[weights1[0].length][Y[0].length];
 		this.seed = seed;
 		this.lr = lr;
 		this.n_iter = n_iter;
@@ -109,8 +118,8 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a sigmoid activation function
-	 * @param x (double) param
-	 * @return (double) the result of the sigmoid function.
+	 * @param x (float) param
+	 * @return (float) the result of the sigmoid function.
 	 */
 	public static float sigmoid(float x) {
 		return (float) (1 / (1 + Math.exp(x)));
@@ -118,8 +127,8 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a sigmoid activation function
-	 * @param x (double) param
-	 * @return (double) the result of the sigmoid function.
+	 * @param x (float[]) param
+	 * @return (float[]) the result of the sigmoid function.
 	 */
 	public static float[] sigmoid(float[] x) {
 		float[] y = new float[x.length];
@@ -127,6 +136,36 @@ public class HESimpleModel {
 			y[i] = sigmoid(x[i]);
 		}
 		return y;
+	}
+	
+	/**
+	 * Perform a softmax activation function
+	 * @param x (float) param
+	 * @return (float) the result of the sigmoid function.
+	 */
+	public static float[] softmax(float[] x) {
+		float[] e_x = new float[x.length];
+		
+		float max_x = Float.MIN_VALUE;
+		for (float f : x) {
+			if (f > max_x) {
+				max_x = f;
+			}
+		}
+		
+		float sum_x = 0;
+		
+		for (int i = 0; i < e_x.length; i++) {
+			e_x[i] = (float) Math.exp(x[i] - max_x);
+			sum_x += e_x[i];
+		}
+		
+		// Normalize
+		for (int i = 0; i < e_x.length; i++) {
+			e_x[i] /= sum_x;
+		}
+		
+		return e_x;
 	}
 	
 	/**
@@ -181,14 +220,14 @@ public class HESimpleModel {
 	 * @param weights. 
 	 * @return
 	 */
-	public static float[] compute_value(float[] inputs, float[][] weights) {
+	public static float[] compute_value(float[] inputs, float[][] weights, Function<float[], float[]> activator) {
 		assert inputs.length == weights.length : "input length does not match weight feature length!";
 		float[][] reshape_input = {inputs};
 		float[][] y = dot(reshape_input, weights);
 		
-		assert y.length == 1 : "It must be the vector!";
+		assert y.length == 1 : "It must be a vector!";
 		// Reshape
-		return sigmoid(y[0]);
+		return activator.apply(y[0]);
 	}
 	
 	/**
@@ -221,28 +260,61 @@ public class HESimpleModel {
 	}
 	
 	/**
-	 * Perform custom back propagation.
+	 * Perform custom back propagation and update weights.
+	 * @param output
+	 * @param label
 	 */
-	public void back_propagation() {
-	
+	public void back_propagation(float[] output, float[] label) {
+//		float loss = categorical_crossentropy(output, label);
 		
+		assert output.length == label.length : "";
+		assert output.length == this.weights2.length : "";
+		
+		float[][] dW2 = new float[this.weights2.length][this.weights2[0].length];
+		
+		for(int feature = 0; feature < output.length; feature++) {
+			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+				dW2[feature][neuron] = this.lr * (output[feature] - label[feature]) * this.weights2[feature][neuron];
+				this.weights2[feature][neuron] += dW2[feature][neuron];
+			}
+		}
+		
+		assert this.weights2.length == this.weights1[0].length : "";
+		
+		// BUG: Currently computing dE/dW by differentiating softmax, need to differentiate sigmoid.
+		for(int feature = 0; feature < this.weights2.length; feature++) {
+			for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
+				this.weights1[feature][neuron] += this.lr * (output[feature] - label[feature]) * this.weights1[feature][neuron];
+			}
+		}		
 	}
 	
 	/**
 	 * Perform one epoch over all input rows, feed-forward, loss, and back-propagation.
 	 */
 	public void evaluate_step() {
-		for (float[] inputLayer : this.X) {
+		
+		assert this.X.length == this.Y.length : "The length of input batches and label batches does not match!";
+		
+		for (int i = 0; i < X.length; i++) {
 			
-			float[] layer1 = compute_value(inputLayer, this.weights1);
-			this.output = compute_value(layer1, this.weights2);
+			float[] inputLayer = this.X[i];
+			float[] label = this.Y[i];
 			
+			// Layer 1
+			float[] layer1 = compute_value(inputLayer, this.weights1, HESimpleModel::sigmoid);
 			
+			// Layer 2 - Output
+			float[] output = compute_value(layer1, this.weights2, HESimpleModel::softmax);
+			
+			back_propagation(output, label);
 		}
 	}
 	
 	public void train () {
-		
+		for (int _ = 0; _ < this.n_iter; _++) {
+			this.evaluate_step();
+		}
 	}
 	
 	/**
@@ -265,26 +337,53 @@ public class HESimpleModel {
 	
 	// Debugging method
 	@SuppressWarnings("unused")
-	private static void printMatrix(float[][] mat) {
-		System.out.print("[ ");
+	private static void print_mat2D(float[][] mat) {
+		System.out.print("[");
 		for (int i = 0; i < mat.length; i++) {
+			System.out.print("[ ");
 			for (int j = 0; j < mat[i].length; j++) {
 				System.out.print(mat[i][j] + " ");
 			}
-			if (i == mat[0].length - 1) {
-				System.out.print("]\n");
+			if (i == mat.length - 1) {
+				System.out.print("]");
 			} else {
-				System.out.println();
+				System.out.print("],\n");
 			}
 		}
+		System.out.print("]\n");
+	}
+	
+	private static void print_mat1D (float[] mat) {
+		System.out.print("[");
+		for (int i = 0; i < mat.length; i++) {
+			System.out.print(mat[i] + " ");
+		}
+		System.out.print("]\n");
 	}
 	
 //	 Test
 	public static void main(String[] args) {
 		// Test Matrix multiplication
-		float[][] x1 = {{2, 3, 1}, {3, 6, 0}};
-		float[][] x2 = {{2}, {3}, {0}};
-		printMatrix(dot(x1, x2));
+//		float[][] x1 = {{2, 3, 1}, {3, 6, 0}};
+//		float[][] x2 = {{2}, {3}, {0}};
+//		printMatrix(dot(x1, x2));
+		
+		float[][] X = {{-2, -1, 0, 0, 1},
+							{-2, 0, 1, 1, 0},
+							{-2, 1, 0, 1, 0},
+							{0, -2, -1, 0, 1}};
+		
+		float[][] Y = {{0, 0, 0, 1, 1},
+						{0, 1, 1, 1, 1},
+						{0, 1, 1, 1, 1},
+						{0, 0, 0, 1, 1}};
+		
+		HESimpleModel model = new HESimpleModel();
+		model.__init__(X, Y, 10, 1e-5f, 1);
+//		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, HESimpleModel::sigmoid));
+		model.weights1[1][2] = 12.3f;
+		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, HESimpleModel::sigmoid));
+//		System.out.println(model.weights1[0].length);
 	}
 
 }

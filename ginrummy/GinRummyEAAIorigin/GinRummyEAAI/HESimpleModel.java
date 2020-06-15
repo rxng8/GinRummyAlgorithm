@@ -20,7 +20,7 @@ public class HESimpleModel {
 	 * 		state -1: The opponent does not care about the card.
 	 * 		state 0: This is the unrelated card.
 	 * 		state 1: The opponent does care and pick up the card.
-	 * @param: X (float[][]): Shape (none, 52). With 52 cards represented by state.
+	 * @param: Y (float[][]): Shape (none, 52). With 52 cards represented by state.
 	 * 		state 0: The opponent does not have this card in hand.
 	 * 		state 1: The opponent does have this card in hand.
 	 * @param: seed (int): Random seed for nothing =))
@@ -33,12 +33,21 @@ public class HESimpleModel {
 	 * 		1. Add bias variables for every weights.
 	 * 		2. Working on back-propagation method:
 	 * 			- Solve the dE/dW in the first layer where having to differentiate sigmoid function.
-	 * 		3. Test thoroughly.
+	 * 			- Fix bug or re-implement the whole function.
+	 * 			- Methodize derivative function for better readable code.
+	 * 				- Sigmoid_derivative
+	 * 				- Softmax derivative
+	 * 				- Categorical cross entropy derivative.
+	 * 				- Linear Regression Sum derivative.
+	 * 		3. Write Predicting method
+	 * 		4. Test thoroughly
 	 */
 	
-	// Input value for curent state. Probability matrix of 52
-	// input.shape[0]: number of training data.
-	// input.shape[1]: Number of features in one training data.
+	/**
+	 * Input value for curent state. Probability matrix of 52
+	 * input.shape[0]: number of training data.
+	 * input.shape[1]: Number of features in one training data.
+	 */
 	public float[][] X;
 	
 	/**
@@ -46,33 +55,56 @@ public class HESimpleModel {
 	 */
 	public float[][] Y;
 	
-	// Randome seed
+	/**
+	 * Random seed
+	 */
 	public int seed;
 	
-	// Learning rate
+	/**
+	 * Learning rate
+	 */
 	public float lr;
 	
-	// Number of training iterations
+	/**
+	 * Number of training iterations
+	 */
 	public float n_iter;
 	
-	// The weights of layer 1. Input: X, Output: Layer 1
-	// weights.shape[0]: number of coordinates corresponding to number of input features.
-	// weights.shape[1]: Number of weights combination.
+	/**
+	 * The weights of layer 1. Input: X, Output: Layer 1
+	 * weights.shape[0]: number of coordinates corresponding to number of input features.
+	 * weights.shape[1]: Number of weights combination.
+	 */
 	private float[][] weights1;
 	
+	/**
+	 * bias
+	 */
 	private float[] bias1;
 	
-	// The weights of layer 2. Input: layer 1, Output: Layer 2
-	// weights.shape[0]: number of coordinates corresponding to number of input features.
-	// weights.shape[1]: Number of weights combination.
+	/**
+	 * The weights of layer 2. Input: layer 1, Output: Layer 2
+	 * weights.shape[0]: number of coordinates corresponding to number of input features.
+	 * weights.shape[1]: Number of weights combination.
+	 */
 	private float[][] weights2;
 	
+	/**
+	 * bias2
+	 */
 	private float[] bias2;
 	
 	/**
 	 * The computed, evaluated, or predicted value from weights.
 	 */
 	private float[] output;
+	
+	
+	//Debugging params
+	/**
+	 * Verbose
+	 */
+	private boolean VERBOSE = true;
 	
 	/**
 	 * Initialize the model with saved file
@@ -129,6 +161,15 @@ public class HESimpleModel {
 	 */
 	public static float sigmoid(float x) {
 		return (float) (1 / (1 + Math.exp(x)));
+	}
+	
+	/**
+	 * Perform a sigmoid derivative function
+	 * @param x (float) param
+	 * @return (float) the result of the sigmoid function.
+	 */
+	public static float sigmoid_derivative(float x) {
+		return sigmoid(x) * (1 - sigmoid(x));
 	}
 	
 	/**
@@ -226,14 +267,14 @@ public class HESimpleModel {
 	 * @param weights. 
 	 * @return
 	 */
-	public static float[] compute_value(float[] inputs, float[][] weights, float[] bias, Function<float[], float[]> activator) {
-		assert inputs.length == weights.length : "input length does not match weight feature length!";
-		float[][] reshape_input = {inputs};
+	public static float[] compute_value(float[] input, float[][] weights, float[] bias, Function<float[], float[]> activator) {
+		assert input.length == weights.length : "input length does not match weight feature length!";
+		float[][] reshape_input = {input};
 		float[][] y = dot(reshape_input, weights);
 		
 		assert y.length == 1 : "It must be a vector!";
-		// Reshape
 		
+		// Reshape
 		float[] y_shaped = y[0];
 		
 		assert y_shaped.length == bias.length : "Bias length should be the same as number of neuron in a layer!";
@@ -278,6 +319,44 @@ public class HESimpleModel {
 	 * @param output
 	 * @param label
 	 */
+//	public void back_propagation(float[] label, float[] output, float[]... layers) {
+////		float loss = categorical_crossentropy(output, label);
+//		
+//		assert output.length == label.length : "";
+//		assert output.length == this.weights2[0].length : "The length of output node in weights2 must match the number of ourput feature";
+//		
+//		float[][] dW2 = new float[this.weights2.length][this.weights2[0].length];
+//		float d_sum = 0;
+//		
+//		for(int feature = 0; feature < this.weights2.length; feature++) {
+//			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+//				d_sum += dW2[feature][neuron] = this.lr * (output[neuron] - label[neuron]) * this.weights2[feature][neuron];
+//				this.weights2[feature][neuron] += dW2[feature][neuron];
+//				this.bias2[neuron] += dW2[feature][neuron];
+//			}
+//		}
+//		
+//		assert this.weights2.length == this.weights1[0].length : "";
+//		
+////		float[] l_layer1 = layers[0].clone();
+//		
+//		float[][] dW1 = new float[this.weights1.length][this.weights1[0].length];
+//		
+//		// BUG: Currently computing dE/dW by differentiating softmax, need to differentiate sigmoid.
+//		for(int feature = 0; feature < this.weights1.length; feature++) {
+//			for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
+//				this.weights1[feature][neuron] += dW1[feature][neuron] = this.lr * d_sum * this.weights1[feature][neuron];
+//				this.bias1[neuron] += dW1[feature][neuron];
+//			}
+//		}		
+//	}
+	
+	/**
+	 * 
+	 * @param label
+	 * @param output
+	 * @param layers
+	 */
 	public void back_propagation(float[] label, float[] output, float[]... layers) {
 //		float loss = categorical_crossentropy(output, label);
 		
@@ -285,29 +364,51 @@ public class HESimpleModel {
 		assert output.length == this.weights2[0].length : "The length of output node in weights2 must match the number of ourput feature";
 		
 		float[][] dW2 = new float[this.weights2.length][this.weights2[0].length];
-		float d_sum = 0;
 		
-		for(int feature = 0; feature < this.weights2.length; feature++) {
-			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
-				d_sum += dW2[feature][neuron] = this.lr * (output[neuron] - label[neuron]) * this.weights2[feature][neuron];
-				this.weights2[feature][neuron] += dW2[feature][neuron];
-				this.bias2[neuron] += dW2[feature][neuron];
+		
+		// Compute dE/dW2 and update W2
+		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+			float dz_j = output[neuron] - label[neuron];
+			for (int feature = 0; feature < this.weights2.length; feature++) {
+				this.weights2[feature][neuron] += dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
 			}
+		}
+		
+		// Compute dE/db2 and update b2
+		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+			float dz_j = output[neuron] - label[neuron];
+			this.bias2[neuron] += this.lr * dz_j;
+		}
+		
+		// Compute dE/da^L-1_j
+		float d_sum;
+		float[] dA_L = new float[this.weights2.length];
+		for (int feature = 0; feature < this.weights2.length; feature++) {
+			d_sum = 0;
+			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+				float dz_j = output[neuron] - label[neuron];
+				d_sum += this.lr * dz_j * this.weights2[feature][neuron];
+			}
+			dA_L[feature] = d_sum;
 		}
 		
 		assert this.weights2.length == this.weights1[0].length : "";
 		
-//		float[] l_layer1 = layers[0].clone();
-		
 		float[][] dW1 = new float[this.weights1.length][this.weights1[0].length];
 		
-		// BUG: Currently computing dE/dW by differentiating softmax, need to differentiate sigmoid.
-		for(int feature = 0; feature < this.weights1.length; feature++) {
-			for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
-				this.weights1[feature][neuron] += dW1[feature][neuron] = this.lr * d_sum * this.weights1[feature][neuron];
-				this.bias1[neuron] += dW1[feature][neuron];
+		// Compute dE/dW1 and update W1
+		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
+			float d_a_j = dA_L[neuron];
+			for (int feature = 0; feature < this.weights1.length; feature++) {
+				this.weights1[feature][neuron] += dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
 			}
-		}		
+		}
+		
+		// Compute dE/db1 and update b1
+		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
+			float d_a_j = dA_L[neuron];
+			this.bias1[neuron] += this.lr * sigmoid_derivative(d_a_j) * d_a_j * 1;
+		}
 	}
 	
 	/**
@@ -328,10 +429,11 @@ public class HESimpleModel {
 			// Layer 2 - Output
 			float[] output = compute_value(layer1, this.weights2, this.bias2, HESimpleModel::softmax);
 			
-			back_propagation(label, output, layer1);
+			back_propagation(label, output, layer1, inputLayer);
 			
-			this.print_weights();
-			
+			if (this.VERBOSE) {
+				this.print_weights();
+			}
 		}
 	}
 	
@@ -339,6 +441,16 @@ public class HESimpleModel {
 		for (int _ = 0; _ < this.n_iter; _++) {
 			this.evaluate_step();
 		}
+	}
+	
+	public float[] predict (float[] input) {
+		assert input.length == X[0].length : "Wrong input size";
+		
+		float[] layer1 = compute_value(input, this.weights1, this.bias1, HESimpleModel::sigmoid);
+		
+		float[] output = compute_value(layer1, this.weights2, this.bias2, HESimpleModel::softmax);
+		
+		return output;
 	}
 	
 	/**
@@ -399,6 +511,10 @@ public class HESimpleModel {
 		System.out.println();
 	}
 	
+	public void set_verbose(boolean v) {
+		this.VERBOSE = v;
+	}
+	
 //	 Test
 	public static void main(String[] args) {
 		// Test Matrix multiplication
@@ -417,13 +533,21 @@ public class HESimpleModel {
 						{0, 0, 0, 1, 1}};
 		
 		HESimpleModel model = new HESimpleModel();
-		model.__init__(X, Y, 10, 1e-3f, 1000);
+		model.__init__(X, Y, 10, 1, 100);
 //		model.train();
 //		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, model.bias1, HESimpleModel::sigmoid));
 		model.weights1[1][2] = 12.3f;
-		model.evaluate_step();
+//		model.evaluate_step();
+		model.set_verbose(true);
+		model.train();
 //		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, model.bias1, HESimpleModel::sigmoid));
 //		System.out.println(model.weights1[0].length);
+		System.out.print("Prediction for :");
+		HESimpleModel.print_mat1D(X[0]);
+		System.out.print("\n");
+		HESimpleModel.print_mat1D(model.predict(X[0]));
+		
+		
 	}
 
 }

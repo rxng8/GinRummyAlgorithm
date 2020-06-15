@@ -145,7 +145,7 @@ public class HESimpleModel {
 		this.X = X;
 		this.Y = Y;
 		assert X.length == Y.length : "The number of training items from input and output must match!";
-		this.weights1 = new float[X[0].length][3];
+		this.weights1 = new float[X[0].length][64];
 		this.bias1 = new float[this.weights1[0].length];
 		this.weights2 = new float[weights1[0].length][Y[0].length];
 		this.bias2 = new float[this.weights2[0].length];
@@ -533,7 +533,7 @@ public class HESimpleModel {
 						{0, 0, 0, 1, 1}};
 		
 		HESimpleModel model = new HESimpleModel();
-		model.__init__(X, Y, 10, 1, 100);
+		model.__init__(X, Y, 10, 1e-2f, 3000);
 //		model.train();
 //		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, model.bias1, HESimpleModel::sigmoid));
 		model.weights1[1][2] = 12.3f;
@@ -543,9 +543,9 @@ public class HESimpleModel {
 //		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, model.bias1, HESimpleModel::sigmoid));
 //		System.out.println(model.weights1[0].length);
 		System.out.print("Prediction for :");
-		HESimpleModel.print_mat1D(X[0]);
+		HESimpleModel.print_mat1D(X[1]);
 		System.out.print("\n");
-		HESimpleModel.print_mat1D(model.predict(X[0]));
+		HESimpleModel.print_mat1D(model.predict(X[1]));
 		
 		
 	}

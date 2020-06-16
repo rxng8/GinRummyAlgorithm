@@ -16,6 +16,7 @@
     * (For more information, please navigate to the documentation I have written in the file or navigate to report 4)
 s
 -------------
+<!-- 
 ## Past Work and Code:
 
 * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
@@ -33,41 +34,91 @@ s
 
     * Read more about this on `Report 3, part 4.`
 
-------------
+--------------- -->
+
 # Report:
 
 ## Report 4, date: June 17, 2020
-### 1. Observation Representation:
+### 1. Observation Representation (Also available in the file `HESimpleModel` documentation):
 
-* TODO:
+* state -3: known card that is not in opponent hand. (Eg. cards on current player hand, card in the discard pile)
+        
+* state -2: The opponent does discard the card.
 
-    * TODO:
-    
-    * TODO:
+* state -1: The opponent does not care about the card.
+
+* state 0: This is the unrelated card.
+
+* state 1: The opponent does care and pick up the card.
 
 ### 2. Hand Estimation using fully connected deep neural network.
 
-* TODO:
+* This is a hand crafted simple fully connected neural network
+	with fixed 2 layer. The first layer has input is the input and
+	output 64 neurons. The second layer has input which is output of
+	the first layer, and spit out a single value!
 
-    * TODO:
+    * @param: X (float[][]): Shape (none, 52). With 52 cards represented by state:
+        * state -3: known card that is not in opponent hand. (Eg. cards on current player hand, card in the discard pile)
+        * state -2: The opponent does discard the card.
+        * state -1: The opponent does not care about the card.
+        * state 0: This is the unrelated card.
+        * state 1: The opponent does care and pick up the card.
+	* @param: Y (float[][]): Shape (none, 52). With 52 cards represented by state:
+		* state 0: The opponent does not have this card in hand.
+		* state 1: The opponent does have this card in hand.
+	* @param: seed (int): Random seed for nothing
+	* @param: lr (float): the learning rate!
+	* @param: n_iter (int): number of episode to be trained.
+
+* Current TODO list:
+
+	1. Add bias variables for every weights.
+
+	2. Working on back-propagation method:
+		- Solve the dE/dW in the first layer where having to differentiate sigmoid function.
+		- Fix bug or re-implement the whole function.
+		- Methodize derivative function for better readable code.
+			- Sigmoid_derivative
+			- Softmax derivative
+	    	- Categorical cross entropy derivative.
+			- Linear Regression Sum derivative.
+    	- On back-propagating, research more on gradient descend and ascend, -= or +=.
+		- Currently hard coding the number of layers. Need to write method that dynamically compute tye number of layers.
+
+	3. Write Predicting method
+
+	4. Test thoroughly
+
+
+
+### 3. Hand Estimation using Sequential Neural Network Model:
+
+* Proving that Hand Estimation process is a sequence of data:
+
+    * Since each we collect data each turn, and we are not only depending on the data at that turn to predict opponent hand, but we are also using the data, prediction from the previous turns in the game.
+
+    * Therefore, the process of estimating opponent hand is sequential. So we should use some kind of neural network that understand the context formed by a sequence of data.
+
+* Approach for further research is:
+    * Recurrent neural network.
+    * Long short-term memory.
+    * GRU neural network.
+
+### 4. Understanding a hand features/ traits with generative model.
+
+* Proving that understanding a hand value is the problem of generative model:
+
+    * Considering a hand with meld 7H, 8H, 9H, 8C, 8D, these two melds form a "plus" sign on the card table. Now consider another hand with 7H, 8H, 9H, 8C, 8S (not 8D), these also form a plus sign on the card table and have pretty good the same trait with the previous hand.
+
+    * What I mean here is the to understand how valuable one hand is, one must not consider each card as it is in a particular meld or shape because the shape can be varied by the combination of how we arrange the card rows.
     
-    * TODO:
+    * Therefore, to understand the actual value of a hand, we need to deeply generalize a hand feature, not just looking into its combination with other particular cards.
 
-### 3. Hand Estimation using LSTM:
+*  Approach for further research:
 
-* TODO:
-
-    * TODO:
-    
-    * TODO:
-
-### 4. Generalize a hand features/ traits using Auto Encoder
-
-* TODO:
-
-    * TODO:
-    
-    * TODO:
+    * Variational auto-encoder.
+    * Generative adversarial network.
 
 ------------
 ## Report 3, date: June 9, 2020
@@ -169,7 +220,7 @@ So far I have written a light version of the new bot, the current base of the bo
 7. WAVEFORM CLUSTERING AS AN EXTENSIVE FORM ABSTRACTION
 TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/theses/kevin-kauth-digipen-master-of-science-in-computer-science-thesis-waveform-clustering-as-an-extensive-form-abstraction-technique-for-poker.pdf
 
------------------
+<!-- -----------------
 
 ### Future Work:
 1. [Deep Q-Learning](https://arxiv.org/abs/1312.5602)
@@ -194,7 +245,7 @@ TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/the
 
 * collect a lot of playing data, learn from that, like supervised learning.
 
-* Number of seed ? and dive deep down into the things.
+* Number of seed ? and dive deep down into the things. -->
 
 -----------
 ## Author: Alex Nguyen

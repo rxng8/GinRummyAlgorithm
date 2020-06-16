@@ -14,7 +14,7 @@
     * This is the custom lstm model that I am about to research in.
 
     * (For more information, please navigate to the documentation I have written in the file or navigate to report 4)
-
+s
 -------------
 ## Past Work and Code:
 
@@ -45,11 +45,7 @@
     
     * TODO:
 
-* TODO:
-
-    * TODO:
-    
-    * TODO:
+### 2. Hand Estimation using fully connected deep neural network.
 
 * TODO:
 
@@ -57,6 +53,21 @@
     
     * TODO:
 
+### 3. Hand Estimation using LSTM:
+
+* TODO:
+
+    * TODO:
+    
+    * TODO:
+
+### 4. Generalize a hand features/ traits using Auto Encoder
+
+* TODO:
+
+    * TODO:
+    
+    * TODO:
 
 ------------
 ## Report 3, date: June 9, 2020
@@ -104,7 +115,6 @@ sets or deadwood. \(TD-Rummy paper\).
     * NOTE: Proving that using an ANN is possible to estimate the value of hand: (Unproved.)
 
 ----------
-
 ## Report 2, date: June 2, 2020
 So far I have written a light version of the new bot, the current base of the bot depends on computing probability of strategy and the probability of which card is in the opponent's hand.
 

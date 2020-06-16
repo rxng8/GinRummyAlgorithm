@@ -134,7 +134,7 @@ public class TurnStatesDataCollector {
 					
 					//record a turn's data 
 					knownCards[currentPlayer][faceUpCard.getId()] = true;
-					roundData.get(currentPlayer).add(turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands.get(currentPlayer), knownCards));
+					roundData.get(currentPlayer).add(turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards));
 					
 					
 					if (playVerbose) {
@@ -305,20 +305,20 @@ public class TurnStatesDataCollector {
 	 * @param Card objects representing faceUp card, drawCard, discarded card, and the player's hand
 	 * @return the corresponding short[2][52] array
 	 */	
-	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> cards, boolean[][] knownCards) {
+	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
 		int opponent = (currentPlayer == 0) ? 1 : 0;
 		
 		short[][] state = new short[2][52];
 		state[0][faceUpCard.getId()] = (short) ((faceUpCard == drawCard) ? 1 : -1);
 		state[0][discardCard.getId()] = -2;
 		
-		for(Card card : cards) 
+		for(Card card : hands.get(currentPlayer)) 
 			state[1][card.getId()] = 1;
 		
-		for(int id = 0; id < 52; id++) {
-			if(knownCards[opponent][id] && !knownCards[currentPlayer][id])
+		for(int id = 0; id < 52; id++) 
+			if(knownCards[opponent][id] && !hands.get(currentPlayer).contains(Card.getCard(id)))
 				state[1][id] = -3;
-		}
+			
 		return state;
 	}
 	

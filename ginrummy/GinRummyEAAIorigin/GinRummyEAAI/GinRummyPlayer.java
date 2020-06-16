@@ -1,3 +1,5 @@
+package ginrummy.GinRummyEAAIorigin.GinRummyEAAI;
+
 import java.util.ArrayList;
 /*
  * GinRummyPlayer - interface for Gin Rummy player

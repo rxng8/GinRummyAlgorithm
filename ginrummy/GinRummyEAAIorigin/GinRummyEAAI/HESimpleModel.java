@@ -39,6 +39,8 @@ public class HESimpleModel {
 	 * 				- Softmax derivative
 	 * 				- Categorical cross entropy derivative.
 	 * 				- Linear Regression Sum derivative.
+	 * 			- On back-propagating, research more on gradient descend and ascend, -= or +=.
+	 * 			- Currently hard coding the number of layers. Need to write method that dynamically compute tye number of layers.
 	 * 		3. Write Predicting method
 	 * 		4. Test thoroughly
 	 */
@@ -97,7 +99,7 @@ public class HESimpleModel {
 	/**
 	 * The computed, evaluated, or predicted value from weights.
 	 */
-	private float[] output;
+	private float[][] output;
 	
 	
 	//Debugging params
@@ -117,6 +119,11 @@ public class HESimpleModel {
 			this.weights1 = (float[][]) in.readObject();
 			this.weights2 = (float[][]) in.readObject();
 			in.close();
+			
+			if (this.VERBOSE) {
+				System.out.println("Saved to file " + filename);
+			}
+			
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + filename);
 			e.printStackTrace();
@@ -132,32 +139,41 @@ public class HESimpleModel {
 	 */
 	public HESimpleModel () {
 		// Have to call __init__ if model is new.
+		if (this.VERBOSE) {
+			System.out.println("Creating New Model...");
+		}
 	}
 	
 	/**
 	 * Initialize data for a new model
-	 * @param weights (ArrayList<Double>): Probability vector of length 52.
-	 * @param seed (int): Random seed.
-	 * @param lr (double): Leanring rate.
-	 * @param n_iter (int): Number of iterations.
+	 * @param X (float[][]): One batch of input data. A batch of data with size X.length, and data length X[0].length
+	 * @param Y (float[][]): One batch of output data. A batch of data with size Y.length, and data length Y[0].length
+	 * @param seed (int): random seed for processing randomization.
+	 * @param lr (float): learning rate.
+	 * @param n_iter (int): Number of epochs.
 	 */
 	public void __init__(float[][] X, float[][] Y, int seed, float lr, int n_iter) {
 		this.X = X;
 		this.Y = Y;
 		assert X.length == Y.length : "The number of training items from input and output must match!";
-		this.weights1 = new float[X[0].length][64];
+		this.weights1 = new float[X[0].length][8];
 		this.bias1 = new float[this.weights1[0].length];
 		this.weights2 = new float[weights1[0].length][Y[0].length];
 		this.bias2 = new float[this.weights2[0].length];
 		this.seed = seed;
 		this.lr = lr;
 		this.n_iter = n_iter;
+		
+		if (this.VERBOSE) {
+			System.out.println("Initialize Model...");
+		}
+		
 	}
 	
 	/**
 	 * Perform a sigmoid activation function
-	 * @param x (float) param
-	 * @return (float) the result of the sigmoid function.
+	 * @param x (float): param
+	 * @return (float): the result of the sigmoid function.
 	 */
 	public static float sigmoid(float x) {
 		return (float) (1 / (1 + Math.exp(x)));
@@ -165,8 +181,8 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a sigmoid derivative function
-	 * @param x (float) param
-	 * @return (float) the result of the sigmoid function.
+	 * @param x (float): param
+	 * @return (float): the result of the sigmoid derivative function.
 	 */
 	public static float sigmoid_derivative(float x) {
 		return sigmoid(x) * (1 - sigmoid(x));
@@ -174,8 +190,8 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a sigmoid activation function
-	 * @param x (float[]) param
-	 * @return (float[]) the result of the sigmoid function.
+	 * @param x (float[]): param vector
+	 * @return (float[]): the result of the sigmoid function over a vector (element wise).
 	 */
 	public static float[] sigmoid(float[] x) {
 		float[] y = new float[x.length];
@@ -187,8 +203,8 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a softmax activation function
-	 * @param x (float) param
-	 * @return (float) the result of the sigmoid function.
+	 * @param x (float): param
+	 * @return (float): the result of the softmax function.
 	 */
 	public static float[] softmax(float[] x) {
 		float[] e_x = new float[x.length];
@@ -217,9 +233,9 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a scalar multiplication
-	 * @param X (ArrayList<Double>): Param
-	 * @param weights (ArrayList<Double>): Param
-	 * @return (double) The dot product of the two vectors.
+	 * @param x1 (float): scalar.
+	 * @param x2 (float[]): vector.
+	 * @return (float[]): The scaled vector.
 	 */
 	public static float[] dot(float x1, float[] x2) {
 		float[] y = new float[x2.length];
@@ -229,21 +245,21 @@ public class HESimpleModel {
 	
 	/**
 	 * Perform a dot product of 2 vectors with the same dimension.
-	 * @param X (ArrayList<Double>): Param
-	 * @param weights (ArrayList<Double>): Param
-	 * @return (double) The dot product of the two vectors.
+	 * @param x1 (float): param
+	 * @param x2 (float): param
+	 * @return (float): The dot product of the two vectors.
 	 */
 	public static double dot(float[] x1, float[] x2) {
 		float sum = 0;
 		for (int i = 0; i < x2.length; i++) sum += x1[i] * x2[i];
 		return sum;
 	}
-	
+
 	/**
 	 * Perform a 2D matrix multiplication.
-	 * @param X (ArrayList<Double>): Param
-	 * @param weights (ArrayList<Double>): Param
-	 * @return (double) The dot product of the two vectors.
+	 * @param x1 (float[][]): param
+	 * @param x2 (float[][]): param
+	 * @return (float[][]): The product of the two matrices.
 	 */
 	public static float[][] dot(float[][] x1, float[][] x2) {
 		assert x1[0].length == x2.length : "The columns of previous matrix should match the rows of the next matrix";
@@ -262,10 +278,12 @@ public class HESimpleModel {
 	}
 	
 	/**
-	 * Normal feed-forward ANN computation for one layer.
-	 * @param inputs.
-	 * @param weights. 
-	 * @return
+	 * Normal feed-forward single-layer computation.
+	 * @param input (float[]): input vector containing feature.
+	 * @param weights (float[][]): the 2D weight matrix that map the input to an output vector of classes/nodes/neurons.
+	 * @param bias (float[]): the bias that goes with the weight.
+	 * @param activator (Function<float[], float[]>): The activation function to perform on the output element-wisely.
+	 * @return (float[]): The output vector of classes/nodes/neurons.
 	 */
 	public static float[] compute_value(float[] input, float[][] weights, float[] bias, Function<float[], float[]> activator) {
 		assert input.length == weights.length : "input length does not match weight feature length!";
@@ -286,10 +304,10 @@ public class HESimpleModel {
 	}
 	
 	/**
-	 * Custom categorical cross entropy loss
-	 * @param 
-	 * @param 
-	 * @return
+	 * Categorical cross entropy loss
+	 * @param output (float[]): The predicted vector by the neural network.
+	 * @param label (float[]): The actual label in the training set.
+	 * @return (float): the amount of loss.
 	 */
 	public static float categorical_crossentropy(float[] output, float[] label) {
 		assert output.length == label.length : "output length and label length cannot be different!";
@@ -352,10 +370,13 @@ public class HESimpleModel {
 //	}
 	
 	/**
-	 * 
-	 * @param label
-	 * @param output
-	 * @param layers
+	 * Perform back-propagation and update weights and bias.
+	 * @param label (float[]): The actual label in the training set.
+	 * @param output (float[]): The predicted vector by the neural network.
+	 * @param layers (float[]...): The computed hidden layers in the middle of the neural network in descending order.
+	 * 		Eg: - Output layer L: output,
+	 * 			- Hidden layer L-1: layers[0],
+	 * 			- Hidden layer L-2: layers[1], etc.
 	 */
 	public void back_propagation(float[] label, float[] output, float[]... layers) {
 //		float loss = categorical_crossentropy(output, label);
@@ -370,14 +391,14 @@ public class HESimpleModel {
 		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 			float dz_j = output[neuron] - label[neuron];
 			for (int feature = 0; feature < this.weights2.length; feature++) {
-				this.weights2[feature][neuron] += dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
+				this.weights2[feature][neuron] -= dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
 			}
 		}
 		
 		// Compute dE/db2 and update b2
 		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 			float dz_j = output[neuron] - label[neuron];
-			this.bias2[neuron] += this.lr * dz_j;
+			this.bias2[neuron] -= this.lr * dz_j;
 		}
 		
 		// Compute dE/da^L-1_j
@@ -387,7 +408,7 @@ public class HESimpleModel {
 			d_sum = 0;
 			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 				float dz_j = output[neuron] - label[neuron];
-				d_sum += this.lr * dz_j * this.weights2[feature][neuron];
+				d_sum -= this.lr * dz_j * this.weights2[feature][neuron];
 			}
 			dA_L[feature] = d_sum;
 		}
@@ -400,14 +421,14 @@ public class HESimpleModel {
 		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
 			float d_a_j = dA_L[neuron];
 			for (int feature = 0; feature < this.weights1.length; feature++) {
-				this.weights1[feature][neuron] += dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
+				this.weights1[feature][neuron] -= dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
 			}
 		}
 		
 		// Compute dE/db1 and update b1
 		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
 			float d_a_j = dA_L[neuron];
-			this.bias1[neuron] += this.lr * sigmoid_derivative(d_a_j) * d_a_j * 1;
+			this.bias1[neuron] -= this.lr * sigmoid_derivative(d_a_j) * d_a_j * 1;
 		}
 	}
 	
@@ -431,18 +452,44 @@ public class HESimpleModel {
 			
 			back_propagation(label, output, layer1, inputLayer);
 			
+//			if (this.VERBOSE) {
+//				this.print_weights();
+//			}
+			
 			if (this.VERBOSE) {
-				this.print_weights();
+				System.out.println("Model Architecture: ");
+				System.out.print("Input: ");
+				print_mat1D(inputLayer);
+				System.out.print("Hidden Layer 1: ");
+				print_mat1D(layer1);
+				System.out.print("Output: ");
+				print_mat1D(output);
+				System.out.print("Label: ");
+				print_mat1D(label);
+				System.out.print("Loss: ");
+				System.out.println(categorical_crossentropy(output, label) + "\n");	
 			}
 		}
 	}
 	
+	/**
+	 * Train through all epochs according to n_iter specified in the __init__() method
+	 */
 	public void train () {
 		for (int _ = 0; _ < this.n_iter; _++) {
-			this.evaluate_step();
+			this.evaluate_step();	
+		}
+		if (this.VERBOSE) {
+			System.out.println("Weights: ");
+			print_weights();
 		}
 	}
 	
+	/**
+	 * Predict an input by using its current weights and bias matrix.
+	 * @param input (float[]): input.
+	 * @return (float[]): output.
+	 */
 	public float[] predict (float[] input) {
 		assert input.length == X[0].length : "Wrong input size";
 		
@@ -472,6 +519,11 @@ public class HESimpleModel {
 	}
 	
 	// Debugging method
+	
+	/**
+	 * 
+	 * @param mat
+	 */
 	@SuppressWarnings("unused")
 	private static void print_mat2D(float[][] mat) {
 		System.out.print("[");
@@ -489,6 +541,10 @@ public class HESimpleModel {
 		System.out.print("]\n");
 	}
 	
+	/**
+	 * 
+	 * @param mat
+	 */
 	@SuppressWarnings("unused")
 	private static void print_mat1D (float[] mat) {
 		System.out.print("[");
@@ -498,6 +554,9 @@ public class HESimpleModel {
 		System.out.print("]\n");
 	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unused")
 	private void print_weights () {
 		System.out.print("Weights 1: \n");
@@ -511,11 +570,18 @@ public class HESimpleModel {
 		System.out.println();
 	}
 	
+	/**
+	 * 
+	 * @param v
+	 */
 	public void set_verbose(boolean v) {
 		this.VERBOSE = v;
 	}
 	
-//	 Test
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		// Test Matrix multiplication
 //		float[][] x1 = {{2, 3, 1}, {3, 6, 0}};
@@ -533,7 +599,7 @@ public class HESimpleModel {
 						{0, 0, 0, 1, 1}};
 		
 		HESimpleModel model = new HESimpleModel();
-		model.__init__(X, Y, 10, 1e-2f, 3000);
+		model.__init__(X, Y, 10, 1e-2f, 300);
 //		model.train();
 //		print_mat1D(HESimpleModel.compute_value(X[0], model.weights1, model.bias1, HESimpleModel::sigmoid));
 		model.weights1[1][2] = 12.3f;
@@ -549,5 +615,4 @@ public class HESimpleModel {
 		
 		
 	}
-
 }

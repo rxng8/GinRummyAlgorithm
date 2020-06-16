@@ -707,7 +707,7 @@ public class HESimpleModel {
 		System.out.println();
 	}
 	
-	public static void print_mat1D_card(float[] mat, String name) {
+	private static void print_mat1D_card(float[] mat, String name) {
 		System.out.println();
 		System.out.println(name + ": ");
 		int a = 0;

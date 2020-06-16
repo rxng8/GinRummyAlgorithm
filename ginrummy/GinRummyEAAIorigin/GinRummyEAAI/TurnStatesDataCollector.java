@@ -1,4 +1,4 @@
-package ginrummy.GinRummyEAAIorigin.GinRummyEAAI;
+
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -331,7 +331,7 @@ public class TurnStatesDataCollector {
 	public static void main(String[] args) {
 		
 		TurnStatesDataCollector collector = new TurnStatesDataCollector();
-		int numGameBig = 100000;
+		int numGameBig = 25000;
 		for(int i = 0; i < numGameBig; i++) 
 			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
 		

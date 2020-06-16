@@ -1,4 +1,3 @@
-package ginrummy.GinRummyEAAIorigin.GinRummyEAAI;
 
 import java.util.ArrayList;
 

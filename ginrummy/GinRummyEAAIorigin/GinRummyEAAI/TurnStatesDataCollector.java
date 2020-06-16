@@ -1,35 +1,20 @@
 
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
 
-
 /**
- * A class for modeling a game of Gin Rummy
- * 
- * @author Todd W. Neller
- * @version 1.0
-
-Copyright (C) 2020 Todd Neller
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-Information about the GNU General Public License is available online at:
-  http://www.gnu.org/licenses/
-To receive a copy of the GNU General Public License, write to the Free
-Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.
-
+ * a data generator meant for Alex's experiments
+ * @author Tom Doan
+ * Gettysburg College. Advisor: Todd W. Neller
+ * @version 1.2.1
  */
-public class GinRummyGame {
+public class TurnStatesDataCollector {
 	
 	/**
 	 * Random number generator
@@ -44,43 +29,44 @@ public class GinRummyGame {
 	/**
 	 * Whether or not to print information during game play
 	 */
-	public static boolean playVerbose = false;
+	private static boolean playVerbose = false;
 	
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private GinRummyPlayer[] players;
+	private GinRummyPlayer[] players = new GinRummyPlayer[2];
 	
 	/**
-	 * Set whether or not there is to be printed output during gameplay.
-	 * @param playVerbose whether or not there is to be printed output during gameplay
+	 * The multi-dimentional array to store the game data in arrays of short[][], where
+	 * playData[0] is the model's input
+	 * playData[1] is the model's expected result
 	 */
-	public static void setPlayVerbose(boolean playVerbose) {
-		GinRummyGame.playVerbose = playVerbose;
-	}
+	private static ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> playData = new ArrayList<>();
+	
 	
 	/**
-	 * Create a GinRummyGame with two given players
-	 * @param player0 Player 0
-	 * @param player1 Player 1
-	 */
-	public GinRummyGame(GinRummyPlayer player0, GinRummyPlayer player1) {
-		players = new GinRummyPlayer[] {player0, player1};
-	}
-
-	/**
-	 * Play a game of Gin Rummy and return the winning player number 0 or 1.
+	 * Play a game of Gin Rummy and return the winning player number 0 or 1. Add a new TurnState in line 132
 	 * @return the winning player number 0 or 1
 	 */
-	@SuppressWarnings("unchecked")
-	public int play() {
+	public int play(int startingPlayer, GinRummyPlayer player0, GinRummyPlayer player1) {
+		players = new GinRummyPlayer[] {player0, player1};
 		int[] scores = new int[2];
-		ArrayList<ArrayList<Card>> hands = new ArrayList<ArrayList<Card>>();
+		ArrayList<ArrayList<Card>> hands = new ArrayList<>();
 		hands.add(new ArrayList<Card>());
 		hands.add(new ArrayList<Card>());
-		int startingPlayer = RANDOM.nextInt(2);
+//		int startingPlayer = RANDOM.nextInt(2);
 		
+		//game states with 2 vectors of turnStates to store one's own actions and hands		
+		ArrayList<ArrayList<ArrayList<short[][]>>> gameData = new ArrayList<>();
+
 		while (scores[0] < GinRummyUtil.GOAL_SCORE && scores[1] < GinRummyUtil.GOAL_SCORE) { // while game not over
+			
+			//create a variable to store turns' states			
+			ArrayList<ArrayList<short[][]>> roundData = new ArrayList<>();
+			roundData.add(new ArrayList<short[][]>());
+			roundData.add(new ArrayList<short[][]>());
+			
+			
 			int currentPlayer = startingPlayer;
 			int opponent = (currentPlayer == 0) ? 1 : 0;
 			
@@ -107,10 +93,6 @@ public class GinRummyGame {
 			int turnsTaken = 0;
 			ArrayList<ArrayList<Card>> knockMelds = null;
 			while (deck.size() > 2) { // while the deck has more than two cards remaining, play round
-				
-				
-				
-				
 				// DRAW
 				boolean drawFaceUp = false;
 				Card faceUpCard = discards.peek();
@@ -141,6 +123,11 @@ public class GinRummyGame {
 					if (playVerbose)
 						System.out.printf("Player %d discards %s.\n", currentPlayer, discardCard);
 					discards.push(discardCard);
+					
+					//record a turn's data					
+					roundData.get(currentPlayer).add(turnStateToShortArray(faceUpCard, drawCard, discardCard, hands.get(currentPlayer)));
+					
+					
 					if (playVerbose) {
 						ArrayList<Card> unmeldedCards = (ArrayList<Card>) hands.get(currentPlayer).clone();
 						ArrayList<ArrayList<ArrayList<Card>>> bestMelds = GinRummyUtil.cardsToBestMeldSets(unmeldedCards);
@@ -165,12 +152,6 @@ public class GinRummyGame {
 				turnsTaken++;
 				currentPlayer = (currentPlayer == 0) ? 1 : 0;
 				opponent = (currentPlayer == 0) ? 1 : 0;
-				
-				
-				
-				
-				
-				
 			}
 			
 			if (knockMelds != null) { // round didn't end due to non-knocking and 2 cards remaining in draw pile
@@ -296,60 +277,66 @@ public class GinRummyGame {
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
 			
-			break;
-			
+			//record game data
+			gameData.add(roundData);
 		}
 		if (playVerbose)
 			System.out.printf("Player %s wins.\n", scores[0] > scores[1] ? 0 : 1);
+		
+		//record "big" game data
+		playData.add(gameData);
+		
+		
 		return scores[0] >= GinRummyUtil.GOAL_SCORE ? 0 : 1;
 	}
 	
 	
 	/**
-	 * Test and demonstrate the use of the GinRummyGame class.
-	 * @param args (unused)
-	 */
-	public static void main(String[] args) {
-		// Single verbose demonstration game
-		setPlayVerbose(true);
-		new GinRummyGame(new CFRPlayer(), new SimpleGinRummyPlayer()).play();
+	 * Given faceUp card, drawCard, and discarded card, return the corresponding short array
+	 * @param Card objects representing faceUp card, drawCard, discarded card, and the player's hand
+	 * @return the corresponding short[2][52] array
+	 */	
+	public short[][] turnStateToShortArray(Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> cards) {
+		short[][] state = new short[2][52];
+		state[0][faceUpCard.getId()] = (short) ((faceUpCard == drawCard) ? 1 : -1);
+		state[0][discardCard.getId()] = -2;
 		
-		// Multiple non-verbose games 
-//		setPlayVerbose(false);
-//		int numGames = 1000;
-//		int numP1Wins = 0;
-//		int quadrant = numGames / 4;
-//		int first_quadrant = 0;
-//		int sec_quadrant = 0;
-//		int third_quadrant = 0;
-//		int fourth_quadrant = 0;
-//		GinRummyGame game = new GinRummyGame(new CFRPlayer(), new SimpleGinRummyPlayer());
-//		long startMs = System.currentTimeMillis();
-//		for (int i = 0; i < numGames; i++) {
-//			int win = game.play();
-//			numP1Wins += win;
-//			if (win != 0) {
-//				if (i < quadrant) {
-//					first_quadrant ++;
-//				} else if (i < 2 * quadrant) {
-//					sec_quadrant ++;
-//				} else if (i < 3 * quadrant) {
-//					third_quadrant ++;
-//				} else {
-//					fourth_quadrant ++;
-//				}
-//			}
-//		}
-//		
-//		long totalMs = System.currentTimeMillis() - startMs;		
-//		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
-//		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
-//		
-//		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
-//		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
-//		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
-//		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
+		for(Card card : cards)
+			state[1][card.getId()] = 1;
 		
+		return state;
 	}
 	
+	/**
+	 * Save the gameplays as objects in dat file
+	 */
+	public void saveGameInShort2(String filename, ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays) {
+		try {
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
+			out.writeObject(gamePlays);
+			out.flush();
+			out.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + filename);
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * Play a number of Gin Rummy games and record the data to file
+	 */
+	public static void main(String[] args) {
+		
+		TurnStatesDataCollector collector = new TurnStatesDataCollector();
+		int numGameBig = 25000;
+		for(int i = 0; i < numGameBig; i++) 
+			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
+		
+		long startMs = System.currentTimeMillis();
+		collector.saveGameInShort2("play_data_SimplePlayer.dat", playData);
+		System.out.println(System.currentTimeMillis() - startMs);
+	}
 }

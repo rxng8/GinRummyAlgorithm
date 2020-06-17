@@ -1,16 +1,1 @@
-/CFRPlayer.class
-/Card.class
-/GinRummyGame.class
-/GinRummyPlayer.class
-/GinRummyUtil.class
-/SimpleGinRummyPlayer.class
-/InfoSet.class
-/PlayerModel.class
-/RLPlayer.class
-/HandEstimationModel.class
-/DataCollector.class
-/DeepFeedForwardTest.class
-/HandEstimationModel$Layer.class
-/HandEstimationModel$Neuron.class
-/HESimpleModel.class
-/TurnStatesDataCollector.class
+*.class

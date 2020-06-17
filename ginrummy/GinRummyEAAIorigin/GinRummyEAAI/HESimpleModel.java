@@ -789,6 +789,7 @@ public class HESimpleModel {
 		HESimpleModel model = new HESimpleModel("weights_100.dat", "bias_100.dat");
 		model.__import_data__("play_data_SimplePlayer_small.dat");
 		model.__init__(10, 10e-3f, 1, false);
+//		model.train();
 		
 		/**
 		 * Predict hand.

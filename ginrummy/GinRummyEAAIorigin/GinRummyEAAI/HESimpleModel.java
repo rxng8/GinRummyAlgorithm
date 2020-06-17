@@ -291,20 +291,35 @@ public class HESimpleModel {
 			System.out.println("Preprocessing data...");
 		}
 		
-		int data_size = this.gamePlays.size()
-				* this.gamePlays.get(0).size()
-				* this.gamePlays.get(0).get(0).size()
-				* this.gamePlays.get(0).get(0).get(0).size();
+//		int data_size = this.gamePlays.size()
+//				* this.gamePlays.get(0).size()
+//				* this.gamePlays.get(0).get(0).size()
+//				* this.gamePlays.get(0).get(0).get(0).size();
 		int data_feature = this.gamePlays.get(0).get(0).get(0).get(0)[0].length;
 		assert data_feature == this.gamePlays.get(0).get(0).get(0).get(0)[1].length : "Input and output does not match dimension";
 		
-		System.out.println("Data size: " + data_size);
-		
-		this.X = new float[data_size*10][data_feature];
-		this.Y = new float[data_size*10][data_feature];
+//		System.out.println("Data size: " + data_size);
 		
 		Iterator<ArrayList<ArrayList<ArrayList<short[][]>>>> it_games = this.gamePlays.iterator();
 		int i = 0;
+		while(it_games.hasNext()) {
+			Iterator<ArrayList<ArrayList<short[][]>>> it_players = it_games.next().iterator();
+			while (it_players.hasNext()) {
+				Iterator<ArrayList<short[][]>> it_rounds = it_players.next().iterator();
+				while (it_rounds.hasNext()) {
+					Iterator<short[][]> it_turns = it_rounds.next().iterator();
+					while (it_turns.hasNext()) {
+						i++;
+					}
+				}
+			}
+		}
+		
+		this.X = new float[i][data_feature];
+		this.Y = new float[i][data_feature];
+		
+		it_games = this.gamePlays.iterator();
+		i = 0;
 		while(it_games.hasNext()) {
 			Iterator<ArrayList<ArrayList<short[][]>>> it_players = it_games.next().iterator();
 			while (it_players.hasNext()) {
@@ -738,11 +753,16 @@ public class HESimpleModel {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// Test Matrix multiplication
+		/**
+		 * Test Matrix multiplication
+		 */
 //		float[][] x1 = {{2, 3, 1}, {3, 6, 0}};
 //		float[][] x2 = {{2}, {3}, {0}};
 //		printMatrix(dot(x1, x2));
 		
+		/**
+		 * Test small data
+		 */
 //		float[][] X = {{-2, -1, 0, 0, 1},
 //							{-2, 0, 1, 1, 0},
 //							{-2, 1, 0, 1, 0},
@@ -775,27 +795,34 @@ public class HESimpleModel {
 //		HESimpleModel.print_mat1D(model.predict(X[1]));
 		
 		/**
-		 * New model
+		 * Test new actual model with actual data
 		 */
-//		HESimpleModel model = new HESimpleModel();
-//		model.__import_data__("play_data_SimplePlayer_small.dat");
-//		model.__init__(10, 10e-3f, 1, true);
+		HESimpleModel model = new HESimpleModel();
+		model.__import_data__("play_data_SimplePlayer_small.dat");
+		model.__init__(10, 10e-3f, 1, true);
 //		model.train();
 //		model.save("weights_100.dat", "bias_100.dat");
 		
 		/**
+		 * Test data
+		 */
+//		System.out.println(model.gamePlays.get(0).get(0).size());
+		
+		
+		
+		/**
 		 * Load model
 		 */
-		HESimpleModel model = new HESimpleModel("weights_100.dat", "bias_100.dat");
-		model.__import_data__("play_data_SimplePlayer_small.dat");
-		model.__init__(10, 10e-3f, 1, false);
+//		HESimpleModel model = new HESimpleModel("weights_100.dat", "bias_100.dat");
+//		model.__import_data__("play_data_SimplePlayer_small.dat");
+//		model.__init__(10, 10e-3f, 1, false);
 //		model.train();
 		
 		/**
 		 * Predict hand.
 		 */
-		HESimpleModel.print_mat1D_card(model.X[2], "Input to be predicted");
-		HESimpleModel.print_mat1D_card(model.predict(model.X[2]), "Predicted");
-		HESimpleModel.print_mat1D_card(model.Y[2], "Actual Data");
+//		HESimpleModel.print_mat1D_card(model.X[2], "Input to be predicted");
+//		HESimpleModel.print_mat1D_card(model.predict(model.X[2]), "Predicted");
+//		HESimpleModel.print_mat1D_card(model.Y[2], "Actual Data");
 	}
 }

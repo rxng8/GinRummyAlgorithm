@@ -113,7 +113,6 @@ public class HESimpleModel {
 	 */
 	private float[][] output;
 	
-	
 	//Debugging params
 	/**
 	 * Verbose
@@ -307,13 +306,13 @@ public class HESimpleModel {
 			while (it_players.hasNext()) {
 				Iterator<ArrayList<short[][]>> it_rounds = it_players.next().iterator();
 				while (it_rounds.hasNext()) {
-					Iterator<short[][]> it_turns = it_rounds.next().iterator();
-					while (it_turns.hasNext()) {
-						i++;
-					}
+					ArrayList<short[][]> turns = it_rounds.next();
+					i += turns.size();
 				}
 			}
 		}
+		
+		System.out.println("Get here");
 		
 		this.X = new float[i][data_feature];
 		this.Y = new float[i][data_feature];
@@ -563,7 +562,8 @@ public class HESimpleModel {
 		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 			float dz_j = output[neuron] - label[neuron];
 			for (int feature = 0; feature < this.weights2.length; feature++) {
-				this.weights2[feature][neuron] -= dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
+//				this.weights2[feature][neuron] -= dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
+				dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
 			}
 		}
 		
@@ -580,7 +580,7 @@ public class HESimpleModel {
 			d_sum = 0;
 			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 				float dz_j = output[neuron] - label[neuron];
-				d_sum -= this.lr * dz_j * this.weights2[feature][neuron];
+				d_sum += this.lr * dz_j * this.weights2[feature][neuron];
 			}
 			dA_L[feature] = d_sum;
 		}
@@ -593,7 +593,8 @@ public class HESimpleModel {
 		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
 			float d_a_j = dA_L[neuron];
 			for (int feature = 0; feature < this.weights1.length; feature++) {
-				this.weights1[feature][neuron] -= dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
+//				this.weights1[feature][neuron] -= dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
+				dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
 			}
 		}
 		
@@ -602,6 +603,19 @@ public class HESimpleModel {
 			float d_a_j = dA_L[neuron];
 			this.bias1[neuron] -= this.lr * sigmoid_derivative(d_a_j) * d_a_j * 1;
 		}
+		
+		// Update weights
+		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
+			for (int feature = 0; feature < this.weights2.length; feature++) {
+				this.weights2[feature][neuron] += dW2[feature][neuron];
+			}
+		}
+		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
+			for (int feature = 0; feature < this.weights1.length; feature++) {
+				this.weights1[feature][neuron] += dW1[feature][neuron];
+			}
+		}
+		
 	}
 	
 	/**
@@ -639,7 +653,8 @@ public class HESimpleModel {
 				System.out.print("Label: ");
 				print_mat1D(label);
 				System.out.print("Loss: ");
-				System.out.println(categorical_crossentropy(output, label) + "\n");	
+				float loss = categorical_crossentropy(output, label);
+				System.out.println(loss + "\n");	
 			}
 		}
 	}
@@ -798,10 +813,10 @@ public class HESimpleModel {
 		 * Test new actual model with actual data
 		 */
 		HESimpleModel model = new HESimpleModel();
-		model.__import_data__("play_data_SimplePlayer_small.dat");
-		model.__init__(10, 10e-3f, 1, true);
-//		model.train();
-//		model.save("weights_100.dat", "bias_100.dat");
+		model.__import_data__("play_data_SimplePlayer_10.dat");
+		model.__init__(10, 10e-3f, 5, true);
+		model.train();
+		model.save("weights_100.dat", "bias_100.dat");
 		
 		/**
 		 * Test data
@@ -814,15 +829,28 @@ public class HESimpleModel {
 		 * Load model
 		 */
 //		HESimpleModel model = new HESimpleModel("weights_100.dat", "bias_100.dat");
-//		model.__import_data__("play_data_SimplePlayer_small.dat");
+//		model.__import_data__("play_data_SimplePlayer_test.dat");
 //		model.__init__(10, 10e-3f, 1, false);
+		
+		// If wanna continue to train
 //		model.train();
 		
 		/**
 		 * Predict hand.
 		 */
-//		HESimpleModel.print_mat1D_card(model.X[2], "Input to be predicted");
-//		HESimpleModel.print_mat1D_card(model.predict(model.X[2]), "Predicted");
-//		HESimpleModel.print_mat1D_card(model.Y[2], "Actual Data");
+		int start = 70;
+		int end = 80;
+		float total_loss = 0;
+		for (int data_th = start; data_th < end; data_th ++) {
+			System.out.println("Let's Predict!");
+			HESimpleModel.print_mat1D_card(model.X[data_th], "Input to be predicted");
+			float[] y_pred = model.predict(model.X[data_th]);
+			HESimpleModel.print_mat1D_card(y_pred, "Predicted");
+			HESimpleModel.print_mat1D_card(model.Y[data_th], "Actual Data");
+			float loss = HESimpleModel.categorical_crossentropy(y_pred, model.Y[data_th]);
+			total_loss += loss;
+			System.out.println("Loss: " + loss);
+		}
+		System.out.println("Average Loss: " + total_loss / (end - start) + "\n");
 	}
 }

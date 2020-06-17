@@ -86,11 +86,25 @@ s
     	- On back-propagating, research more on gradient descend and ascend, -= or +=.
 		- Currently hard coding the number of layers. Need to write method that dynamically compute tye number of layers.
 
+    3. Work on custom loss function:
+    
+        * It is because since we cannot exactly estimate the opponent hand, and sometime there is no clue (opponent don't discard or draw any card that directly related to those cards, or the opponent forms meld right from the start.). Therefore, we cannot calculate the loss by the normal categorical cross entropy loss function.
+
+        * Prospective further research can be modified categorical cross entropy: the loss only care about the cards that are related to the opponent's action on a particular card.
+
 	3. Write Predicting method
 
 	4. Test thoroughly
 
+* Current result:
 
+    * This model achieves hand estimation
+
+* Current Drawbacks:
+    
+    * The model is very simple, each turn is trained separately, therefore, no memory of previous turns.
+
+    * Therefore although the model can predict the probability of opponent not having related cards in melds, it cannot keep track of previous data.
 
 ### 3. Hand Estimation using Sequential Neural Network Model:
 

@@ -10,6 +10,7 @@ import java.util.Stack;
 
 /**
  * a data generator meant for Alex's experiments
+ * 
  * @author Tom Doan
  * Gettysburg College. Advisor: Todd W. Neller
  * @version 1.2.1
@@ -66,6 +67,8 @@ public class TurnStatesDataCollector {
 			roundData.add(new ArrayList<short[][]>());
 			roundData.add(new ArrayList<short[][]>());
 			
+			//TODO remove magic numbers
+			boolean[][] knownCards = new boolean[2][52];
 			
 			int currentPlayer = startingPlayer;
 			int opponent = (currentPlayer == 0) ? 1 : 0;
@@ -79,10 +82,15 @@ public class TurnStatesDataCollector {
 			for (int i = 0; i < 2; i++) {
 				Card[] handArr = new Card[HAND_SIZE];
 				hands.get(i).toArray(handArr);
+				
+				for(Card card: hands.get(i))
+					knownCards[i][card.getId()] = true;
+				
 				players[i].startGame(i, startingPlayer, handArr); 
 				if (playVerbose)
 					System.out.printf("Player %d is dealt %s.\n", i, hands.get(i));
 			}
+			
 			if (playVerbose)
 				System.out.printf("Player %d starts.\n", startingPlayer);
 			Stack<Card> discards = new Stack<Card>();
@@ -124,8 +132,9 @@ public class TurnStatesDataCollector {
 						System.out.printf("Player %d discards %s.\n", currentPlayer, discardCard);
 					discards.push(discardCard);
 					
-					//record a turn's data					
-					roundData.get(currentPlayer).add(turnStateToShortArray(faceUpCard, drawCard, discardCard, hands.get(currentPlayer)));
+					//record a turn's data 
+					knownCards[currentPlayer][faceUpCard.getId()] = true;
+					roundData.get(currentPlayer).add(turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards));
 					
 					
 					if (playVerbose) {
@@ -296,21 +305,27 @@ public class TurnStatesDataCollector {
 	 * @param Card objects representing faceUp card, drawCard, discarded card, and the player's hand
 	 * @return the corresponding short[2][52] array
 	 */	
-	public short[][] turnStateToShortArray(Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> cards) {
+	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
+		int opponent = (currentPlayer == 0) ? 1 : 0;
+		
 		short[][] state = new short[2][52];
 		state[0][faceUpCard.getId()] = (short) ((faceUpCard == drawCard) ? 1 : -1);
 		state[0][discardCard.getId()] = -2;
 		
-		for(Card card : cards)
+		for(Card card : hands.get(currentPlayer)) 
 			state[1][card.getId()] = 1;
 		
+		for(int id = 0; id < 52; id++) 
+			if(knownCards[opponent][id] && !hands.get(currentPlayer).contains(Card.getCard(id)))
+				state[1][id] = -3;
+			
 		return state;
 	}
 	
 	/**
 	 * Save the gameplays as objects in dat file
 	 */
-	public void saveGameInShort2(String filename, ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays) {
+	public void saveGameInShort(String filename, ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays) {
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
 			out.writeObject(gamePlays);
@@ -336,7 +351,7 @@ public class TurnStatesDataCollector {
 			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
 		
 		long startMs = System.currentTimeMillis();
-		collector.saveGameInShort2("play_data_SimplePlayer.dat", playData);
+		collector.saveGameInShort("play_data_SimplePlayer.dat", playData);
 		System.out.println(System.currentTimeMillis() - startMs);
 	}
 }

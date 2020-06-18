@@ -1,4 +1,8 @@
 
+/**
+ * @author Alex Nguyen
+ * Gettysburg College
+ */
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -312,8 +316,6 @@ public class HESimpleModel {
 			}
 		}
 		
-		System.out.println("Get here");
-		
 		this.X = new float[i][data_feature];
 		this.Y = new float[i][data_feature];
 		
@@ -337,7 +339,6 @@ public class HESimpleModel {
 				}
 			}
 		}
-		
 	}
 	
 	

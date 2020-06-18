@@ -37,7 +37,16 @@
 --------------- -->
 
 # Report:
+# Report:
 
+## Report 5, date: June 23, 2020
+### 1. 
+
+### 2. Reference:
+
+* (RNN)[https://www.youtube.com/watch?v=LHXXI4-IEns]
+
+-------------
 ## Report 4, date: June 17, 2020
 ### 1. Observation Representation (Also available in the file `HESimpleModel` documentation):
 

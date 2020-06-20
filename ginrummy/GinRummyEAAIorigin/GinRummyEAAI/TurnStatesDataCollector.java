@@ -310,7 +310,7 @@ public class TurnStatesDataCollector {
 	/**
 	 * Given faceUp card, drawCard, and discarded card, return the corresponding short array
 	 * @param Card objects representing faceUp card, drawCard, discarded card, and the player's hand
-	 * @return the corresponding short[2][52] array
+	 * @return the corresponding short[5][52] array
 	 */	
 	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
 		int opponent = (currentPlayer == 0) ? 1 : 0;
@@ -319,13 +319,14 @@ public class TurnStatesDataCollector {
 		state[0][faceUpCard.getId()] = 1;
 		if(faceUpCard == drawCard)
 			state[1][faceUpCard.getId()] = 1;
+		state[2][discardCard.getId()] = 1;
 		
 		for(int id = 0; id < 52; id++) 
 			if(knownCards[opponent][id] && !hands.get(currentPlayer).contains(Card.getCard(id)))
-				state[2][id] = 1;
+				state[3][id] = 1;
 		
 		for(Card card : hands.get(currentPlayer)) 
-			state[3][card.getId()] = 1;
+			state[4][card.getId()] = 1;
 		
 		return state;
 	}

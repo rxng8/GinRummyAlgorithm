@@ -43,6 +43,14 @@ public class HandEstimationModel {
 	public static final int CARE_VEC = 2;
 	public static final int EXISTED_VEC = 3;
 	
+	public static final int ID_FORGET_GATE = 0;
+	public static final int ID_INPUT_GATE = 1;
+	public static final int ID_CANDIDATE_GATE = 2;
+	public static final int ID_OUTPUT_GATE = 3;
+	
+	public static final int ID_MEMORY_VECTOR = 0;
+	public static final int ID_LSTM_OUT_VECTOR = 1;
+	
 	public static final int CARD_FEATURE = 52;
 	public static final int INPUT_TURN_LEN = 4;
 	
@@ -263,10 +271,14 @@ public class HandEstimationModel {
 				float[] output_bias = new float[lstm_neurons_this_cell];
 				
 				this.lstm_bias[i] = new ArrayList<float[]>();
-				this.lstm_bias[i].add(forget_bias);
-				this.lstm_bias[i].add(input_bias);
-				this.lstm_bias[i].add(candidate_bias);
-				this.lstm_bias[i].add(output_bias);
+//				this.lstm_bias[i].add(forget_bias);
+//				this.lstm_bias[i].add(input_bias);
+//				this.lstm_bias[i].add(candidate_bias);
+//				this.lstm_bias[i].add(output_bias);
+				this.lstm_bias[i].set(ID_FORGET_GATE, forget_bias);
+				this.lstm_bias[i].set(ID_INPUT_GATE, input_bias);
+				this.lstm_bias[i].set(ID_CANDIDATE_GATE, candidate_bias);
+				this.lstm_bias[i].set(ID_OUTPUT_GATE, output_bias);
 				
 				total_lstm_neurons += lstm_neurons_this_cell;
 			}
@@ -344,8 +356,6 @@ public class HandEstimationModel {
 		int data_feature = this.gamePlays.get(0).get(0).get(0).get(0)[0].length;
 		assert data_feature == this.gamePlays.get(0).get(0).get(0).get(0)[4].length : "Input and output does not match dimension";
 		
-//		System.out.println("Data size: " + data_size);
-		
 		Iterator<ArrayList<ArrayList<ArrayList<short[][]>>>> it_games = this.gamePlays.iterator();
 		while(it_games.hasNext()) {
 			Iterator<ArrayList<ArrayList<short[][]>>> it_players = it_games.next().iterator();
@@ -405,6 +415,30 @@ public class HandEstimationModel {
 		float[] y = new float[x.length];
 		for (int i = 0; i < x.length; i++) {
 			y[i] = sigmoid(x[i]);
+		}
+		return y;
+	}
+	
+	public static float tanh (float x) {
+		return 2 * sigmoid(2 * x) - 1;
+	}
+	
+	public static float[] tanh (float[] x) {
+		float[] y = new float[x.length];
+		for (int i = 0; i < y.length; i++) {
+			y[i] = tanh(x[i]);
+		}
+		return y;
+	}
+	
+	public static float relu (float x) {
+		return Math.max(0, x);
+	}
+	
+	public static float[] relu (float[] x) {
+		float[] y = new float[x.length];
+		for (int i = 0; i < y.length; i++) {
+			y[i] = relu(x[i]);
 		}
 		return y;
 	}
@@ -567,24 +601,109 @@ public class HandEstimationModel {
 		return y;
 	}
 	
+	/**
+	 * LSTM Layer or LSTM Cell
+	 * @param weights
+	 * @param input
+	 * @param bias
+	 * @param state
+	 * @return val (ArrayList<float[]>):
+	 * 		val.get(0): memory
+	 * 		val.get(1): output
+	 */
 	public static ArrayList<float[]> lstm_cell (ArrayList<float[][]> weights, float[] input, ArrayList<float[]> bias, ArrayList<float[]> state) {
-		return null;
+		float[][] Wf = weights.get(ID_FORGET_GATE); // get 0
+		float[][] Wi = weights.get(ID_INPUT_GATE); // get 1
+		float[][] Wc = weights.get(ID_CANDIDATE_GATE); // get 2
+		float[][] Wo = weights.get(ID_OUTPUT_GATE); // get 3
+		
+		float[] bf = bias.get(ID_FORGET_GATE); // get 0
+		float[] bi = bias.get(ID_INPUT_GATE); // get 1
+		float[] bc = bias.get(ID_CANDIDATE_GATE); // get 2
+		float[] bo = bias.get(ID_OUTPUT_GATE); // get 3
+		
+		assert Wf.length == bf.length : "Bias dimension must match the number of neurons in weights";
+		assert Wi.length == bi.length : "Bias dimension must match the number of neurons in weights";
+		assert Wc.length == bc.length : "Bias dimension must match the number of neurons in weights";
+		assert Wo.length == bo.length : "Bias dimension must match the number of neurons in weights";
+		
+		float[] prev_memory = state.get(ID_MEMORY_VECTOR);
+		float[] prev_output = state.get(ID_LSTM_OUT_VECTOR);
+		
+		// Concatenate previous output vector with current input vector
+		float[] concated_input = concatenate_vector(prev_output, input);
+		
+		// Assert, check, test
+		assert Wf[0].length == concated_input.length : "Concatenated input length did not match forget gate weights";
+		assert Wi[0].length == concated_input.length : "Concatenated input length did not match input gate weights";
+		assert Wc[0].length == concated_input.length : "Concatenated input length did not match candidate gate weights";
+		assert Wo[0].length == concated_input.length : "Concatenated input length did not match output gate weights";
+		
+		// Compute 4 outputs!
+		
+		float[] out_forget = dense_cell_sigmoid(Wf, concated_input, bf);
+		float[] out_input = dense_cell_sigmoid(Wi, concated_input, bi);
+		float[] out_candidate = dense_cell_tanh(Wc, concated_input, bc);
+		float[] out_output = dense_cell_sigmoid(Wo, concated_input, bo);
+		
+		// Compute element-wise operations
+		float[] new_memory = add(multiply(out_forget, prev_memory), multiply(out_input, out_candidate));
+		float[] new_output = multiply(out_output, tanh(new_memory));
+		
+		ArrayList<float[]> new_state = new ArrayList<float[]>();
+		new_state.set(ID_MEMORY_VECTOR, new_memory);
+		new_state.set(ID_LSTM_OUT_VECTOR, new_output);
+		
+		return new_state;
 	}
 	
-	public static float[] dense_cell_relu (float[][] weights, float[] input, float[] bias) {
-		return null;
-	}
-	
-	public static float[] dense_cell_sigmoid (float[][] weights, float[] input, float[] bias) {
-		return null;
-	}
-	
-	public static float[] dense_cell_softmax (float[][] weights, float[] input, float[] bias) {
-		return null;
+	public static float[] dense_cell_tanh (float[][] weights, float[] input, float[] bias) {
+		assert weights[0].length == input.length: "The number of coordinates in weights must match the number of input features";
+		assert weights.length == bias.length : "The number of neurons must match the number of bias";
+		return compute_value(weights, input, bias, HandEstimationModel::tanh);
 	}
 	
 	/**
-	 * Perform one step of feed forward network
+	 * Dense layer or Dense cell using relu activation function
+	 * @param weights
+	 * @param input
+	 * @param bias
+	 * @return
+	 */
+	public static float[] dense_cell_relu (float[][] weights, float[] input, float[] bias) {
+		assert weights[0].length == input.length: "The number of coordinates in weights must match the number of input features";
+		assert weights.length == bias.length : "The number of neurons must match the number of bias";
+		return compute_value(weights, input, bias, HandEstimationModel::relu);
+	}
+	
+	/**
+	 * Dense layer or Dense cell using sigmoid activation function
+	 * @param weights
+	 * @param input
+	 * @param bias
+	 * @return
+	 */
+	public static float[] dense_cell_sigmoid (float[][] weights, float[] input, float[] bias) {
+		assert weights[0].length == input.length: "The number of coordinates in weights must match the number of input features";
+		assert weights.length == bias.length : "The number of neurons must match the number of bias";
+		return compute_value(weights, input, bias, HandEstimationModel::sigmoid);
+	}
+	
+	/**
+	 * Dense layer or Dense cell using softmax activation function
+	 * @param weights
+	 * @param input
+	 * @param bias
+	 * @return
+	 */
+	public static float[] dense_cell_softmax (float[][] weights, float[] input, float[] bias) {
+		assert weights[0].length == input.length: "The number of coordinates in weights must match the number of input features";
+		assert weights.length == bias.length : "The number of neurons must match the number of bias";
+		return compute_value(weights, input, bias, HandEstimationModel::softmax);
+	}
+	
+	/**
+	 * Perform one step of feed forward network. Checkout model here and there!
 	 * @param input
 	 * @param states
 	 * @return (Object[]):
@@ -596,20 +715,22 @@ public class HandEstimationModel {
 	public Object[] evaluate_step(float[][] input, ArrayList<float[]>[] states) {
 		
 		assert states.length == INPUT_TURN_LEN : "list of number of states in input did not match the number of input!";
+		
 		// Create new state vector
 		ArrayList<float[]>[] new_states = (ArrayList<float[]>[]) new Object[states.length];
 		
-		// For each input, we put into a LSTM cell.
+		// For each input, we put into a LSTM cell. After that, concatenate.
 		float[] concatenated_vector = new float[0];
 
 		for (int i = 0; i < input.length; i++) {
 			ArrayList<float[]> this_state = lstm_cell(this.lstm_weights[i], input[i], this.lstm_bias[i], states[i]);
 			assert this_state.size() == 2 : "Wrong lstm cell behavior";
-			float[] output = this_state.get(1);
+			float[] output = this_state.get(ID_LSTM_OUT_VECTOR);
 			concatenated_vector = concatenate_vector(concatenated_vector, output);
 			new_states[i] = this_state;
 		}
 		
+		// Add the dense layer after the concatenation.
 		ArrayList<float[]> dense_layers = new ArrayList<>();
 		dense_layers.add(concatenated_vector);
 		
@@ -678,11 +799,33 @@ public class HandEstimationModel {
 	 * 
 	 */
 	
+	/**
+	 * Compute dE / da_l
+	 */
+	public static void compute_reverse() {
+		
+	}
 	
-	
-	
+	/**
+	 * Compute dE / da_l
+	 */
+	public static void compute_reverse_lstm() {
+		
+	}
 
+	/**
+	 * Compute dE / dW_l and dE / db_l
+	 */
+	public static void compute_derivatives() {
+		
+	}
 	
+	/**
+	 * Compute dE / dW_l and dE / db_l
+	 */
+	public static void compute_derivatives_lstm() {
+		
+	}
 	
 	
 
@@ -696,71 +839,6 @@ public class HandEstimationModel {
 	 * 			- Hidden layer L-2: layers[1], etc.
 	 */
 	public void back_propagation(float[] label, float[] output, float[]... layers) {
-//		float loss = categorical_crossentropy(output, label);
-		
-		assert output.length == label.length : "";
-		assert output.length == this.weights2[0].length : "The length of output node in weights2 must match the number of ourput feature";
-		
-		float[][] dW2 = new float[this.weights2.length][this.weights2[0].length];
-		
-		
-		// Compute dE/dW2 and update W2
-		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
-			float dz_j = output[neuron] - label[neuron];
-			for (int feature = 0; feature < this.weights2.length; feature++) {
-//				this.weights2[feature][neuron] -= dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
-				dW2[feature][neuron] = this.lr * dz_j * layers[0][feature];
-			}
-		}
-		
-		// Compute dE/db2 and update b2
-		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
-			float dz_j = output[neuron] - label[neuron];
-			this.bias2[neuron] -= this.lr * dz_j;
-		}
-		
-		// Compute dE/da^L-1_j
-		float d_sum;
-		float[] dA_L = new float[this.weights2.length];
-		for (int feature = 0; feature < this.weights2.length; feature++) {
-			d_sum = 0;
-			for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
-				float dz_j = output[neuron] - label[neuron];
-				d_sum += this.lr * dz_j * this.weights2[feature][neuron];
-			}
-			dA_L[feature] = d_sum;
-		}
-		
-		assert this.weights2.length == this.weights1[0].length : "";
-		
-		float[][] dW1 = new float[this.weights1.length][this.weights1[0].length];
-		
-		// Compute dE/dW1 and update W1
-		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
-			float d_a_j = dA_L[neuron];
-			for (int feature = 0; feature < this.weights1.length; feature++) {
-//				this.weights1[feature][neuron] -= dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
-				dW1[feature][neuron] = this.lr * sigmoid_derivative(d_a_j) * d_a_j * layers[1][feature];
-			}
-		}
-		
-		// Compute dE/db1 and update b1
-		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
-			float d_a_j = dA_L[neuron];
-			this.bias1[neuron] -= this.lr * sigmoid_derivative(d_a_j) * d_a_j * 1;
-		}
-		
-		// Update weights
-		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
-			for (int feature = 0; feature < this.weights2.length; feature++) {
-				this.weights2[feature][neuron] += dW2[feature][neuron];
-			}
-		}
-		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
-			for (int feature = 0; feature < this.weights1.length; feature++) {
-				this.weights1[feature][neuron] += dW1[feature][neuron];
-			}
-		}
 		
 	}
 	
@@ -769,7 +847,7 @@ public class HandEstimationModel {
 	 */
 	public void train () {
 		for (int _ = 0; _ < this.n_iter; _++) {
-			this.evaluate_step();
+//			this.evaluate_step();
 		}
 		if (this.VERBOSE) {
 			System.out.println("Weights: ");
@@ -783,16 +861,31 @@ public class HandEstimationModel {
 	 * @return (float[]): output.
 	 */
 	public float[] predict (float[] input) {
-		assert input.length == X[0].length : "Wrong input size";
+		assert input.length == CARD_FEATURE : "Wrong input size";
 		
-		float[] layer1 = compute_value(input, this.weights1, this.bias1, HESimpleModel::sigmoid);
+//		Object[] result = evaluate_step(input, states)
 		
-		float[] output = compute_value(layer1, this.weights2, this.bias2, HESimpleModel::softmax);
-		
-		return output;
+		return null;
 	}
 	
-	// Debugging method
+	/**
+	 * 
+	 * Debugging method
+	 * 
+	 */
+	
+	/**
+	 * 
+	 * @param mat
+	 */
+	@SuppressWarnings("unused")
+	private static void print_mat1D (float[] mat) {
+		System.out.print("[");
+		for (int i = 0; i < mat.length; i++) {
+			System.out.print(mat[i] + " ");
+		}
+		System.out.print("]\n");
+	}
 	
 	/**
 	 * 
@@ -817,31 +910,18 @@ public class HandEstimationModel {
 	
 	/**
 	 * 
-	 * @param mat
-	 */
-	@SuppressWarnings("unused")
-	private static void print_mat1D (float[] mat) {
-		System.out.print("[");
-		for (int i = 0; i < mat.length; i++) {
-			System.out.print(mat[i] + " ");
-		}
-		System.out.print("]\n");
-	}
-	
-	/**
-	 * 
 	 */
 	@SuppressWarnings("unused")
 	private void print_weights () {
-		System.out.print("Weights 1: \n");
-		print_mat2D(this.weights1);
-		System.out.print("Bias1: \n");
-		print_mat1D(this.bias1);
-		System.out.print("\nWeights2: \n");
-		print_mat2D(this.weights2);
-		System.out.print("Bias2: \n");
-		print_mat1D(this.bias2);
-		System.out.println();
+//		System.out.print("Weights 1: \n");
+//		print_mat2D(this.weights1);
+//		System.out.print("Bias1: \n");
+//		print_mat1D(this.bias1);
+//		System.out.print("\nWeights2: \n");
+//		print_mat2D(this.weights2);
+//		System.out.print("Bias2: \n");
+//		print_mat1D(this.bias2);
+//		System.out.println();
 	}
 	
 	@SuppressWarnings("unused")

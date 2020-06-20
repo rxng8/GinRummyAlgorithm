@@ -316,10 +316,11 @@ public class TurnStatesDataCollector {
 		int opponent = (currentPlayer == 0) ? 1 : 0;
 		
 		short[][] state = new short[4][52];
-		state[0][faceUpCard.getId()] = 1;
-		if(faceUpCard == drawCard)
+		state[0][discardCard.getId()] = 1;
+		if(faceUpCard != drawCard)
 			state[1][faceUpCard.getId()] = 1;
-		state[2][discardCard.getId()] = 1;
+		else
+			state[2][faceUpCard.getId()] = 1;
 		
 		for(int id = 0; id < 52; id++) 
 			if(knownCards[opponent][id] && !hands.get(currentPlayer).contains(Card.getCard(id)))

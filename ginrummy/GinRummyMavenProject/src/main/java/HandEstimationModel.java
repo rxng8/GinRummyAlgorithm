@@ -14,14 +14,17 @@ public class HandEstimationModel {
 	 * This is a hand crafted Hand Estimation model with with 4 LSTM layer with 4 input, then concatenate those hidden layer to form a Dense
 	 * network with dynamic options of layers and neurons.
 	 * 
-	 * @param: X (float[][][]): Shape (none, 4, 52). With 52 one-hot encoded state.
-	 * 		X[][0]: Vector of cards the opponent discarded this turn
-	 * 		X[][1]: Vector of cards that the opponent does not care about (not picking up from discard pile) this turn.
-	 * 		X[][2]: Vector of cards that the opponent does care and pick up from the discard pile.
-	 * 		X[][3]: Cards that are on this player's hand and in the discard pile.
-	 * @param: Y (float[][]): Shape (none, 52). With 52 cards represented by state.
-	 * 		state 0: The opponent does not have this card in hand.
-	 * 		state 1: The opponent does have this card in hand.
+	 * @param: X (ArrayList<ArrayList<float[][]>>): Shape (none, 4, 52). With 52 one-hot encoded state.
+	 * 		X.get(0): each round data has been  generated.
+	 * 			X.get(0).get(0): each turn collected in each game.
+	 * 				X.get(0).get(0)[0]: Vector of cards the opponent discarded this turn
+	 * 				X.get(0).get(0)[1]: Vector of cards that the opponent does not care about (not picking up from discard pile) this turn.
+	 * 				X.get(0).get(0)[2]: Vector of cards that the opponent does care and pick up from the discard pile.
+	 * 				X.get(0).get(0)[3]: Cards that are on this player's hand and in the discard pile.
+	 * @param: Y (ArrayList<ArrayList<float[]>>): Shape (none, 52). With 52 cards represented by state.
+	 * 		Y.get(0): each round data has been  generated.
+	 * 			Y.get(0).get(0): each turn collected in each game, containing an opponent hand.
+
 	 * @param: seed (int): Random seed for nothing =))
 	 * @param: lr (float): the learning rate!
 	 * @param: n_iter (int): number of episode to be trained.

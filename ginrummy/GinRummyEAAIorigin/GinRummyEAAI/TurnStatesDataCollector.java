@@ -44,10 +44,11 @@ public class TurnStatesDataCollector {
 	
 	/**
 	 * The multi-dimentional array to store the game data in arrays of short[][], where
-	 * playData[0] is the faceupCard's input
-	 * playData[1] is the drawCard's input, if it appears that opponent pick up faceupCard
-	 * playData[2] is the discardCard's input
-	 * playData[1] is the model's expected result
+	 * playData[0] is the discardCard's input
+	 * playData[1] is the faceupCard's input in the event of opponent picking up
+	 * playData[2] is the faceupCard's input in the event of opponent ignore
+	 * playData[3] is the knownCard's that is not on the opponent hand input
+	 * playData[4] is the model's expected result
 	 */
 	private static ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> playData = new ArrayList<>();
 	

@@ -316,7 +316,7 @@ public class TurnStatesDataCollector {
 	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
 		int opponent = (currentPlayer == 0) ? 1 : 0;
 		
-		short[][] state = new short[4][52];
+		short[][] state = new short[5][52];
 		state[0][discardCard.getId()] = 1;
 		if(faceUpCard != drawCard)
 			state[1][faceUpCard.getId()] = 1;
@@ -405,12 +405,15 @@ public class TurnStatesDataCollector {
 	public static void main(String[] args) {
 		
 		TurnStatesDataCollector collector = new TurnStatesDataCollector();
-		int numGameBig = 25000;
-		for(int i = 0; i < numGameBig; i++) 
-			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
+//		int numGameBig = 25000;
+//		for(int i = 0; i < numGameBig; i++) 
+//			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
+//		
+//		long startMs = System.currentTimeMillis();
+//		collector.saveGame("play_data_SimplePlayer.dat", playData);
+//		System.out.println(System.currentTimeMillis() - startMs);
 		
-		long startMs = System.currentTimeMillis();
-		collector.saveGame("play_data_SimplePlayer.dat", playData);
-		System.out.println(System.currentTimeMillis() - startMs);
+		collector.playVerbose = true;
+		collector.play(0, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
 	}
 }

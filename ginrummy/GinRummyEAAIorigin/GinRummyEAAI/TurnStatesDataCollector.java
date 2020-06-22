@@ -45,8 +45,8 @@ public class TurnStatesDataCollector {
 	/**
 	 * The multi-dimentional array to store the game data in arrays of short[][], where
 	 * playData[0] is the discardCard's input
-	 * playData[1] is the faceupCard's input in the event of opponent picking up
-	 * playData[2] is the faceupCard's input in the event of opponent ignore
+	 * playData[1] is the faceupCard's input in the event of opponent ignore
+	 * playData[2] is the faceupCard's input in the event of opponent picking up
 	 * playData[3] is the knownCard's that is not on the opponent hand input
 	 * playData[4] is the model's expected result
 	 */
@@ -142,7 +142,9 @@ public class TurnStatesDataCollector {
 					
 					//record a turn's data 
 					knownCards[currentPlayer][faceUpCard.getId()] = true;
-					roundData.get(currentPlayer).add(turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards));
+					short[][] state = turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards);
+					roundData.get(currentPlayer).add(state);
+					print(state);
 					
 					
 					if (playVerbose) {
@@ -379,6 +381,26 @@ public class TurnStatesDataCollector {
 //		}
 //		
 //	}
+	
+	
+	public void print(short[][] state) {
+		System.out.print("Rank");
+		for(int j = 0; j < state.length; j++) {
+			for (int i = 0; i < Card.NUM_RANKS; i++)
+				System.out.print("\t" + Card.rankNames[i]);
+			for (int i = 0; i < Card.NUM_CARDS; i++) {
+				if (i % Card.NUM_RANKS == 0)
+					System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
+				System.out.print("\t");
+			System.out.print(state[j][i]);
+//			if (known[i])
+//				System.out.print(prob[i] == 1 ? "*TRUE*" : "FALSE");
+//			else
+//				System.out.printf("%.4f", prob[i]);
+			}
+			System.out.println();
+		}
+	}
 	
 	
 	/**

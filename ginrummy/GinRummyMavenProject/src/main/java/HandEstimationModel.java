@@ -769,6 +769,16 @@ public class HandEstimationModel {
 	}
 	
 	/**
+	 * 
+	 * @param output
+	 * @param label
+	 * @return
+	 */
+	public static float crossentropy (float[] output, float[] label) {
+		return 0;
+	}
+	
+	/**
 	 * Categorical cross entropy loss
 	 * @param output (float[]): The predicted vector by the neural network.
 	 * @param label (float[]): The actual label in the training set.
@@ -796,9 +806,76 @@ public class HandEstimationModel {
 		
 		return log_loss;
 	}
-
-
 	
+	/**
+	 * 
+	 * @param d_down_layer
+	 * @param d_activator
+	 * @param d_upper_layer
+	 * @return
+	 */
+	public static float[][] compute_d_weights(float[] d_down_layer,
+			float[] d_activator,
+			float[] d_upper_layer) {
+		
+		assert d_activator.length == d_upper_layer.length;
+		
+		// Create derivative of weights matrix with neuron-rows and feature-columns
+		float[][] dW = new float[d_upper_layer.length][d_down_layer.length];
+		
+		for (int neuron = 0; neuron < dW.length; neuron++) {
+			for (int feature = 0; feature< dW[neuron].length; feature++) {
+				dW[neuron][feature] = d_down_layer[feature] * d_activator[neuron] * d_upper_layer[neuron];
+			}
+		}
+		
+		return dW;
+	}
+	
+	/**
+	 * 
+	 * @param d_activator
+	 * @param d_upper_layer
+	 * @return
+	 */
+	public static float[] compute_d_bias(float[] d_activator, float[] d_upper_layer) {
+		
+		assert d_activator.length == d_upper_layer.length;
+		
+		float[] d_bias = new float[d_activator.length];
+		
+		for (int i = 0; i < d_bias.length; i++) {
+			d_bias[i] = d_activator[i] * d_upper_layer[i];
+		}
+		
+		return d_bias;
+	}
+	
+	/**
+	 * 
+	 * @param weights
+	 * @param d_activator
+	 * @param d_upper_layer
+	 * @return
+	 */
+	public static float[] compute_d_layers(float[][] weights,
+			float[] d_activator,
+			float[] d_upper_layer) {
+		
+		assert d_upper_layer.length == d_activator.length: "";
+		assert d_upper_layer.length == weights.length;
+		
+		float[] d_current_layer = new float[weights[0].length];
+		
+		for (int i = 0; i < d_current_layer.length; i++) {
+			float sum = 0;
+			for (int j = 0; j < d_upper_layer.length; j++) {
+				sum += weights[j][i] * d_activator[j] * d_upper_layer[j];
+			}
+			d_current_layer[i] = sum;
+		}
+		return d_current_layer;
+	}
 	
 	
 	
@@ -810,36 +887,8 @@ public class HandEstimationModel {
 	 * 
 	 */
 	
-	/**
-	 * Compute dE / da_l
-	 */
-	public static void compute_reverse() {
-		
-	}
-	
-	/**
-	 * Compute dE / da_l
-	 */
-	public static void compute_reverse_lstm() {
-		
-	}
-
-	/**
-	 * Compute dE / dW_l and dE / db_l
-	 */
-	public static void compute_derivatives() {
-		
-	}
-	
-	/**
-	 * Compute dE / dW_l and dE / db_l
-	 */
-	public static void compute_derivatives_lstm() {
-		
-	}
 	
 	
-
 	/**
 	 * Perform back-propagation and update weights and bias.
 	 * @param label (float[]): The actual label in the training set.
@@ -850,7 +899,19 @@ public class HandEstimationModel {
 	 * 			- Hidden layer L-2: layers[1], etc.
 	 */
 	public void back_propagation(float[] label, float[] output, float[]... layers) {
+		float[] d_o = new float[output.length];
 		
+		// Compute dC / d_output
+		
+		
+		
+		// Compute dC / d_W dense layers backward.
+		
+		// Compute dC / d_b dense layers backward.
+		
+		// Compute dC / da_l dense layers backward.
+		
+				
 	}
 	
 	/**

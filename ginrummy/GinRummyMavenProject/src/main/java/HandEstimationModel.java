@@ -401,15 +401,6 @@ public class HandEstimationModel {
 	}
 	
 	/**
-	 * Perform a sigmoid derivative function
-	 * @param x (float): param
-	 * @return (float): the result of the sigmoid derivative function.
-	 */
-	public static float sigmoid_derivative(float x) {
-		return sigmoid(x) * (1 - sigmoid(x));
-	}
-	
-	/**
 	 * Perform a sigmoid activation function
 	 * @param x (float[]): param vector
 	 * @return (float[]): the result of the sigmoid function over a vector (element wise).
@@ -420,6 +411,15 @@ public class HandEstimationModel {
 			y[i] = sigmoid(x[i]);
 		}
 		return y;
+	}
+	
+	/**
+	 * Perform a sigmoid derivative function
+	 * @param x (float): param
+	 * @return (float): the result of the sigmoid derivative function.
+	 */
+	public static float sigmoid_derivative(float x) {
+		return sigmoid(x) * (1 - sigmoid(x));
 	}
 	
 	public static float tanh (float x) {
@@ -434,6 +434,10 @@ public class HandEstimationModel {
 		return y;
 	}
 	
+	public static float tanh_derivative (float x) {
+		return 1 - (float) Math.pow(tanh(x), 2);
+	}
+	
 	public static float relu (float x) {
 		return Math.max(0, x);
 	}
@@ -444,6 +448,10 @@ public class HandEstimationModel {
 			y[i] = relu(x[i]);
 		}
 		return y;
+	}
+	
+	public static float relu_derivative (float x) {
+		return x > 0 ? 1 : 0;
 	}
 	
 	/**

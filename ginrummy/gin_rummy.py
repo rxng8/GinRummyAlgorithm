@@ -329,14 +329,6 @@ class GinTrainer:
     Return an infoset
     '''
     def get_info_set(self, information: str) -> InformationSet:
-        """[summary]
-
-        Args:
-            information (str): [description]
-
-        Returns:
-            InformationSet: [description]
-        """
         pass
 
 

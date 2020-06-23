@@ -422,10 +422,33 @@ public class HandEstimationModel {
 		return sigmoid(x) * (1 - sigmoid(x));
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
+	public static float[] sigmoid_derivative(float x[]) {
+		float[] y = new float[x.length];
+		for (int i = 0; i < y.length; i++) {
+			y[i] = sigmoid_derivative(x[i]);
+		}
+		return y;
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float tanh (float x) {
 		return 2 * sigmoid(2 * x) - 1;
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float[] tanh (float[] x) {
 		float[] y = new float[x.length];
 		for (int i = 0; i < y.length; i++) {
@@ -434,14 +457,42 @@ public class HandEstimationModel {
 		return y;
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float tanh_derivative (float x) {
 		return 1 - (float) Math.pow(tanh(x), 2);
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
+	public static float[] tanh_derivative (float[] x) {
+		float[] y = new float[x.length];
+		for (int i = 0; i < y.length; i++) {
+			y[i] = tanh_derivative(x[i]);
+		}
+		return y;
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float relu (float x) {
 		return Math.max(0, x);
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float[] relu (float[] x) {
 		float[] y = new float[x.length];
 		for (int i = 0; i < y.length; i++) {
@@ -450,8 +501,26 @@ public class HandEstimationModel {
 		return y;
 	}
 	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
 	public static float relu_derivative (float x) {
 		return x > 0 ? 1 : 0;
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @return
+	 */
+	public static float[] relu_derivative (float[] x) {
+		float[] y = new float[x.length];
+		for (int i = 0; i < y.length; i++) {
+			y[i] = relu_derivative(x[i]);
+		}
+		return y;
 	}
 	
 	/**
@@ -769,13 +838,42 @@ public class HandEstimationModel {
 	}
 	
 	/**
+	 * Softmax function followed by cross entropy loss
+	 * @param output
+	 * @param label
+	 * @return
+	 */
+	public static float categorical_crossentropy (float[] output, float[] label) {
+		return crossentropy(softmax(output), label);
+	}
+	
+	/**
 	 * 
 	 * @param output
 	 * @param label
 	 * @return
 	 */
-	public static float crossentropy (float[] output, float[] label) {
-		return 0;
+	public static float d_categorical_crossentropy (float output, float label) {
+		return output - label;
+	}
+	
+	/**
+	 * 
+	 * @param output
+	 * @param label
+	 * @return
+	 */
+	public static float[] d_categorical_crossentropy (float[] output, float[] label) {
+		
+		assert output.length == label.length;
+		
+		float[] y = new float[output.length];
+		
+		for (int i = 0; i < y.length; i++) {
+			y[i] = d_categorical_crossentropy(output[i], label[i]);
+		}
+		
+		return y;
 	}
 	
 	/**
@@ -784,23 +882,14 @@ public class HandEstimationModel {
 	 * @param label (float[]): The actual label in the training set.
 	 * @return (float): the amount of loss.
 	 */
-	public static float categorical_crossentropy(float[] output, float[] label) {
+	public static float crossentropy(float[] output, float[] label) {
 		assert output.length == label.length : "output length and label length cannot be different!";
-		
-		// Count non-zero label
-		int non_zeros = 0;
-		for (float l : label) {
-			if (l != 0) non_zeros ++;
-		}
-		
-		// Scale factor
-		float scale_factor = 1f / non_zeros;
-		
+
 		// Compute log loss
 		float log_loss = 0;
 		for (int i = 0; i < label.length; i++) {
 			if (label[i] != 0) { // Positive class.
-				log_loss += -Math.log10(output[i]) * label[i] * scale_factor;
+				log_loss += -Math.log10(output[i]) * label[i];
 			}
 		}
 		
@@ -808,7 +897,7 @@ public class HandEstimationModel {
 	}
 	
 	/**
-	 * 
+	 * Compute dC / dW_l-1 by multiplying dC / da_l with da_l / dz and dz / dW_l-1
 	 * @param d_down_layer
 	 * @param d_activator
 	 * @param d_upper_layer
@@ -833,7 +922,27 @@ public class HandEstimationModel {
 	}
 	
 	/**
-	 * 
+	 * Compute dC / dW_l-1 by multiplying dC / dz with dz / dW_l-1
+	 * @param d_down_layer
+	 * @param d_function
+	 * @return
+	 */
+	public static float[][] compute_d_weights(float[] d_down_layer, float[] d_function) {
+		
+		// Create derivative of weights matrix with neuron-rows and feature-columns
+		float[][] dW = new float[d_function.length][d_down_layer.length];
+		
+		for (int neuron = 0; neuron < dW.length; neuron++) {
+			for (int feature = 0; feature< dW[neuron].length; feature++) {
+				dW[neuron][feature] = d_down_layer[feature] * d_function[neuron];
+			}
+		}
+		
+		return dW;
+	}
+	
+	/**
+	 * Compute dC / db_l-1 by multiplying dC / da_l with da_l / dz and dz / db_l-1
 	 * @param d_activator
 	 * @param d_upper_layer
 	 * @return
@@ -852,7 +961,16 @@ public class HandEstimationModel {
 	}
 	
 	/**
-	 * 
+	 * Compute dC / db_l-1 by multiplying dC / dz with dz / db
+	 * @param d_function
+	 * @return
+	 */
+	public static float[] compute_d_bias(float[] d_function) {
+		return d_function.clone();
+	}
+	
+	/**
+	 * Compute dC / da_l-1 by multiplying dC / da_l with da_l / dz and dz / da_l-1
 	 * @param weights
 	 * @param d_activator
 	 * @param d_upper_layer
@@ -877,6 +995,29 @@ public class HandEstimationModel {
 		return d_current_layer;
 	}
 	
+	/**
+	 * Compute dC / da_l-1 by multiplying dC / dz with dz / da_l
+	 * @param weights
+	 * @param d_function
+	 * @return
+	 */
+	public static float[] compute_d_layers(float[][] weights,
+			float[] d_function) {
+
+		assert d_function.length == weights.length;
+		
+		float[] d_current_layer = new float[weights[0].length];
+		
+		for (int feature = 0; feature < weights[0].length; feature++) {
+			float sum = 0;
+			for (int neuron = 0; neuron < weights.length; neuron++) {
+				sum += weights[neuron][feature] * d_function[neuron];
+			}
+			d_current_layer[feature] = sum;
+		}
+		return d_current_layer;
+	}	
+	
 	
 	
 	/**
@@ -899,18 +1040,55 @@ public class HandEstimationModel {
 	 * 			- Hidden layer L-2: layers[1], etc.
 	 */
 	public void back_propagation(float[] label, float[] output, float[]... layers) {
-		float[] d_o = new float[output.length];
 		
-		// Compute dC / d_output
+		assert layers.length > 1: "";
 		
+		float[] d_upper_layer = output.clone();
 		
+		// Update dense layers weights
+		for (int i = this.dense_weights.size() - 1; i >= 0; i--) {
+			
+			float[] prev_layer = layers[(layers.length - 1) - i];
+			
+			ArrayList<float[][]> d_weights_dense = new ArrayList<float[][]>();
+			ArrayList<float[]> d_bias_dense = new ArrayList<float[]>();
+			
+			if (i == this.dense_weights.size() - 1) {
+				// Compute dC / dz_L
+				float[] d_sigmoid_last_layer = d_categorical_crossentropy(output, label);
+				// Compute dC / da_L-1
+				float[] d_layer_near_last = compute_d_layers(this.dense_weights.get(i), d_sigmoid_last_layer);
+				d_upper_layer = d_layer_near_last.clone();
+				
+				// Compute dC / d_W_L dense layers backward.
+				float[][] d_weights = compute_d_weights(prev_layer, d_layer_near_last);
+				d_weights_dense.add(d_weights);
+				
+				// Compute dC / d_b_L dense layers backward.
+				float[] d_bias = compute_d_bias(d_layer_near_last);
+				d_bias_dense.add(d_bias);
+				
+			} else {
+				// Compute dC / da_l
+				//the number of dense layer will be 1 fewer than the number of dense weights
+				d_upper_layer = compute_d_layers(this.dense_weights.get(i), relu_derivative(layers[layers.length - i + 1]), d_upper_layer);
+				
+				// Compute dC / d_W_L dense layers backward.
+				float[][] d_weights = compute_d_weights(prev_layer, relu_derivative(d_upper_layer), d_upper_layer);
+				d_weights_dense.add(d_weights);
+				
+				// Compute dC / d_b_L dense layers backward.
+				float[] d_bias = compute_d_bias(relu_derivative(d_upper_layer), d_upper_layer);
+				d_bias_dense.add(d_bias);
+			}
+		}
 		
-		// Compute dC / d_W dense layers backward.
-		
-		// Compute dC / d_b dense layers backward.
-		
-		// Compute dC / da_l dense layers backward.
-		
+		//Update LSTM layers weights
+		for (int i = 0; i < this.lstm_weights.length; i++) {
+			for (int j = 0; j < this.lstm_weights[i].size(); j++) {
+				
+			}
+		}
 				
 	}
 	

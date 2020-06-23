@@ -9,12 +9,12 @@
 
     * This file is being debugged and finished.
 
-* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HElstm.java` to see what I'm working on with hand estimation lstm model.
+<!-- * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HElstm.java` to see what I'm working on with hand estimation lstm model.
 
     * This is the custom lstm model that I am about to research in.
 
-    * (For more information, please navigate to the documentation I have written in the file or navigate to report 4)
-s
+    * (For more information, please navigate to the documentation I have written in the file or navigate to report 4) -->
+
 -------------
 <!-- 
 ## Past Work and Code:
@@ -37,7 +37,16 @@ s
 --------------- -->
 
 # Report:
+# Report:
 
+## Report 5, date: June 23, 2020
+### 1. 
+
+### 2. Reference:
+
+* (RNN)[https://www.youtube.com/watch?v=LHXXI4-IEns]
+
+-------------
 ## Report 4, date: June 17, 2020
 ### 1. Observation Representation (Also available in the file `HESimpleModel` documentation):
 
@@ -86,11 +95,25 @@ s
     	- On back-propagating, research more on gradient descend and ascend, -= or +=.
 		- Currently hard coding the number of layers. Need to write method that dynamically compute tye number of layers.
 
+    3. Work on custom loss function:
+
+        * It is because since we cannot exactly estimate the opponent hand, and sometime there is no clue (opponent don't discard or draw any card that directly related to those cards, or the opponent forms meld right from the start.). Therefore, we cannot calculate the loss by the normal categorical cross entropy loss function.
+
+        * Prospective further research can be modified categorical cross entropy: the loss only care about the cards that are related to the opponent's action on a particular card.
+
 	3. Write Predicting method
 
 	4. Test thoroughly
 
+* Current result:
 
+    * This model achieves hand estimation
+
+* Current Drawbacks:
+    
+    * The model is very simple, each turn is trained separately, therefore, no memory of previous turns.
+
+    * Therefore although the model can predict the probability of opponent not having related cards in melds, it cannot keep track of previous data.
 
 ### 3. Hand Estimation using Sequential Neural Network Model:
 

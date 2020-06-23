@@ -2,18 +2,12 @@
 
 ## Current Work and Code:
 
-* Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HESimpleModel.java` to see what I'm working on with hand estimation simple model.
-    * This is the custom simple fully connected (feed-forward, back-propagation) artificial neural network model (2 layers) that I have written from scratch (no library use).
+* Please navigate to `/ginrummy/GinRummyMavenProject/HandEstimationModel.java` to see what I'm working on with hand estimation lstm model.
+    * I write this form scratch without any usage of library.
     
-    * This model takes an input of observation of the opponent move, and output an estimated opponent hand. (For more information, please navigate to the documentation I have written in the file or navigate to report 4).
+    * This model takes an input of observation of the opponent move, and output an estimated opponent hand. (For more information, please navigate to the documentation I have written in the file or navigate to report 5).
 
-    * This file is being debugged and finished.
-
-<!-- * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/HElstm.java` to see what I'm working on with hand estimation lstm model.
-
-    * This is the custom lstm model that I am about to research in.
-
-    * (For more information, please navigate to the documentation I have written in the file or navigate to report 4) -->
+    * This file is being finished.
 
 -------------
 <!-- 
@@ -37,14 +31,25 @@
 --------------- -->
 
 # Report:
-# Report:
 
 ## Report 5, date: June 23, 2020
-### 1. 
+### 1. Turn State Representation of Opponent's action (Also available in the file `HESimpleModel` documentation).
 
-### 2. Reference:
+* There will be 4 inputs. Each is a vector of length 52 (one-hot encoded).
 
-* (RNN)[https://www.youtube.com/watch?v=LHXXI4-IEns]
+    * Vector of cards the opponent discarded this turn
+    * Vector of cards that the opponent does not care about (not picking up from discard pile) this turn.
+    * Vector of cards that the opponent does care and pick up from the discard pile.
+    * Cards that are on this player's hand and in the discard pile.
+
+* There will be one output: vector of length 52, containing one-hot encoded opponent hand.
+
+
+### 2. Hand Estimation modeling:
+
+![Model](reference/model.png)
+
+* 
 
 -------------
 ## Report 4, date: June 17, 2020

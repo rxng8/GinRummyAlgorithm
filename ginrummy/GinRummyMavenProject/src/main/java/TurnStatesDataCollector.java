@@ -1,5 +1,4 @@
 
-import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,6 +7,10 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
 
+import org.json.*;
+
+import jdk.nashorn.internal.runtime.JSONListAdapter;
+
 /**
  * a data generator meant for Alex's experiments
  * 
@@ -15,6 +18,8 @@ import java.util.Stack;
  * Gettysburg College. Advisor: Todd W. Neller
  * @version 1.2.1
  */
+
+
 public class TurnStatesDataCollector {
 	
 	/**
@@ -39,8 +44,11 @@ public class TurnStatesDataCollector {
 	
 	/**
 	 * The multi-dimentional array to store the game data in arrays of short[][], where
-	 * playData[0] is the model's input
-	 * playData[1] is the model's expected result
+	 * playData[0] is the discardCard's input
+	 * playData[1] is the faceupCard's input in the event of opponent ignore
+	 * playData[2] is the faceupCard's input in the event of opponent picking up
+	 * playData[3] is the knownCard's that is not on the opponent hand input
+	 * playData[4] is the model's expected result
 	 */
 	private static ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> playData = new ArrayList<>();
 	
@@ -134,7 +142,9 @@ public class TurnStatesDataCollector {
 					
 					//record a turn's data 
 					knownCards[currentPlayer][faceUpCard.getId()] = true;
-					roundData.get(currentPlayer).add(turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards));
+					short[][] state = turnStateToArray(currentPlayer, faceUpCard, drawCard, discardCard, hands, knownCards);
+					roundData.get(currentPlayer).add(state);
+					print(state);
 					
 					
 					if (playVerbose) {
@@ -303,28 +313,98 @@ public class TurnStatesDataCollector {
 	/**
 	 * Given faceUp card, drawCard, and discarded card, return the corresponding short array
 	 * @param Card objects representing faceUp card, drawCard, discarded card, and the player's hand
-	 * @return the corresponding short[2][52] array
+	 * @return the corresponding short[5][52] array
 	 */	
 	public short[][] turnStateToArray(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
 		int opponent = (currentPlayer == 0) ? 1 : 0;
 		
-		short[][] state = new short[2][52];
-		state[0][faceUpCard.getId()] = (short) ((faceUpCard == drawCard) ? 1 : -1);
-		state[0][discardCard.getId()] = -2;
+		short[][] state = new short[5][52];
+		state[0][discardCard.getId()] = 1;
+		if(faceUpCard != drawCard)
+			state[1][faceUpCard.getId()] = 1;
+		else
+			state[2][faceUpCard.getId()] = 1;
+		
 		for(int id = 0; id < 52; id++) 
 			if(knownCards[opponent][id] && !hands.get(currentPlayer).contains(Card.getCard(id)))
-				state[0][id] = -3;
+				state[3][id] = 1;
 		
 		for(Card card : hands.get(currentPlayer)) 
-			state[1][card.getId()] = 1;
+			state[4][card.getId()] = 1;
 		
 		return state;
 	}
 	
+	
+	
+	
+	public long[] turnStateToBitstring(int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<ArrayList<Card>> hands, boolean[][] knownCards) {
+		int opponent = (currentPlayer == 0) ? 1 : 0;
+		
+		long[] stateBitstring = new long[4];
+		
+		ArrayList<Card> cards = new ArrayList<>();
+		cards.add(faceUpCard);
+		stateBitstring[0] = GinRummyUtil.cardsToBitstring(cards);
+		
+		cards.clear();
+		cards.add(drawCard);
+		stateBitstring[1] = GinRummyUtil.cardsToBitstring(cards);
+		
+		cards.clear();
+		for(Card card : Card.allCards) 
+			if(knownCards[opponent][card.getId()] && !hands.get(currentPlayer).contains(card))
+				cards.add(card);
+		stateBitstring[2] = GinRummyUtil.cardsToBitstring(cards);
+		
+		stateBitstring[3] = GinRummyUtil.cardsToBitstring(hands.get(opponent));
+		
+		return stateBitstring;
+	}
+	
+	
+	public void saveGameBitstring (String filename, ArrayList<ArrayList<ArrayList<ArrayList<long[]>>>> gamePlaysInBitstring) {
+//		
+//		int size0 = gamePlaysInBitstring.size()
+//		for(int i = 0; i < size0; i++) {
+//			int size1 = gamePlaysInBitstring.get(i).size();
+//			for(int j = 0; j < size1; j++) {
+//				int size2 = gamePlaysInBitstring.get(i).get(j).size();
+//				for(int k = 0; k < size2; k++) {
+//					
+//					
+//					
+//					int size3 = gamePlaysInBitstring.get(i).get(j).get(k).size();
+//					for(int l = 0; l < size3; l++) {
+//						
+//					}
+//				}
+//			}
+//		}
+//		
+	}
+	
+	
+	public void print(short[][] state) {
+		System.out.print("Rank");
+		for(int j = 0; j < state.length; j++) {
+			for (int i = 0; i < Card.NUM_RANKS; i++)
+				System.out.print("\t" + Card.rankNames[i]);
+			for (int i = 0; i < Card.NUM_CARDS; i++) {
+				if (i % Card.NUM_RANKS == 0)
+					System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
+				System.out.print("\t");
+			System.out.print(state[j][i]);
+			}
+			System.out.println();
+		}
+	}
+	
+	
 	/**
 	 * Save the gameplays as objects in dat file
 	 */
-	public void saveGameInShort(String filename, ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays) {
+	public void saveGame(String filename, ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays) {
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
 			out.writeObject(gamePlays);
@@ -345,12 +425,15 @@ public class TurnStatesDataCollector {
 	public static void main(String[] args) {
 		
 		TurnStatesDataCollector collector = new TurnStatesDataCollector();
-		int numGameBig = 10;
+		int numGameBig = 25000;
 		for(int i = 0; i < numGameBig; i++) 
 			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
 		
 		long startMs = System.currentTimeMillis();
-		collector.saveGameInShort("play_data_SimplePlayer_10.dat", playData);
+		collector.saveGame("play_data_SimplePlayer.dat", playData);
 		System.out.println(System.currentTimeMillis() - startMs);
+		
+//		collector.playVerbose = true;
+//		collector.play(0, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
 	}
 }

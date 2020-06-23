@@ -1,3 +1,10 @@
+/**
+ * @author Alex Nguyen
+ * Gettysburg College
+ * 
+ * Advisor: Professor Neller.
+ */
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

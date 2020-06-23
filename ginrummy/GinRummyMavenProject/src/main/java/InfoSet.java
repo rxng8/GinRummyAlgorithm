@@ -1,3 +1,9 @@
+/**
+ * @author Alex Nguyen
+ * Gettysburg College
+ * 
+ * Advisor: Professor Neller.
+ */
 
 import java.util.ArrayList;
 

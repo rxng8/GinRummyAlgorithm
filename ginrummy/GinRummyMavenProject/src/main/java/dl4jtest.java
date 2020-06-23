@@ -1,3 +1,9 @@
+/**
+ * @author Alex Nguyen
+ * Gettysburg College
+ * 
+ * Advisor: Professor Neller.
+ */
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;

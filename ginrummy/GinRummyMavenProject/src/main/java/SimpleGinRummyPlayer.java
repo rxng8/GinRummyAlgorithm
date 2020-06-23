@@ -1,7 +1,12 @@
+/**
+ * @author Alex Nguyen
+ * Gettysburg College
+ * 
+ * Advisor: Professor Neller.
+ */
 
 import java.util.ArrayList;
 import java.util.Random;
-
 
 /**
  * Implements a random dummy Gin Rummy player that has the following trivial, poor play policy: 

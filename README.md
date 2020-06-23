@@ -3,11 +3,11 @@
 ## Current Work and Code:
 
 * Please navigate to `/ginrummy/GinRummyMavenProject/HandEstimationModel.java` to see what I'm working on with hand estimation lstm model.
-    * I write this form scratch without any usage of library.
+    * I write this form scratch without any usage of library. I don't want to use any library because I want to deeply understand process of neural networks.
     
     * This model takes an input of observation of the opponent move, and output an estimated opponent hand. (For more information, please navigate to the documentation I have written in the file or navigate to report 5).
 
-    * This file is being finished.
+    * This file is being finished. TODO: Finish the back-propagation process, and prediction algorithms.
 
 -------------
 <!-- 
@@ -49,14 +49,36 @@
 
 ![Model](reference/model.png)
 
-* 
+* The four input collected in the games are feed into the model:
+    * First, each input vector go to a lstm cell that remember the predicted opponent hand in relation with the each input.
 
+    * The output of all lstm cells are then concatenated into a single vector.
+
+    * The vector is then feeded into the feed forward dense network with dynamic layers.
+
+* Custom Loss Function - Augmented Categorical Cross Entropy:
+    
+    * The basics of categorical cross entropy:
+    
+    ![CEloss](/reference/CEloss.png)
+
+    ![CElossMin](/reference/CElossMin.png)
+
+    * The problem of this loss function is that it consider all errors at every classes the same. However, in this particular Gin Rummy case, we only want to estimate each card if we have some clue of them in the input. Say it another way, we can only be able to estimate which card the opponent have in hand if we know the existence of some of the cards.
+
+    * Therefore, to solve this problem, we need to make cards that are relevant to the input cards, and we also want to make unrelated card more trivial.
+
+    * So I suggest having a function called `get_related_importance(input)` which takes in 4 inputs and returns a vector of length 52 representing the importance of our prediction of that card.
+
+    * I also suggest that the formular will be:
+
+    ![customCE](/reference/customCE.png) 
 -------------
 ## Report 4, date: June 17, 2020
 ### 1. Observation Representation (Also available in the file `HESimpleModel` documentation):
 
 * state -3: known card that is not in opponent hand. (Eg. cards on current player hand, card in the discard pile)
-        
+
 * state -2: The opponent does discard the card.
 
 * state -1: The opponent does not care about the card.

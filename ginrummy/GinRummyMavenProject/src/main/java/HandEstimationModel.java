@@ -1024,7 +1024,7 @@ public class HandEstimationModel {
 	 * 
 	 * The above have been coded !!!
 	 * 
-	 * The below not!!
+	 * The below is being finished!!
 	 * 
 	 */
 	

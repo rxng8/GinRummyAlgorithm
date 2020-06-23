@@ -33,7 +33,7 @@
 # Report:
 
 ## Report 5, date: June 23, 2020
-### 1. Turn State Representation of Opponent's action (Also available in the file `HESimpleModel` documentation).
+### 1. Turn State Representation of Opponent's action (Also available in the file `HandEstimationModel` documentation).
 
 * There will be 4 inputs. Each is a vector of length 52 (one-hot encoded).
 

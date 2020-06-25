@@ -5,45 +5,511 @@
  * Advisor: Professor Neller.
  */
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.GravesLSTM;
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+
+
 public class dl4jtest {
-	public static final double LEARNING_RATE = 0.05;
-	public static final int lstmLayerSize = 300;
-	public static final int NB_INPUTS = 86;
+
+	public static final int DISCARD_VEC = 0;
+	public static final int DONT_CARE_VEC = 1;
+	public static final int CARE_VEC = 2;
+	public static final int EXISTED_VEC = 3;
 	
-	public dl4jtest(int numLabelClasses) {
+	public static final int ID_FORGET_GATE = 0;
+	public static final int ID_INPUT_GATE = 1;
+	public static final int ID_CANDIDATE_GATE = 2;
+	public static final int ID_OUTPUT_GATE = 3;
+	
+	public static final int ID_MEMORY_VECTOR = 0;
+	public static final int ID_LSTM_OUT_VECTOR = 1;
+	
+	public static final int CARD_FEATURE = 52;
+	public static final int INPUT_TURN_LEN = 4;
+	
+	/**
+	 * 
+	 */
+	ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays;
+	
+	/**
+	 * one float[][] is one input datum for one turn.
+	 * ArrayList<float[][]> represents sequence of turns.
+	 * ArrayList<ArrayList<float[][]>> represents sequences of matches.
+	 * 
+	 * Future work: Take the data "Game Score" to process, too.
+	 */
+	public ArrayList<ArrayList<float[][]>> X;
+	
+	/**
+	 * one float[][] is one input datum for one turn.
+	 * ArrayList<float[][]> represents sequence of turns.
+	 * ArrayList<ArrayList<float[][]>> represents sequences of matches.
+	 * 
+	 * Future work: Take the data "Game Score" to process, too.
+	 */
+	public ArrayList<ArrayList<float[]>> Y;
+	
+	/**
+	 * Y_hat
+	 */
+	public ArrayList<ArrayList<float[]>> outputs;
+	
+	/**
+	 * Random seed
+	 */
+	public int seed;
+	
+	/**
+	 * Learning rate
+	 */
+	public float lr;
+	
+	/**
+	 * Number of training iterations
+	 */
+	public float n_iter;
+	
+	/**
+	 * Array of length 4 => 4 state vector
+	 */
+	private int[] lstm_neurons;
+	
+	/**
+	 * Array of length dynamic, corresponding to the number of feed forward layers.
+	 */
+	private int[] dense_neurons;
+	
+	/**
+	 * Input dimension
+	 */
+	private int[] input_dim;
+	
+	/**
+	 * 
+	 */
+	private int output_dim;
+	
+	/**
+	 * equal lstm_neurons[i] + input_dim
+	 */
+	private int[] lstm_cell_neurons;
+	
+	/**
+	 * lstm_weights[i].get(j)[q][k] is a coordinate.
+	 * lstm_weights[i].get(j)[q] is a vector of coordinates that map input to one neuron.
+	 * lstm_weights[i].get(j) is a particular kind of matrix that have actual function in an lstm cell.
+	 * 		lstm_weights[0].get(0): weights for forgetting gate. sigmoid(Wf[h_t-1, x_t] + bf)
+	 * 		lstm_weights[0].get(1): weights for input gate. sigmoid(Wi[h_t-1, x_t] + bi)
+	 * 		lstm_weights[0].get(2): weights for candidate gate. tanh(Wc[h_t-1, x_t] + bc)
+	 * 		lstm_weights[0].get(3): weights for output gate. sigmoid(Wo[h_t-1, x_t] + bo)
+	 * lstm_weights[i] is the set of weights of each input
+	 * 		lstm_weights[0] (ArrayList<float[][]>): the opponent discarded this turn
+	 * 		lstm_weights[1] (ArrayList<float[][]>): the opponent does not care about (not picking up from discard pile) this turn.
+	 * 		lstm_weights[2] (ArrayList<float[][]>): the opponent does care and pick up from the discard pile.
+	 * 		lstm_weights[3] (ArrayList<float[][]>): Cards that are on this player's hand and in the discard pile.
+	 */
+	private ArrayList<float[][]>[] lstm_weights;
+	
+	private ArrayList<float[]>[] lstm_bias;
+	
+	private ArrayList<float[][]> dense_weights;
+	
+	private ArrayList<float[]> dense_bias;
+	
+	private boolean VERBOSE;
+	
+	/**
+	 * Initialize a new model
+	 */
+	public dl4jtest () {
+		// Have to call __init__ if model is new.
+		if (this.VERBOSE) {
+			System.out.println("Creating New Model...");
+		}
+	}
+	
+	/**
+	 * Initialize the model with saved file
+	 * @param filename (String): The path the saved model.
+	 */
+	@SuppressWarnings("unchecked")
+	public dl4jtest (String filename) {
+		if (this.VERBOSE) {
+			System.out.println("Importing model...");
+		}
+		try {
+			ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
+			this.lstm_weights = (ArrayList<float[][]>[]) in.readObject();
+			this.lstm_bias = (ArrayList<float[]>[]) in.readObject();
+			this.dense_weights = (ArrayList<float[][]>) in.readObject();
+			this.dense_bias = (ArrayList<float[]>) in.readObject();
+			in.close();
+			
+			if (this.VERBOSE) {
+				System.out.println("Read weights from file " + filename);
+			}
+			
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + filename);
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Save model, in this case, save weights.
+	 * @param filename
+	 */
+	public void save(String weights, String bias) {
+		
+		if (this.VERBOSE) {
+			System.out.println("Saving model...");
+		}
+		
+		try {
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(weights));
+			out.writeObject(this.lstm_weights);
+			out.writeObject(this.lstm_bias);
+			out.writeObject(this.dense_weights);
+			out.writeObject(this.dense_bias);
+			out.close();
+			if (this.VERBOSE) {
+				System.out.println("Written weights to file " + weights);
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + weights);
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (this.VERBOSE) {
+			System.out.println("Model Saved!");
+		}
+	}
+	
+	/**
+	 * Initialize data for a new model, weights
+	 * @param X (float[][]): One batch of input data. A batch of data with size X.length, and data length X[0].length
+	 * @param Y (float[][]): One batch of output data. A batch of data with size Y.length, and data length Y[0].length
+	 * @param seed (int): random seed for processing randomization.
+	 * @param lr (float): learning rate.
+	 * @param n_iter (int): Number of epochs.
+	 */
+	@SuppressWarnings("unchecked")
+	public void __init__(int[] lstm_neurons,
+			int[] dense_neurons,
+			int[] input_dim,
+			int output_dim, 
+			int seed,
+			float lr,
+			int n_iter,
+			boolean new_model) {
+		
+		preprocess_data();
+		
+		assert lstm_neurons.length == INPUT_TURN_LEN : "Number of lstm_neuron must exist in 4 input states";
+		
+		assert input_dim.length == INPUT_TURN_LEN : "Number of lstm_neuron must exist in 4 input states";
+		
+		if (new_model) {
+			// Initialize weights.
+			int total_lstm_neurons = 0;
+			this.lstm_cell_neurons = new int[lstm_neurons.length];
+			this.lstm_weights = (ArrayList<float[][]>[]) new Object[INPUT_TURN_LEN];
+			this.lstm_bias = (ArrayList<float[]>[]) new Object[INPUT_TURN_LEN];
+			for (int i = 0; i < INPUT_TURN_LEN; i++) {
+				int lstm_neurons_this_cell = lstm_neurons[i];
+				lstm_cell_neurons[i] = lstm_neurons[i] + input_dim[i];
+				// Initialize weights
+				float[][] forget_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
+				float[][] input_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
+				float[][] candidate_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
+				float[][] output_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
+				
+				this.lstm_weights[i] = new ArrayList<float[][]>();
+				this.lstm_weights[i].add(forget_weights);
+				this.lstm_weights[i].add(input_weights);
+				this.lstm_weights[i].add(candidate_weights);
+				this.lstm_weights[i].add(output_weights);
+				
+				// Initialize bias
+				float[] forget_bias = new float[lstm_neurons_this_cell];
+				float[] input_bias = new float[lstm_neurons_this_cell];
+				float[] candidate_bias = new float[lstm_neurons_this_cell];
+				float[] output_bias = new float[lstm_neurons_this_cell];
+				
+				this.lstm_bias[i] = new ArrayList<float[]>();
+//				this.lstm_bias[i].add(forget_bias);
+//				this.lstm_bias[i].add(input_bias);
+//				this.lstm_bias[i].add(candidate_bias);
+//				this.lstm_bias[i].add(output_bias);
+				this.lstm_bias[i].set(ID_FORGET_GATE, forget_bias);
+				this.lstm_bias[i].set(ID_INPUT_GATE, input_bias);
+				this.lstm_bias[i].set(ID_CANDIDATE_GATE, candidate_bias);
+				this.lstm_bias[i].set(ID_OUTPUT_GATE, output_bias);
+				
+				total_lstm_neurons += lstm_neurons_this_cell;
+			}
+			
+			// Initialize dense layer.
+			this.dense_weights = new ArrayList<float[][]>();
+			this.dense_bias = new ArrayList<float[]>();
+			
+			// For each layer, initialize with the specified neurons.
+			for (int i = 0; i < dense_neurons.length; i++) {
+				if (i == 0) {
+					float[][] dense_weights_this_layer = new float[dense_neurons[i]][total_lstm_neurons];
+					this.dense_weights.add(dense_weights_this_layer);
+				} else {
+					float[][] dense_weights_this_layer = new float[dense_neurons[i]][dense_neurons[i - 1]];
+					this.dense_weights.add(dense_weights_this_layer);
+				}
+				
+				this.dense_bias.add(new float[dense_neurons[i]]);
+			}
+			
+			float[][] output_weights = new float[output_dim][dense_neurons[dense_neurons.length - 1]];
+			this.dense_weights.add(output_weights);
+			
+			float[] output_bias = new float[output_dim];
+			this.dense_bias.add(output_bias);
+		}
+		
+		// Do every other things
+		this.lstm_neurons = lstm_neurons.clone();
+		this.dense_neurons = dense_neurons.clone();
+		this.input_dim = input_dim.clone();
+		this.output_dim = output_dim;
+		this.seed = seed;
+		this.lr = lr;
+		this.n_iter = n_iter;
+	}
+	
+	/**
+	 * 
+	 * @param filename
+	 */
+	@SuppressWarnings("unchecked")
+	public void __import_data__(String filename) {
+		try {
+			ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
+			this.gamePlays = (ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>>) in.readObject();
+			in.close();
+			if (this.VERBOSE) {
+				System.out.println("Imported data from file " + filename);
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + filename);
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 *  Take the variable gameplays and preprocess to float[][] forms to put in X and Y
+	 * 	ArrayList<ArrayList<ArrayList<ArrayList<short[][]>>>> gamePlays
+	 */
+	@SuppressWarnings("unchecked")
+	private void preprocess_data() {
+		
+		assert this.gamePlays != null : "You have to import the data first using __import_data__ method";
+		
+		if (this.VERBOSE) {
+			System.out.println("Preprocessing data...");
+		}
+		
+		int data_feature = this.gamePlays.get(0).get(0).get(0).get(0)[0].length;
+		assert data_feature == this.gamePlays.get(0).get(0).get(0).get(0)[4].length : "Input and output does not match dimension";
+		
+		Iterator<ArrayList<ArrayList<ArrayList<short[][]>>>> it_games = this.gamePlays.iterator();
+		while(it_games.hasNext()) {
+			Iterator<ArrayList<ArrayList<short[][]>>> it_players = it_games.next().iterator();
+			while (it_players.hasNext()) {
+				Iterator<ArrayList<short[][]>> it_rounds = it_players.next().iterator();
+				while (it_rounds.hasNext()) {
+					Iterator<short[][]> it_turns = it_rounds.next().iterator();
+					ArrayList<float[][]> inputs = new ArrayList<>();
+					ArrayList<float[]> outputs = new ArrayList<>();
+					while (it_turns.hasNext()) {
+						short[][] turnData = it_turns.next();
+						assert turnData.length == INPUT_TURN_LEN + 1 : "Wrong data form! There are 4 input vector, and 1 output vector.";
+						assert turnData[0].length == CARD_FEATURE : "Wrong data form! One card vector must have 52 features";
+						float[][] input = new float[INPUT_TURN_LEN][CARD_FEATURE];
+						float[] output = new float[CARD_FEATURE];
+						for (int j = 0; j < CARD_FEATURE; j++) {
+							input[0][j] = (float) turnData[0][j];
+							input[1][j] = (float) turnData[1][j];
+							input[2][j] = (float) turnData[2][j];
+							input[3][j] = (float) turnData[3][j];
+							output[j] = (float) turnData[4][j];
+						}
+						inputs.add(input);
+						outputs.add(output);
+					}
+					this.X.add(inputs);
+					this.Y.add(outputs);
+				}
+			}
+		}
+	}
+	
+	public ComputationGraph buildModel () {
 		ComputationGraphConfiguration conf = new NeuralNetConfiguration.Builder()
-		    .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-		    .updater(new Sgd(LEARNING_RATE))
-		    .graphBuilder()
-		    .addInputs("trainFeatures")
-		    .setOutputs("predictMortality")
-		    .addLayer("L1", new GravesLSTM.Builder()
-		        .nIn(NB_INPUTS)
-		        .nOut(lstmLayerSize)
-		        .activation(Activation.SOFTSIGN)
-		        .weightInit(WeightInit.DISTRIBUTION)
-		        .build(), "trainFeatures")
-		    .addLayer("predictMortality", new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-		        .activation(Activation.SOFTMAX)
-		        .weightInit(WeightInit.DISTRIBUTION)
-		        .nIn(lstmLayerSize).nOut(numLabelClasses).build(),"L1")
-		    .pretrain(false).backprop(true)
-		    .build();
+			    .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+			    .updater(new Sgd(this.lr))
+			    .graphBuilder()
+			    .addInputs("trainFeatures")
+			    .setOutputs("predictMortality")
+			    .addLayer("L1", new GravesLSTM.Builder()
+			        .nIn(52)
+			        .nOut(300)
+			        .activation(Activation.SOFTSIGN)
+			        .weightInit(WeightInit.DISTRIBUTION)
+			        .build(), "trainFeatures")
+			    .addLayer("predictMortality", new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+			        .activation(Activation.SOFTMAX)
+			        .weightInit(WeightInit.DISTRIBUTION)
+			        .nIn(300).nOut(52).build(),"L1")
+			    .pretrain(false).backprop(true)
+			    .build();
+		return new ComputationGraph(conf);
+	}
+	
+	/**
+	 * Train through all epochs according to n_iter specified in the __init__() method
+	 */
+	public void train () {
+		for (int _ = 0; _ < this.n_iter; _++) {
+//			this.evaluate_step();
+		}
+		if (this.VERBOSE) {
+			System.out.println("Weights: ");
+			print_weights();
+		}
+	}
+	
+	/**
+	 * Predict an input by using its current weights and bias matrix.
+	 * @param input (float[]): input.
+	 * @return (float[]): output.
+	 */
+	public float[] predict (float[] input) {
+		assert input.length == CARD_FEATURE : "Wrong input size";
+		
+//		Object[] result = evaluate_step(input, states)
+		
+		return null;
+	}
+	
+	/**
+	 * 
+	 * Debugging method
+	 * 
+	 */
+	
+	/**
+	 * 
+	 * @param mat
+	 */
+	@SuppressWarnings("unused")
+	private static void print_mat1D (float[] mat) {
+		System.out.print("[");
+		for (int i = 0; i < mat.length; i++) {
+			System.out.print(mat[i] + " ");
+		}
+		System.out.print("]\n");
+	}
+	
+	/**
+	 * 
+	 * @param mat
+	 */
+	@SuppressWarnings("unused")
+	private static void print_mat2D(float[][] mat) {
+		System.out.print("[");
+		for (int i = 0; i < mat.length; i++) {
+			System.out.print("[ ");
+			for (int j = 0; j < mat[i].length; j++) {
+				System.out.print(mat[i][j] + " ");
+			}
+			if (i == mat.length - 1) {
+				System.out.print("]");
+			} else {
+				System.out.print("],\n");
+			}
+		}
+		System.out.print("]\n");
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("unused")
+	private void print_weights () {
+//		System.out.print("Weights 1: \n");
+//		print_mat2D(this.weights1);
+//		System.out.print("Bias1: \n");
+//		print_mat1D(this.bias1);
+//		System.out.print("\nWeights2: \n");
+//		print_mat2D(this.weights2);
+//		System.out.print("Bias2: \n");
+//		print_mat1D(this.bias2);
+//		System.out.println();
+	}
+	
+	@SuppressWarnings("unused")
+	private static void print_mat1D_card(float[] mat, String name) {
+		System.out.println();
+		System.out.println(name + ": ");
+		int a = 0;
+		for (int i = 0; i < mat.length; i++) {
+			// Debugging
+			System.out.printf("%s: %.5f ",Card.getCard(i).toString(), mat[i]);
+			a++;
+			if(a == 13) {
+				a = 0;
+				System.out.println();
+			}
+		}
+		System.out.println();
+	}
+	
+	/**
+	 * 
+	 * @param v
+	 */
+	public void set_verbose(boolean v) {
+		this.VERBOSE = v;
 	}
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		dl4jtest model = new dl4jtest(10);
+		
 	}
 
 }

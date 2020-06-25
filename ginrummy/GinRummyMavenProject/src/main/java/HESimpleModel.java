@@ -246,7 +246,7 @@ public class HESimpleModel {
 	public void __init__(int seed, float lr, int n_iter, boolean new_model) {
 		preprocess_data();
 		if (new_model) {
-			this.weights1 = new float[X[0].length][8];
+			this.weights1 = new float[X[0].length][64];
 			this.bias1 = new float[this.weights1[0].length];
 			this.weights2 = new float[weights1[0].length][Y[0].length];
 			this.bias2 = new float[this.weights2[0].length];
@@ -299,8 +299,9 @@ public class HESimpleModel {
 //				* this.gamePlays.get(0).size()
 //				* this.gamePlays.get(0).get(0).size()
 //				* this.gamePlays.get(0).get(0).get(0).size();
-		int data_feature = this.gamePlays.get(0).get(0).get(0).get(0)[0].length;
-		assert data_feature == this.gamePlays.get(0).get(0).get(0).get(0)[1].length : "Input and output does not match dimension";
+//		int data_feature = this.gamePlays.get(0).get(0).get(0).get(0)[0].length;
+		int data_feature = 52;
+//		assert data_feature == this.gamePlays.get(0).get(0).get(0).get(0)[1].length : "Input and output does not match dimension";
 		
 //		System.out.println("Data size: " + data_size);
 		
@@ -317,7 +318,7 @@ public class HESimpleModel {
 			}
 		}
 		
-		this.X = new float[i][data_feature];
+		this.X = new float[i][data_feature * 4];
 		this.Y = new float[i][data_feature];
 		
 		it_games = this.gamePlays.iterator();
@@ -330,10 +331,13 @@ public class HESimpleModel {
 					Iterator<short[][]> it_turns = it_rounds.next().iterator();
 					while (it_turns.hasNext()) {
 						short[][] turnData = it_turns.next();
-						assert turnData.length == 2 : "Wrong data form!";
+						assert turnData.length == 5 : "Wrong data form!";
 						for (int j = 0; j < turnData[0].length; j++) {
-							X[i][j] = (float) turnData[0][j];
-							Y[i][j] = (float) turnData[1][j];
+							for (int k = 0; k < 4; k++) {
+								X[i][4 * k + j] = (float) turnData[k][j];
+							}
+							
+							Y[i][j] = (float) turnData[4][j];
 						}
 						i++;
 					}
@@ -609,12 +613,12 @@ public class HESimpleModel {
 		// Update weights
 		for (int neuron = 0; neuron < this.weights2[0].length; neuron++) {
 			for (int feature = 0; feature < this.weights2.length; feature++) {
-				this.weights2[feature][neuron] += dW2[feature][neuron];
+				this.weights2[feature][neuron] -= dW2[feature][neuron];
 			}
 		}
 		for (int neuron = 0; neuron < this.weights1[0].length; neuron++) {
 			for (int feature = 0; feature < this.weights1.length; feature++) {
-				this.weights1[feature][neuron] += dW1[feature][neuron];
+				this.weights1[feature][neuron] -= dW1[feature][neuron];
 			}
 		}
 		
@@ -745,7 +749,7 @@ public class HESimpleModel {
 		System.out.println();
 		System.out.println(name + ": ");
 		int a = 0;
-		for (int i = 0; i < mat.length; i++) {
+		for (int i = 0; i < 52; i++) {
 			// Debugging
 			System.out.printf("%s: %.5f ",Card.getCard(i).toString(), mat[i]);
 			a++;
@@ -815,8 +819,8 @@ public class HESimpleModel {
 		 * Test new actual model with actual data
 		 */
 		HESimpleModel model = new HESimpleModel();
-		model.__import_data__("play_data_SimplePlayer_10.dat");
-		model.__init__(10, 10e-3f, 5, true);
+		model.__import_data__("play_data_SimplePlayer.dat");
+		model.__init__(10, 10e-3f, 3, true);
 		model.train();
 		model.save("weights_100.dat", "bias_100.dat");
 		
@@ -845,7 +849,7 @@ public class HESimpleModel {
 		float total_loss = 0;
 		for (int data_th = start; data_th < end; data_th ++) {
 			System.out.println("Let's Predict!");
-			HESimpleModel.print_mat1D_card(model.X[data_th], "Input to be predicted");
+//			HESimpleModel.print_mat1D_card(model.X[data_th], "Input to be predicted");
 			float[] y_pred = model.predict(model.X[data_th]);
 			HESimpleModel.print_mat1D_card(y_pred, "Predicted");
 			HESimpleModel.print_mat1D_card(model.Y[data_th], "Actual Data");

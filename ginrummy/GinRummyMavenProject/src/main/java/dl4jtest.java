@@ -20,8 +20,14 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.GravesLSTM;
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.io.ClassPathResource;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
@@ -190,10 +196,6 @@ public class dl4jtest {
 		
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(weights));
-			out.writeObject(this.lstm_weights);
-			out.writeObject(this.lstm_bias);
-			out.writeObject(this.dense_weights);
-			out.writeObject(this.dense_bias);
 			out.close();
 			if (this.VERBOSE) {
 				System.out.println("Written weights to file " + weights);
@@ -219,90 +221,14 @@ public class dl4jtest {
 	 * @param n_iter (int): Number of epochs.
 	 */
 	@SuppressWarnings("unchecked")
-	public void __init__(int[] lstm_neurons,
-			int[] dense_neurons,
-			int[] input_dim,
-			int output_dim, 
+	public void __init__(
 			int seed,
 			float lr,
-			int n_iter,
-			boolean new_model) {
-		
+			int n_iter) {
+		this.X = new ArrayList<>();
+		this.Y = new ArrayList<>();
 		preprocess_data();
-		
-		assert lstm_neurons.length == INPUT_TURN_LEN : "Number of lstm_neuron must exist in 4 input states";
-		
-		assert input_dim.length == INPUT_TURN_LEN : "Number of lstm_neuron must exist in 4 input states";
-		
-		if (new_model) {
-			// Initialize weights.
-			int total_lstm_neurons = 0;
-			this.lstm_cell_neurons = new int[lstm_neurons.length];
-			this.lstm_weights = (ArrayList<float[][]>[]) new Object[INPUT_TURN_LEN];
-			this.lstm_bias = (ArrayList<float[]>[]) new Object[INPUT_TURN_LEN];
-			for (int i = 0; i < INPUT_TURN_LEN; i++) {
-				int lstm_neurons_this_cell = lstm_neurons[i];
-				lstm_cell_neurons[i] = lstm_neurons[i] + input_dim[i];
-				// Initialize weights
-				float[][] forget_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
-				float[][] input_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
-				float[][] candidate_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
-				float[][] output_weights = new float[lstm_neurons_this_cell][lstm_cell_neurons[i]];
-				
-				this.lstm_weights[i] = new ArrayList<float[][]>();
-				this.lstm_weights[i].add(forget_weights);
-				this.lstm_weights[i].add(input_weights);
-				this.lstm_weights[i].add(candidate_weights);
-				this.lstm_weights[i].add(output_weights);
-				
-				// Initialize bias
-				float[] forget_bias = new float[lstm_neurons_this_cell];
-				float[] input_bias = new float[lstm_neurons_this_cell];
-				float[] candidate_bias = new float[lstm_neurons_this_cell];
-				float[] output_bias = new float[lstm_neurons_this_cell];
-				
-				this.lstm_bias[i] = new ArrayList<float[]>();
-//				this.lstm_bias[i].add(forget_bias);
-//				this.lstm_bias[i].add(input_bias);
-//				this.lstm_bias[i].add(candidate_bias);
-//				this.lstm_bias[i].add(output_bias);
-				this.lstm_bias[i].set(ID_FORGET_GATE, forget_bias);
-				this.lstm_bias[i].set(ID_INPUT_GATE, input_bias);
-				this.lstm_bias[i].set(ID_CANDIDATE_GATE, candidate_bias);
-				this.lstm_bias[i].set(ID_OUTPUT_GATE, output_bias);
-				
-				total_lstm_neurons += lstm_neurons_this_cell;
-			}
-			
-			// Initialize dense layer.
-			this.dense_weights = new ArrayList<float[][]>();
-			this.dense_bias = new ArrayList<float[]>();
-			
-			// For each layer, initialize with the specified neurons.
-			for (int i = 0; i < dense_neurons.length; i++) {
-				if (i == 0) {
-					float[][] dense_weights_this_layer = new float[dense_neurons[i]][total_lstm_neurons];
-					this.dense_weights.add(dense_weights_this_layer);
-				} else {
-					float[][] dense_weights_this_layer = new float[dense_neurons[i]][dense_neurons[i - 1]];
-					this.dense_weights.add(dense_weights_this_layer);
-				}
-				
-				this.dense_bias.add(new float[dense_neurons[i]]);
-			}
-			
-			float[][] output_weights = new float[output_dim][dense_neurons[dense_neurons.length - 1]];
-			this.dense_weights.add(output_weights);
-			
-			float[] output_bias = new float[output_dim];
-			this.dense_bias.add(output_bias);
-		}
-		
-		// Do every other things
-		this.lstm_neurons = lstm_neurons.clone();
-		this.dense_neurons = dense_neurons.clone();
-		this.input_dim = input_dim.clone();
-		this.output_dim = output_dim;
+
 		this.seed = seed;
 		this.lr = lr;
 		this.n_iter = n_iter;
@@ -509,7 +435,85 @@ public class dl4jtest {
 	}
 	
 	public static void main(String[] args) {
+		dl4jtest obj = new dl4jtest();
+		obj.__import_data__("play_data_SimplePlayer.dat");
+		obj.__init__(10, 1e-3f, 10);
 		
+		int max_match = obj.X.size();
+		
+		int match_from = 390;
+		int match_to = 400;
+		assert match_from < match_to : "Duhhhh!!";
+		int length = match_to - match_from;
+		assert match_to < max_match : "Invalid ending match index!";
+	
+		try {
+			String modelJson = new ClassPathResource("model/lstm_100_200epoch_config.json").getFile().getPath();
+//			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
+			
+			String modelWeights = new ClassPathResource("model/lstm_100_200epoch_weights.h5").getFile().getPath();
+			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
+			
+			
+			for (int match = 0; match < length; match++) {
+				
+				System.out.println("Match " + (match + match_from));
+				
+				ArrayList<float[][]> xdatum = obj.X.get(match_from + match);
+				ArrayList<float[]> ydatum = obj.Y.get(match_from + match);
+				
+				int n_turns = xdatum.size();
+				
+				float[] dx0 = new float[n_turns * 52];
+				float[] dx1 = new float[n_turns * 52];
+				float[] dx2 = new float[n_turns * 52];
+				float[] dx3 = new float[n_turns * 52];
+				float[][] dy = new float[n_turns][52];
+				
+				for (int turn = 0; turn < n_turns; turn++) {
+					for (int feature = 0; feature < 52; feature ++) {
+						dx0[feature + turn * 52] = xdatum.get(turn)[0][feature];
+						dx1[feature + turn * 52] = xdatum.get(turn)[1][feature];
+						dx2[feature + turn * 52] = xdatum.get(turn)[2][feature];
+						dx3[feature + turn * 52] = xdatum.get(turn)[3][feature];
+					}
+					dy[turn] = ydatum.get(turn).clone();
+				}
+				
+				
+				// Debug
+//				System.out.println(x0.toString());
+//				Iterator<float[][]> it = obj.X.get(390).iterator();
+//				while(it.hasNext()) {
+//					float[] features = it.next()[0];
+//					print_mat1D_card(features, "test");
+//				}
+				
+				INDArray x0 = Nd4j.create(dx0, new int[] {n_turns, 52}, 'c');
+				INDArray x1 = Nd4j.create(dx1, new int[] {n_turns, 52}, 'c');
+				INDArray x2 = Nd4j.create(dx2, new int[] {n_turns, 52}, 'c');
+				INDArray x3 = Nd4j.create(dx3, new int[] {n_turns, 52}, 'c');
+
+				INDArray[] X = {x0, x1, x2, x3};
+				
+				INDArray[] y_pred_ind = network.output(X);
+				float[][] y_pred = y_pred_ind[0].toFloatMatrix();
+				for (int turn = 0; turn < y_pred.length; turn++) {
+					System.out.println("Turn " + turn);
+					print_mat1D_card(y_pred[turn], "Predicted");
+					print_mat1D_card(dy[turn], "Actual");
+				}
+								
+			}
+			
+
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException | InvalidKerasConfigurationException | UnsupportedKerasConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

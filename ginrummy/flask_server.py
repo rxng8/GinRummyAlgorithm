@@ -25,13 +25,13 @@ def auc(y_true, y_pred):
 model = load_model('./simple_training.h5')
 
 # define a predict function as an endpoint 
-@app.route("/predict", methods=["GET","POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     data = {"success": False}
 
     params = flask.request.json
     if (params == None):
-        params = flask.request.args
+        raise KeyError()
 
     # if parameters are found, return a prediction
     if (params != None):

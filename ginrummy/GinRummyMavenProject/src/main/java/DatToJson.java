@@ -145,8 +145,9 @@ public class DatToJson {
 	}
 	
 	public static void writeFile (JSONObject json) {
+		
 		try {
-	         FileWriter file = new FileWriter("output.json");
+	         FileWriter file = new FileWriter("output_500.json");
 	         file.write(json.toString());
 	         file.close();
 	      } catch (IOException e) {
@@ -161,7 +162,7 @@ public class DatToJson {
 		fileWriter.__import_data__("play_data_SimplePlayer.dat");
 		fileWriter.preprocess_data();
 		
-		System.out.println(fileWriter.X.get(2).get(2)[2][3]);
+//		System.out.println(fileWriter.X.get(2).get(2)[2][3]);
 		
 		JSONObject json = fileWriter.toJSON();
 		DatToJson.writeFile(json);

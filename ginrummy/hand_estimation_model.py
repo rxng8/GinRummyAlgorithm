@@ -299,61 +299,24 @@ def pad_data (x, max_length):
 x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_100.json")
 n_match = len(x0)
 
-# %%
-max_length = get_max_length(x0[3: 30])
-x_train_1 = pad_data(x0[3: 30], max_length)
 
-# %%
-
-x_train_1[0] = np.reshape(x_train_1[0], (1, *x_train_1[0].shape))
-x_train_1[0].shape 
-# %%
-
-x_train_1 = np.array(x_train_1, shape=(27, max_length, x_train_1[0].shape[1]))
-
-# %%
-
-# 
-# max_length = -1
-# for match in x0:
-#     if match.shape[0] > max_length:
-#         max_length = match.shape[0]
-# 
-# x0 = pad_data(x0, max_length)
-# x1 = pad_data(x1, max_length)
-# x2 = pad_data(x2, max_length)
-# x3 = pad_data(x3, max_length)
-# y = pad_data(y, max_length)
-#
 # %%
 model = lstm_model()
 
 # %%
 
-len(y)
-
-
-# %%
-
 # model.fit(x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], epochs=1, verbose=1)
 
-model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match, 3), steps_per_epoch=50, epochs=10,verbose=1)
-
-
-
+model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match, 3), steps_per_epoch=n_match - 1, epochs=100,verbose=1)
 
 
 
 # %%
 
-model.save('simple_training.h5')
-
-# %%
-
-model.save('full_model.h5')  # save everything in HDF5 format
+model.save('lstm_model_100.h5')  # save everything in HDF5 format
 
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("model_config.json", "w") as f:
+with open("lstm_model_100_config.json", "w") as f:
     f.write(model_json)
 
-model.save_weights('model_weights.h5') # save just the weights.
+model.save_weights('lstm_model_100_weights.h5') # save just the weights.

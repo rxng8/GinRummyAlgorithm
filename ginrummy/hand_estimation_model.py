@@ -235,24 +235,24 @@ def dense_model():
 def lstm_model (input_max_length=None, config=None):
     
     input_op_pick = Input(shape=(input_max_length, 52), name="op_pick")
-    op_pick_lstm = LSTM(64, return_sequences=False, return_state=False) (input_op_pick)
+    op_pick_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
 
     input_op_unpick = Input(shape=(input_max_length, 52), name="op_unpick")
-    op_unpick_lstm = LSTM(64, return_sequences=False, return_state=False) (input_op_unpick)
+    op_unpick_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_unpick)
 
     input_op_discard = Input(shape=(input_max_length, 52), name="op_discard")
-    op_discard_lstm = LSTM(64, return_sequences=False, return_state=False) (input_op_discard)
+    op_discard_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
 
     input_uncards = Input(shape=(input_max_length, 52), name="uncards")
-    uncards_lstm = LSTM(64, return_sequences=False, return_state=False) (input_uncards)
+    uncards_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
 
     features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm, uncards_lstm])
 
-    features = Dense(512, activation=relu) (features)
+    features = Dense(512, activation=relu, kernel_initializer='random_normal') (features)
 
-    features = Dense(128, activation=relu) (features)
+    features = Dense(128, activation=relu, kernel_initializer='random_normal') (features)
 
-    output = Dense(52, activation=sigmoid) (features)
+    output = Dense(52, activation=sigmoid, kernel_initializer='random_normal') (features)
 
     model = Model(inputs=[input_op_pick, input_op_unpick, input_op_discard, input_uncards], outputs=output)
 
@@ -313,10 +313,48 @@ model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match, 3), steps_per_epoc
 
 # %%
 
-model.save('lstm_model_100.h5')  # save everything in HDF5 format
+model.save('lstm_100_200epoch.h5')  # save everything in HDF5 format
+# %%
 
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("lstm_model_100_config.json", "w") as f:
+with open("lstm_100_200epoch_config.json", "w") as f:
     f.write(model_json)
 
-model.save_weights('lstm_model_100_weights.h5') # save just the weights.
+# %%
+model.save_weights('lstm_100_200epoch_weights.h5') # save just the weights.
+
+# %%
+
+############################################# Predict
+
+# Make prediction data
+def make_predict_data():
+    pass
+
+r = 0
+
+ax0 = np.reshape(x0[r], (1, *x0[r].shape))
+ax1 = np.reshape(x1[r], (1, *x1[r].shape))
+ax2 = np.reshape(x2[r], (1, *x2[r].shape))
+ax3 = np.reshape(x3[r], (1, *x3[r].shape))
+
+y = np.reshape(y[r], (1, *y[r].shape))
+
+# %%
+
+ax0.shape
+
+# %%
+
+
+y_hat = model.predict([ax0[:,:3,:], ax1[:,:3,:], ax2[:,:3,:], ax3[:,:3,:]])
+# %%
+y_hat
+# %%
+
+y[0][4]
+
+# %%
+
+ax.shape
+

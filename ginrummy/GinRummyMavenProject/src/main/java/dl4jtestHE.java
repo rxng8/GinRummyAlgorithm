@@ -14,10 +14,12 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.io.ClassPathResource;
@@ -410,18 +412,45 @@ public class dl4jtestHE {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String simpleMlp;
+		
+		dl4jtestHE obj = new dl4jtestHE();
+		obj.__import_data__("play_data_SimplePlayer.dat");
+		obj.__init__(10, 1e-3f, 10, true);
+		
+		int from = 390;
+		int to = 400;
+		float[][] testX = new float[to - from][obj.X[0].length];
+		for (int i = 0; i < to - from; i++) {
+			for (int j = 0; j < obj.X[i].length; j++) {
+				testX[i][j] = obj.X[i][j];
+			}
+		}
+		
+		float[][] testY = new float[to - from][obj.Y[0].length];
+		for (int i = 0; i < to - from; i++) {
+			for (int j = 0; j < obj.Y[i].length; j++) {
+				testY[i][j] = obj.Y[i][j];
+			}
+		}
+		
 		try {
-			String fullModel = new ClassPathResource("simple_training.h5").getFile().getPath();
-			ComputationGraph model = KerasModelImport.importKerasModelAndWeights(fullModel);
-			// make a random sample
-			int inputs = 10;
-			INDArray features = Nd4j.zeros(inputs);
-			for (int i=0; i<inputs; i++) 
-			    features.putScalar(new int[] {i}, Math.random() < 0.5 ? 0 : 1);
-			// get the prediction
-//			double prediction = model.output(features).getDouble(0);
+			String modelJson = new ClassPathResource("model/model_config.json").getFile().getPath();
+//			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
+			String modelWeights = new ClassPathResource("model/model_weights.h5").getFile().getPath();
+			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
+			
+			
+			
+			for (int i = 0; i < to - from; i++) {
+				System.out.println("Predict: ");
+//				print_mat1D_card(testX[i], "Input");
+				INDArray X = Nd4j.create(testX[i]);
+				INDArray[] predicted = network.output(X);
+				print_mat1D_card(predicted[0].toFloatVector(), "Predicted");
+				print_mat1D_card(testY[i], "Actual");
+				
+			}
 			
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block

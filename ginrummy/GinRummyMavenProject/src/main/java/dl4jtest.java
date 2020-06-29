@@ -448,10 +448,11 @@ public class dl4jtest {
 		assert match_to < max_match : "Invalid ending match index!";
 	
 		try {
-			String modelJson = new ClassPathResource("model/lstm_100_200epoch_config.json").getFile().getPath();
+			String file_name = "test";
+			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
-			String modelWeights = new ClassPathResource("model/lstm_100_200epoch_weights.h5").getFile().getPath();
+			String modelWeights = new ClassPathResource("./model/" + file_name + "_weights.h5").getFile().getPath();
 			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
 			
 			
@@ -480,7 +481,7 @@ public class dl4jtest {
 					dy[turn] = ydatum.get(turn).clone();
 				}
 				
-				
+				System.out.println("Get here");
 				// Debug
 //				System.out.println(x0.toString());
 //				Iterator<float[][]> it = obj.X.get(390).iterator();
@@ -489,20 +490,20 @@ public class dl4jtest {
 //					print_mat1D_card(features, "test");
 //				}
 				
-				INDArray x0 = Nd4j.create(dx0, new int[] {n_turns, 52}, 'c');
-				INDArray x1 = Nd4j.create(dx1, new int[] {n_turns, 52}, 'c');
-				INDArray x2 = Nd4j.create(dx2, new int[] {n_turns, 52}, 'c');
-				INDArray x3 = Nd4j.create(dx3, new int[] {n_turns, 52}, 'c');
-
-				INDArray[] X = {x0, x1, x2, x3};
-				
-				INDArray[] y_pred_ind = network.output(X);
-				float[][] y_pred = y_pred_ind[0].toFloatMatrix();
-				for (int turn = 0; turn < y_pred.length; turn++) {
-					System.out.println("Turn " + turn);
-					print_mat1D_card(y_pred[turn], "Predicted");
-					print_mat1D_card(dy[turn], "Actual");
-				}
+//				INDArray x0 = Nd4j.create(dx0, new int[] {n_turns, 52}, 'c');
+//				INDArray x1 = Nd4j.create(dx1, new int[] {n_turns, 52}, 'c');
+//				INDArray x2 = Nd4j.create(dx2, new int[] {n_turns, 52}, 'c');
+//				INDArray x3 = Nd4j.create(dx3, new int[] {n_turns, 52}, 'c');
+//
+//				INDArray[] X = {x0, x1, x2, x3};
+//				
+//				INDArray[] y_pred_ind = network.output(X);
+//				float[][] y_pred = y_pred_ind[0].toFloatMatrix();
+//				for (int turn = 0; turn < y_pred.length; turn++) {
+//					System.out.println("Turn " + turn);
+//					print_mat1D_card(y_pred[turn], "Predicted");
+//					print_mat1D_card(dy[turn], "Actual");
+//				}
 								
 			}
 			

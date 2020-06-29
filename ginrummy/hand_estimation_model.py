@@ -19,6 +19,8 @@ from keras.optimizers import Adam
 
 from keras.preprocessing.sequence import pad_sequences
 
+import pickle
+
 
 # %%
 
@@ -232,7 +234,7 @@ def dense_model():
 
     return model
 
-def lstm_model (input_max_length=None, config=None):
+def lstm_model_simple (input_max_length=None, config=None):
     
     input_op_pick = Input(shape=(input_max_length, 52), name="op_pick")
     op_pick_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
@@ -243,28 +245,101 @@ def lstm_model (input_max_length=None, config=None):
     input_op_discard = Input(shape=(input_max_length, 52), name="op_discard")
     op_discard_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
 
+    features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm])
+
     input_uncards = Input(shape=(input_max_length, 52), name="uncards")
     uncards_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
 
-    features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm, uncards_lstm])
+    features = Concatenate(axis=1)([features, uncards_lstm])
 
-    features = Dense(512, activation=relu, kernel_initializer='random_normal') (features)
+    features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
 
-    features = Dense(128, activation=relu, kernel_initializer='random_normal') (features)
-
-    output = Dense(52, activation=sigmoid, kernel_initializer='random_normal') (features)
+    output = Dense(52, activation='sigmoid', kernel_initializer='random_normal') (features)
 
     model = Model(inputs=[input_op_pick, input_op_unpick, input_op_discard, input_uncards], outputs=output)
 
-    model.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
+    # adam = Adam(learning_rate=0.01)
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
 
     return model
 
-def one_generator(x0, x1, x2, x3, y, n_match, r):
+def lstm_model (input_max_length=None, config=None):
+    
+    input_op_pick = Input(shape=(input_max_length, 52), name="op_pick")
+    op_pick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
+
+    input_op_unpick = Input(shape=(input_max_length, 52), name="op_unpick")
+    op_unpick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_unpick)
+
+    input_op_discard = Input(shape=(input_max_length, 52), name="op_discard")
+    op_discard_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
+
+    input_uncards = Input(shape=(input_max_length, 52), name="uncards")
+    uncards_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
+
+    features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm, uncards_lstm])
+
+    features = Dense(768, activation=relu, kernel_initializer='random_normal') (features)
+
+    features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
+
+    features = Dense(64, activation=relu, kernel_initializer='random_normal') (features)
+
+    output = Dense(52, activation='sigmoid', kernel_initializer='random_normal') (features)
+
+    model = Model(inputs=[input_op_pick, input_op_unpick, input_op_discard, input_uncards], outputs=output)
+
+    # adam = Adam(learning_rate=0.01)
+
+    model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.summary()
+
+    return model
+
+def lstm_model_2 (input_max_length=None, config=None):
+    
+    input_op_pick = Input(shape=(input_max_length, 52), name="op_pick")
+    op_pick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
+
+    input_op_unpick = Input(shape=(input_max_length, 52), name="op_unpick")
+    op_unpick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_unpick)
+
+    input_op_discard = Input(shape=(input_max_length, 52), name="op_discard")
+    op_discard_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
+
+    features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm])
+
+    input_uncards = Input(shape=(input_max_length, 52), name="uncards")
+    uncards_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
+
+    features = Concatenate(axis=1)([features, uncards_lstm])
+
+    features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
+
+    # features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
+
+    # features = Dense(64, activation=relu, kernel_initializer='random_normal') (features)
+
+    output = Dense(52, activation='sigmoid', kernel_initializer='random_normal') (features)
+
+    model = Model(inputs=[input_op_pick, input_op_unpick, input_op_discard, input_uncards], outputs=output)
+
+    # adam = Adam(learning_rate=0.01)
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.summary()
+
+    return model
+
+def one_generator(x0, x1, x2, x3, y, n_match, seed=1):
+    
+    r = 0
+    
     while True:
 
-        r = np.random.randint(0, n_match - 1)
+        r = r % n_match
 
         x_train_1 = np.reshape(x0[r], (1, x0[r].shape[0], x0[r].shape[1]))
         x_train_2 = np.reshape(x1[r], (1, x1[r].shape[0], x1[r].shape[1]))
@@ -273,7 +348,8 @@ def one_generator(x0, x1, x2, x3, y, n_match, r):
 
         # Fix error in data
         if x_train_1.shape[1] == 0:
-          continue
+            r += seed
+            continue
 
         y_train = np.reshape(y[r][y[r].shape[0] - 1], (1, y[r].shape[1]))
 
@@ -282,7 +358,7 @@ def one_generator(x0, x1, x2, x3, y, n_match, r):
         assert x_train_3.shape == x_train_4.shape, "wrong data form"
 
         # assert x_train_1.shape == y_train.shape, "so wrong data form"
-
+        r += seed
         yield [x_train_1, x_train_2, x_train_3, x_train_4], y_train
 
 def pad_data (x, max_length):
@@ -293,35 +369,47 @@ def pad_data (x, max_length):
             y[i] = np.append(y[i], zeros, axis=0)
 
     return y
-            
+
 
 # %%
-x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_100.json")
+x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_200.json")
 n_match = len(x0)
-
-
+# %%
+model = lstm_model_simple()
 # %%
 model = lstm_model()
 
 # %%
 
+model = lstm_model_2()
+
+# %%
+
 # model.fit(x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], epochs=1, verbose=1)
 
-model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match, 3), steps_per_epoch=n_match - 1, epochs=100,verbose=1)
+history = model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match), steps_per_epoch=n_match, epochs=100,verbose=1)
 
+filename = 'lstm_simple_200_100epoch'
+
+with open('./history/' + filename + '_history.pkl', 'ab') as file_pi:
+    pickle.dump(history.history, file_pi)
 
 
 # %%
 
-model.save('lstm_100_200epoch.h5')  # save everything in HDF5 format
+np.save('./history/cdsc.npy', history.history)
+
+# %%
+
+model.save('lstm_200_150epoch.h5')  # save everything in HDF5 format
 # %%
 
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("lstm_100_200epoch_config.json", "w") as f:
+with open("lstm_200_150epoch_config.json", "w") as f:
     f.write(model_json)
 
 # %%
-model.save_weights('lstm_100_200epoch_weights.h5') # save just the weights.
+model.save_weights('lstm_200_150epoch_weights.h5') # save just the weights.
 
 # %%
 
@@ -331,30 +419,82 @@ model.save_weights('lstm_100_200epoch_weights.h5') # save just the weights.
 def make_predict_data():
     pass
 
-r = 0
+r = 2
 
 ax0 = np.reshape(x0[r], (1, *x0[r].shape))
 ax1 = np.reshape(x1[r], (1, *x1[r].shape))
 ax2 = np.reshape(x2[r], (1, *x2[r].shape))
 ax3 = np.reshape(x3[r], (1, *x3[r].shape))
 
-y = np.reshape(y[r], (1, *y[r].shape))
+ay = np.reshape(y[r], (1, *y[r].shape))
 
 # %%
 
 ax0.shape
 
+
+# %%
+
+len(y)
+
 # %%
 
 
-y_hat = model.predict([ax0[:,:3,:], ax1[:,:3,:], ax2[:,:3,:], ax3[:,:3,:]])
+y_hat = model.predict([ax0[:,:5,:], ax1[:,:5,:], ax2[:,:5,:], ax3[:,:5,:]])
 # %%
 y_hat
-# %%
 
-y[0][4]
 
 # %%
 
-ax.shape
+ay[0][4]
 
+# %%
+
+dot_img_file = '/tmp/model_1.png'
+import keras
+
+keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
+
+# %%
+import matplotlib.pyplot as plt
+# summarize history for accuracy
+plt.plot(model.history.history['accuracy'])
+# plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+# %%
+
+# summarize history for loss
+plt.plot(model.history.history['loss'])
+# plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+# %%
+filename = "test"
+model.save(filename + ".h5")  # save everything in HDF5 format
+
+model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
+with open(filename + "_config.json", "w") as f:
+    f.write(model_json)
+
+model.save_weights(filename + "_weights.h5") # save just the weights.
+
+
+# %%
+
+
+from tensorflow import keras
+model = keras.models.load_model('./GinRummyMavenProject/src/main/java/model/lstm_200_150epoch.h5')
+
+# %%
+
+model.summary

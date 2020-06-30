@@ -247,12 +247,18 @@ def lstm_model_simple (input_max_length=None, config=None):
 
     features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm])
 
+    features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
+
     input_uncards = Input(shape=(input_max_length, 52), name="uncards")
     uncards_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
 
-    features = Concatenate(axis=1)([features, uncards_lstm])
+    uncards_dense = Dense(96, activation=relu, kernel_initializer='random_normal') (uncards_lstm)
 
-    features = Dense(256, activation=relu, kernel_initializer='random_normal') (features)
+    features = Concatenate(axis=1)([features, uncards_dense])
+
+    features = Dense(512, activation=relu, kernel_initializer='random_normal') (features)
+
+    features = Dense(128, activation=relu, kernel_initializer='random_normal') (features)
 
     output = Dense(52, activation='sigmoid', kernel_initializer='random_normal') (features)
 
@@ -301,18 +307,18 @@ def lstm_model (input_max_length=None, config=None):
 def lstm_model_2 (input_max_length=None, config=None):
     
     input_op_pick = Input(shape=(input_max_length, 52), name="op_pick")
-    op_pick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
+    op_pick_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_pick)
 
     input_op_unpick = Input(shape=(input_max_length, 52), name="op_unpick")
-    op_unpick_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_unpick)
+    op_unpick_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_unpick)
 
     input_op_discard = Input(shape=(input_max_length, 52), name="op_discard")
-    op_discard_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
+    op_discard_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_op_discard)
 
     features = Concatenate(axis=1)([op_pick_lstm, op_unpick_lstm, op_discard_lstm])
 
     input_uncards = Input(shape=(input_max_length, 52), name="uncards")
-    uncards_lstm = LSTM(128, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
+    uncards_lstm = LSTM(64, return_sequences=False, return_state=False, kernel_initializer='random_normal') (input_uncards)
 
     features = Concatenate(axis=1)([features, uncards_lstm])
 
@@ -375,41 +381,59 @@ def pad_data (x, max_length):
 x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_200.json")
 n_match = len(x0)
 # %%
-model = lstm_model_simple()
-# %%
-model = lstm_model()
 
-# %%
+# model = lstm_model_simple()
 
+# model = lstm_model()
 model = lstm_model_2()
 
 # %%
 
 # model.fit(x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], epochs=1, verbose=1)
 
-history = model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match), steps_per_epoch=n_match, epochs=100,verbose=1)
+history = model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match), steps_per_epoch=n_match, epochs=50,verbose=1)
 
-filename = 'lstm_simple_200_100epoch'
+# %%
+
+filename = 'lstm_simple_200'
 
 with open('./history/' + filename + '_history.pkl', 'ab') as file_pi:
     pickle.dump(history.history, file_pi)
 
+# np.save('./history/cdsc.npy', history.history)
 
 # %%
 
-np.save('./history/cdsc.npy', history.history)
+with open('./history/' + filename + '_history.pkl', 'rb') as file_pi:
+    history = pickle.load(file_pi)
+
+# %%
+import matplotlib.pyplot as plt
+# summarize history for accuracy
+plt.plot(history['accuracy'])
+# plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+# summarize history for loss
+plt.plot(history['loss'])
+# plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
 
 # %%
 
-model.save('lstm_200_150epoch.h5')  # save everything in HDF5 format
-# %%
-
+model.save('lstm_200_200epoch.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("lstm_200_150epoch_config.json", "w") as f:
+with open("lstm_200_200epoch_config.json", "w") as f:
     f.write(model_json)
-
-# %%
-model.save_weights('lstm_200_150epoch_weights.h5') # save just the weights.
+model.save_weights('lstm_200_200epoch_weights.h5') # save just the weights.
 
 # %%
 
@@ -428,14 +452,9 @@ ax3 = np.reshape(x3[r], (1, *x3[r].shape))
 
 ay = np.reshape(y[r], (1, *y[r].shape))
 
-# %%
 
-ax0.shape
-
-
-# %%
-
-len(y)
+# ax0.shape
+# len(y)
 
 # %%
 
@@ -448,13 +467,6 @@ y_hat
 # %%
 
 ay[0][4]
-
-# %%
-
-dot_img_file = '/tmp/model_1.png'
-import keras
-
-keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
 
 # %%
 import matplotlib.pyplot as plt
@@ -477,6 +489,7 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.show()
+
 
 # %%
 filename = "test"

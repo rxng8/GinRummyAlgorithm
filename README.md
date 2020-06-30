@@ -2,6 +2,19 @@
 
 ## Current Work and Code:
 
+* Please navigate to `/ginrummy/hand_estimation_model.ipynb` to see what I'm working on with hand estimation lstm model.
+    * I trained lstm model with 4 inputs in different versions. All of them achieve an accuracy of about 78%. The model has been estimating mostly accurate opponent hands with just some noise here and there.
+    
+    * LSTM model trained ~2000 matches, 100 epochs, achieve an accuracy of 76%.
+
+    * LSTM model trained ~4000 matches, 150 epochs, achieve an accuracy of 78%.
+
+    * TODO: For future implementation, research more on bias on cards that are in meld with opponent action as another non-lstm input!
+
+-------------
+<!-- 
+## Past Work and Code:
+
 * Please navigate to `/ginrummy/GinRummyMavenProject/HandEstimationModel.java` to see what I'm working on with hand estimation lstm model.
     * I write this from scratch without any usage of library. I don't want to use any library because I want to deeply understand process of neural networks.
     
@@ -9,9 +22,6 @@
 
     * This file is being finished. TODO: Finish the back-propagation process, and prediction algorithms.
 
--------------
-<!-- 
-## Past Work and Code:
 
 * Please navigate to `/ginrummy/GinRummyEAAIorigin/GinRummyEAAI/CFRPlayer.java` to see what I'm working on.
     * This player use simple probability estimation algorithm stated from `week 2 report` including opponent hand estimation by Bayes Theorem. And Flipping and Masking to map that estimation to strategy.
@@ -31,6 +41,34 @@
 --------------- -->
 
 # Report:
+
+## Report 6, date: June 30, 2020
+### 1. LSTM Trainer:
+
+* First, I generate game data in JSON format in JAVA. then I preprocess them in python.
+
+* I then build model, train, and experiment with different kinds of model.
+    * First, I use my 4 inputs that I have mention in [previous report](##-Report-5,-date:-June-23,-2020), and create these following model.
+
+    * Model 1: 4 inputs map to 4 different parallel LSTM layer, and then concatenated and go through 1 dense layer
+    ![Model](reference/model1.png)
+
+    * Model 2: 
+    ![Model](reference/model2.png)
+    ![Acc](reference/acclstm200.png)
+    ![Loss](reference/losslstm200.png)
+
+    * Model 3: 
+    ![Model](reference/model3.png)
+
+* I then import the model to java and start predicting, here is the result:
+
+    * The result of the best model achieve an accuracy of 77% can predict mostly opponent hand from turn 3 and away. The prediction has some noise here and there due to lacking information about which card was picked by the opponent from the draw pile. There sometimes there is just no clue!
+
+    ![Turn0-1](reference/t01.png)
+    ![Turn2-3](reference/t23.png)
+    ![Turn4-5](reference/t45.png)
+
 
 ## Report 5, date: June 23, 2020
 ### 1. Turn State Representation of Opponent's action (Also available in the file `HandEstimationModel` documentation).

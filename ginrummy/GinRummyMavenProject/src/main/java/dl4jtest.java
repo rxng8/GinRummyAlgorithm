@@ -436,19 +436,19 @@ public class dl4jtest {
 	
 	public static void main(String[] args) {
 		dl4jtest obj = new dl4jtest();
-		obj.__import_data__("play_data_SimplePlayer.dat");
+		obj.__import_data__("validation_data.dat");
 		obj.__init__(10, 1e-3f, 10);
 		
 		int max_match = obj.X.size();
 		
-		int match_from = 390;
-		int match_to = 400;
+		int match_from = 190;
+		int match_to = 200;
 		assert match_from < match_to : "Duhhhh!!";
 		int length = match_to - match_from;
 		assert match_to < max_match : "Invalid ending match index!";
 	
 		try {
-			String file_name = "test";
+			String file_name = "lstm_200_200epoch";
 			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
@@ -463,7 +463,14 @@ public class dl4jtest {
 				ArrayList<float[][]> xdatum = obj.X.get(match_from + match);
 				ArrayList<float[]> ydatum = obj.Y.get(match_from + match);
 				
+				assert xdatum.size() == ydatum.size() : "Number of turns in input and output must match!";
+				
 				int n_turns = xdatum.size();
+				
+				if (n_turns == 0 || n_turns == 1) {
+					System.out.println("This match some player goes gin right from the start, not taking any turn, omitting, duhhh");
+					continue;
+				}
 				
 				float[] dx0 = new float[n_turns * 52];
 				float[] dx1 = new float[n_turns * 52];
@@ -481,7 +488,7 @@ public class dl4jtest {
 					dy[turn] = ydatum.get(turn).clone();
 				}
 				
-				System.out.println("Get here");
+//				System.out.println("Get here");
 				// Debug
 //				System.out.println(x0.toString());
 //				Iterator<float[][]> it = obj.X.get(390).iterator();
@@ -490,20 +497,24 @@ public class dl4jtest {
 //					print_mat1D_card(features, "test");
 //				}
 				
-//				INDArray x0 = Nd4j.create(dx0, new int[] {n_turns, 52}, 'c');
-//				INDArray x1 = Nd4j.create(dx1, new int[] {n_turns, 52}, 'c');
-//				INDArray x2 = Nd4j.create(dx2, new int[] {n_turns, 52}, 'c');
-//				INDArray x3 = Nd4j.create(dx3, new int[] {n_turns, 52}, 'c');
-//
-//				INDArray[] X = {x0, x1, x2, x3};
-//				
-//				INDArray[] y_pred_ind = network.output(X);
-//				float[][] y_pred = y_pred_ind[0].toFloatMatrix();
-//				for (int turn = 0; turn < y_pred.length; turn++) {
-//					System.out.println("Turn " + turn);
-//					print_mat1D_card(y_pred[turn], "Predicted");
-//					print_mat1D_card(dy[turn], "Actual");
-//				}
+				INDArray x0 = Nd4j.create(dx0, new int[] {n_turns, 52}, 'c');
+				INDArray x1 = Nd4j.create(dx1, new int[] {n_turns, 52}, 'c');
+				INDArray x2 = Nd4j.create(dx2, new int[] {n_turns, 52}, 'c');
+				INDArray x3 = Nd4j.create(dx3, new int[] {n_turns, 52}, 'c');
+
+				INDArray[] X = {x0, x1, x2, x3};
+				
+				INDArray[] y_pred_ind = network.output(X);
+				
+				// Debug
+//				System.out.println(y_pred_ind[0].shapeInfoToString());
+				
+				float[][] y_pred = y_pred_ind[0].toFloatMatrix();
+				for (int turn = 0; turn < y_pred.length; turn++) {
+					System.out.println("Turn " + turn);
+					print_mat1D_card(y_pred[turn], "Predicted");
+					print_mat1D_card(dy[turn], "Actual");
+				}
 								
 			}
 			

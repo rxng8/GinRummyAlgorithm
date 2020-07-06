@@ -378,7 +378,7 @@ def pad_data (x, max_length):
 
 
 # %%
-x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_200.json")
+x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_100.json")
 n_match = len(x0)
 # %%
 

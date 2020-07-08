@@ -5,6 +5,17 @@
     <artifactId>alex</artifactId>
     <version>0.98.4</version>
     <dependencies>
+    	<dependency>
+		   <groupId>com.opencsv</groupId>
+		   <artifactId>opencsv</artifactId>
+		   <version>4.4</version>
+		</dependency>
+		<dependency>
+		   <groupId>org.apache.commons</groupId>
+		   <artifactId>commons-lang3</artifactId>
+		   <version>3.9</version>
+		</dependency>
+    
 	    <dependency>
 	        <groupId>org.json</groupId>
 	        <artifactId>json</artifactId>

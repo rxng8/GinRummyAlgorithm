@@ -1,15 +1,24 @@
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import javax.xml.crypto.Data;
+
+import com.opencsv.CSVWriter;
 
 /*
  * @author Todd W. Neller
@@ -55,67 +64,132 @@ public class DataCollector {
 	
 	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
 
-//	int[] rankCounts = new int[Card.NUM_RANKS];
-//	int[][][][] heldVisits = new int[2][2][Card.NUM_RANKS][Card.NUM_RANKS]; // indexed by drawFaceUp (0/1), discardSuited (0/1), 
-//	int[][][][][][] heldCounts = new int[2][2][Card.NUM_RANKS][Card.NUM_RANKS][3][Card.NUM_RANKS]; // indexed by drawFaceUp (0/1), discardSuited (0/1), rank face up, rank discard, suited (0=unsuited with either, 1=suited with face-up, 2=suited with discard), rank 
-//	final int DRAW_FACE_UP = 1, DRAW_FACE_DOWN = 0, UNSUITED = 0, SUITED_WITH_FACE_UP = 1, SUITED_WITH_DISCARD = 2;
-//	int faceDownDrawCount = 0;
-//	int immediateDiscardCount = 0;
+	@SuppressWarnings("unchecked")
+	ArrayList<ArrayList<Integer>> labels = new ArrayList<>();
+	
+	
+	ArrayList<ArrayList<ArrayList<int[]>>> hands;
+	
+	int turnsTaken = 0;
+	
+	public DataCollector () {
+		labels.add(new ArrayList<Integer>());
+		labels.add(new ArrayList<Integer>());
+		
+		hands = new ArrayList<ArrayList<ArrayList<int[]>>>();
+		hands.add(new ArrayList<ArrayList<int[]>>());
+		hands.add(new ArrayList<ArrayList<int[]>>()); 
+	}
+	
+	
+	public void collectLabel(int turnsTaken, int currentPlayer, boolean won) {
+		int opponent = 1 - currentPlayer;
+		labels.get(currentPlayer).add(won ? 1 : 0);
+		labels.get(opponent).add(won? 0 : 1);
+		
+		// Add new arraylist of turns (match) to the hand list
+		ArrayList<ArrayList<int[]>> player_game = hands.get(currentPlayer);
+		player_game.add(new ArrayList<int[]>());
+	}
 	
 	public void collectData(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand) {
-//		int faceUpRank = faceUpCard.rank;
-//		int discardRank = discardCard.rank;
-//		boolean drawFaceUp = faceUpCard == drawCard;
-//		int drawFaceUpIndex = drawFaceUp ? 1 : 0;
-//		boolean discardSuited = discardCard.suit == faceUpCard.suit;
-//		int discardSuitedIndex = discardSuited ? 1 : 0;
-//		heldVisits[drawFaceUpIndex][discardSuitedIndex][faceUpRank][discardRank]++;
-//		for (Card card : hand) {
-//			rankCounts[card.rank]++;
-//			int suitedIndex = UNSUITED;
-//			if (card.suit == faceUpCard.suit)
-//				suitedIndex = SUITED_WITH_FACE_UP;
-//			else if (card.suit == discardCard.suit)
-//				suitedIndex = SUITED_WITH_DISCARD;
-//			heldCounts[drawFaceUpIndex][discardSuitedIndex][faceUpRank][discardRank][suitedIndex][card.rank]++;
-//		}
-//		if (drawCard != faceUpCard) {
-//			faceDownDrawCount++;
-//			if (drawCard == discardCard)
-//				immediateDiscardCount++;
-//		}
+
+		int[] hand_arr = new int[52];
+		for (Card c : hand) {
+			hand_arr[c.getId()] = 1;
+		}
+		ArrayList<ArrayList<int[]>> player_game = hands.get(currentPlayer);
+		ArrayList<int[]> player_match;
+		if (player_game.size() != 0) {
+			player_match = player_game.get(player_game.size() - 1);
+			player_match.add(hand_arr);
+		} else {
+			player_match = new ArrayList<int[]>();
+			player_match.add(hand_arr);
+			player_game.add(player_match);
+		}
+		
+		assert player_match != null: "duhhh";
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static void toCSV_linear(String filename, ArrayList<ArrayList<ArrayList<int[]>>> hands, ArrayList<ArrayList<Integer>> labels) throws IOException {
+	      //Instantiating the CSVWriter class
+	      CSVWriter writer = new CSVWriter(new FileWriter(filename));
+	      //Writing data to a csv file
+	            
+	      // Header
+	      String[] headers = new String[53];
+	      for (int i = 0; i < 52; i++) {
+	    	  String header = Card.getCard(i).toString();
+	    	  headers[i] = header;
+	      }
+	      headers[52] = "Label";
+	      writer.writeNext(headers);
+	      
+	      System.out.println("Writing to file ...");
+	      for (int player = 0; player < 2; player++) {
+	    	  ArrayList<ArrayList<int[]>> player_matches = hands.get(player);
+	    	  ArrayList<Integer> player_labels = labels.get(player);
+	    	  int n_matches = player_matches.size();
+	    	  assert n_matches == player_labels.size() : "Duh";
+	    	  
+
+    		  for (int match = 0; match < n_matches; match++) {
+    			  for (int[] turns : player_matches.get(match)) {
+    				  String[] line = new String[53];
+    				  String strArray[] = Arrays.stream(turns)
+								.mapToObj(String::valueOf)
+								.toArray(String[]::new);
+    				  assert strArray.length == 52 : "Duhhh!";
+    				  System.arraycopy(strArray, 0, line, 0, strArray.length);
+    				  line[52] = Integer.toString(player_labels.get(match));
+    				  writer.writeNext(line);
+    			  }
+    			  System.out.println("Written one match in match " + match);
+    		  }
+    		  System.out.println("Written one player!");
+	      }
+	      
+	      //Writing data to the csv file
+//	      writer.writeAll(list);
+//	      writer.flush();
+	      writer.close();
+	      System.out.println("Data entered!!!");
 	}
 
 	public void displayData() {
-//		System.out.println("Probability of immediate discard of face-down draw: " + (double) immediateDiscardCount / faceDownDrawCount);
-//		for (int faceUp = 0; faceUp <= 1; faceUp++) {
-//			boolean drawFaceUp = faceUp == 1;
-//			for (int c1 = 0; c1 < Card.NUM_RANKS; c1++)
-//				for (int c2 = 0; c2 < 2 * Card.NUM_RANKS; c2++) {
-//					if (c1 == c2) continue;
-//					Card faceUpCard = Card.allCards[c1];
-//					Card discardCard = Card.allCards[c2];
-//					int faceUpRank = faceUpCard.rank;
-//					int discardRank = discardCard.rank;
-//					int drawFaceUpIndex = drawFaceUp ? 1 : 0;
-//					boolean discardSuited = discardCard.suit == faceUpCard.suit;
-//					int discardSuitedIndex = discardSuited ? 1 : 0;
-//					System.out.printf("Face-up card: %s  Drawn face-up? %s  Discard card: %s\n", faceUpCard, drawFaceUp, discardCard);
-//					System.out.println("Visits: " + heldVisits[drawFaceUpIndex][discardSuitedIndex][faceUpRank][discardRank]);
-//					System.out.print("Rank\t");
-//					for (int i = 0; i < Card.NUM_RANKS; i++)
-//						System.out.print("\t" + Card.rankNames[i]);
-//					System.out.println();
-//					String[] suitedLabels = {"Unsuited", "Face-up suited", "Discard suited"};
-//					for (int suitedIndex = 0; suitedIndex <= 2; suitedIndex++) {
-//						if (discardSuited && suitedIndex == 2) break;
-//						System.out.print(suitedLabels[suitedIndex]);
-//						for (int i = 0; i < Card.NUM_RANKS; i++)
-//							System.out.printf("\t%.3f", (double) heldCounts[drawFaceUpIndex][discardSuitedIndex][faceUpRank][discardRank][suitedIndex][i] / heldVisits[drawFaceUpIndex][discardSuitedIndex][faceUpRank][discardRank]);
-//						System.out.println();
-//					}
-//				}
-//		}
+		
+		for (ArrayList<ArrayList<int[]>> player : hands) {
+			
+			for (ArrayList<int[]> game: player) {
+				for(int[] match : game) {
+					
+					print_mat1D_card(match, "Turn");
+				}
+			}
+		}
+		for (ArrayList<Integer> label : labels) {
+			Stream.of(label).forEach(win -> System.out.print(win + " "));
+			System.out.println();
+		}
+	}
+	
+	@SuppressWarnings("unused")
+	private static void print_mat1D_card(int[] mat, String name) {
+		System.out.println();
+		System.out.println(name + ": ");
+		int a = 0;
+		for (int i = 0; i < mat.length; i++) {
+			// Debugging
+			System.out.printf("%s: %d ",Card.getCard(i).toString(), mat[i]);
+			a++;
+			if(a == 13) {
+				a = 0;
+				System.out.println();
+			}
+		}
+		System.out.println();
 	}
 	
 	/**
@@ -319,19 +393,24 @@ public class DataCollector {
 				// compare deadwood and compute new scores
 				if (knockingDeadwood == 0) { // gin round win
 					scores[currentPlayer] += GinRummyUtil.GIN_BONUS + opponentDeadwood;
+					collectLabel(turnsTaken, currentPlayer, true);
 					if (playVerbose)
 						System.out.printf("Player %d scores the gin bonus of %d plus opponent deadwood %d for %d total points.\n", currentPlayer, GinRummyUtil.GIN_BONUS, opponentDeadwood, GinRummyUtil.GIN_BONUS + opponentDeadwood); 
 				}
 				else if (knockingDeadwood < opponentDeadwood) { // non-gin round win
 					scores[currentPlayer] += opponentDeadwood - knockingDeadwood;
+					collectLabel(turnsTaken, currentPlayer, true);
 					if (playVerbose)
 						System.out.printf("Player %d scores the deadwood difference of %d.\n", currentPlayer, opponentDeadwood - knockingDeadwood); 
 				}
 				else { // undercut win for opponent
 					scores[opponent] += GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood;
+					collectLabel(turnsTaken, currentPlayer, false);
 					if (playVerbose)
 						System.out.printf("Player %d undercuts and scores the undercut bonus of %d plus deadwood difference of %d for %d total points.\n", opponent, GinRummyUtil.UNDERCUT_BONUS, knockingDeadwood - opponentDeadwood, GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood); 
 				}
+				
+				
 				startingPlayer = (startingPlayer == 0) ? 1 : 0; // starting player alternates
 			}
 			else { // If the round ends due to a two card draw pile with no knocking, the round is cancelled.
@@ -344,35 +423,32 @@ public class DataCollector {
 				System.out.printf("Player\tScore\n0\t%d\n1\t%d\n", scores[0], scores[1]);
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
+			
+			
+//			break;
+			
+			
 		}
 		if (playVerbose)
 			System.out.printf("Player %s wins.\n", scores[0] > scores[1] ? 0 : 1);
 		return scores[0] >= GinRummyUtil.GOAL_SCORE ? 0 : 1;
 	}
 	
-	private void match(String player1Name, String player2Name, int numGames) throws InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, UnsupportedEncodingException {
-		String filename = "match-" + numGames + "-" + player1Name + "-" + player2Name + ".txt";
-		PrintWriter writer = new PrintWriter(filename, "UTF-8");
+	private void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames) {
 		
-		writer.printf("Match %s vs. %s (%d games) ... ", player1Name, player2Name, numGames);
-		writer.flush();
-		@SuppressWarnings("unchecked")
-		Class<GinRummyPlayer> playerClass1 = (Class<GinRummyPlayer>) Class.forName(player1Name);
-		players[0] = playerClass1.newInstance();
-		@SuppressWarnings("unchecked")
-		Class<GinRummyPlayer> playerClass2 = (Class<GinRummyPlayer>) Class.forName(player2Name);
-		players[1] = playerClass2.newInstance();
+		this.players[0] = p0;
+		this.players[1] = p1;
+
 		long startMs = System.currentTimeMillis();
 		int numP1Wins = 0;
 		for (int i = 0; i < numGames; i++) {
 			numP1Wins += play(i % 2);
 		}
 		long totalMs = System.currentTimeMillis() - startMs;
-		writer.printf("%d games played in %d ms.\n", numGames, totalMs);
-		writer.printf("Games Won: %s:%d, %s:%d.\n", player1Name, numGames - numP1Wins, player2Name, numP1Wins);
+
 		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
-		System.out.printf("Games Won: %s:%d, %s:%d.\n", player1Name, numGames - numP1Wins, player2Name, numP1Wins);
-		writer.close();
+		System.out.printf("Games Won: %s: %d, %s: %d.\n", "Player1", numGames - numP1Wins, "Player2", numP1Wins);
+
 	}
 	
 	/**
@@ -381,38 +457,22 @@ public class DataCollector {
 	 * @throws ClassNotFoundException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
-	 * @throws UnsupportedEncodingException 
-	 * @throws FileNotFoundException 
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, UnsupportedEncodingException {
-
-//		String[] playerNames = {"SimpleGinRummyPlayer", "SimpleGinRummyPlayer2"};
-//		String computerName = getComputerName();
-//		Scanner in = new Scanner(computerName);
-//		int computerNum = Integer.parseInt(in.findInLine(Pattern.compile("[1-9][0-9]*")));
-//		in.close();
-//		System.out.println(computerNum);
-//		int minComputerNum = 1;
-//		int index = computerNum - minComputerNum;
-//		index = 0; // TODO: comment out to use computer names
-//		int index1 = 0, index2 = 0;
-//		for (int i = 0; i < playerNames.length && index >= 0; i++)
-//			for (int j = i + 1; j < playerNames.length && index >= 0; j++) {
-//				if (index == 0) {
-//					index1 = i;
-//					index2 = j;
-//				}
-//				index--;
-//			}
-//		setPlayVerbose(false);
-//		int numGames = 10000;
-//		DataCollector collector = new DataCollector();
-//		collector.match(playerNames[index1], playerNames[index2], numGames);
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
+		setPlayVerbose(false);
+		int numGames = 100;
+		DataCollector collector = new DataCollector();
+		
+		GinRummyPlayer p0 = new SimpleGinRummyPlayer();
+		GinRummyPlayer p1 = new SimpleGinRummyPlayer();
+		
+		collector.match(p0, p1, numGames);
+		
+		
 //		collector.displayData();
-//		HandEstimator handEst;
-//		handEst = new HandEstimator(collector);
-//		handEst.save("handEst1-" + numGames + ".dat");
-//		handEst = new HandEstimator("handEst1-" + numGames + ".dat");
-//		handEst.test();
+		
+		DataCollector.toCSV_linear("data_linear_small.csv", collector.hands, collector.labels);
+		
 	}
 }

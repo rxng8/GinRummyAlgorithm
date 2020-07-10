@@ -72,6 +72,16 @@ public class DataCollector {
 	
 	int turnsTaken = 0;
 	
+	// Players / Matches / Turns / hand, pick/unpick, discard / cards
+	ArrayList<int[][]> picking_data;
+	
+	// Players / Matches / Turns / Picked or not
+	ArrayList<Integer> picking_labels;
+	
+	// Matches / Turns / deadwood, turnstate, n_meld in winning game
+	ArrayList<int[]> knock_data;	
+	
+	
 	public DataCollector () {
 		labels.add(new ArrayList<Integer>());
 		labels.add(new ArrayList<Integer>());
@@ -79,7 +89,47 @@ public class DataCollector {
 		hands = new ArrayList<ArrayList<ArrayList<int[]>>>();
 		hands.add(new ArrayList<ArrayList<int[]>>());
 		hands.add(new ArrayList<ArrayList<int[]>>()); 
+		
+		picking_data = new ArrayList<>();
+		picking_labels = new ArrayList<>();
+		
+		knock_data = new ArrayList<>();
 	}
+	
+	public void collectKnock(int turnsTaken, int deadwood, int n_meld, boolean win) {
+		 int[] line = {turnsTaken, deadwood, n_meld, win? 1 : 0};
+		 knock_data.add(line);
+	}
+	
+	public static void to_CSV_knock(String filename, ArrayList<int[]> data) throws IOException {
+		//Instantiating the CSVWriter class
+		CSVWriter writer = new CSVWriter(new FileWriter(filename));
+		//Writing data to a csv file
+		        
+		// Header
+		String[] headers = new String[4];
+		headers[0] = "Turnstaken";
+		headers[1] = "Deadwood";
+		headers[2] = "N_meld";
+		headers[3] = "Label";
+		writer.writeNext(headers);
+		
+		for (int i = 0; i < data.size(); i++) {
+			String[] line = new String[4];
+			
+			
+			String strArray[] = Arrays.stream(data.get(i))
+						.mapToObj(String::valueOf)
+						.toArray(String[]::new);
+			System.arraycopy(strArray, 0, line, 0, strArray.length);
+			
+			writer.writeNext(line);
+		}
+		
+		writer.close();
+	    System.out.println("Data entered!!!");
+	}
+	
 	
 	
 	public void collectLabel(int turnsTaken, int currentPlayer, boolean won) {
@@ -92,7 +142,7 @@ public class DataCollector {
 		player_game.add(new ArrayList<int[]>());
 	}
 	
-	public void collectData(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand) {
+	public void collectData_linear(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand) {
 
 		int[] hand_arr = new int[52];
 		for (Card c : hand) {
@@ -112,6 +162,125 @@ public class DataCollector {
 		assert player_match != null: "duhhh";
 	}
 	
+	
+	public void collectDataLabel_bayes(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand) {
+		//Data
+		int[] hand_arr = new int[52];
+		for (Card c : hand) {
+			if (faceUpCard.getId() == c.getId()) continue;
+			hand_arr[c.getId()] = 1;
+		}
+		int[] faceUp = new int[52];
+		faceUp[faceUpCard.getId()] = 1;
+		// Comment this part to take the draw card only
+		int rank = faceUpCard.getRank();
+		int suit = faceUpCard.getSuit();
+		// Mask all suit
+		for (int i = 0; i < 4; i++) {
+			faceUp[i * 13 + rank] = 1;
+		}
+		// Mask all rank
+		for (int i = 0; i < 13; i++) {
+			faceUp[suit * 13 + 1] = 1;
+		}
+		// ----------^
+		
+		int[] disc = new int[52];
+		
+		// Comment this part to take the discard card only
+		disc[discardCard.getId()] = 1;
+		rank = discardCard.getRank();
+		suit = discardCard.getSuit();
+		// Mask all suit
+		for (int i = 0; i < 4; i++) {
+			disc[i * 13 + rank] = 1;
+		}
+		// Mask all rank
+		for (int i = 0; i < 13; i++) {
+			disc[suit * 13 + 1] = 1;
+		}
+		// ----^
+		
+		int[][] line = {hand_arr, faceUp, disc};
+		
+		picking_data.add(line);
+		picking_labels.add(drawCard.getId() == faceUpCard.getId() ? 1 : 0);
+		
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static void toCSV_picking(String filename, ArrayList<int[][]> data, ArrayList<Integer> labels) throws IOException {
+		//Instantiating the CSVWriter class
+		CSVWriter writer = new CSVWriter(new FileWriter(filename));
+		//Writing data to a csv file
+		        
+		// Header
+		String[] headers = new String[105];
+		for (int p = 0; p < 2; p++) {
+			for (int i = 0; i < 52; i++) {
+		    	String header = Card.getCard(i).toString();
+		    	headers[52*p + i] = header;
+		    }
+		}
+		headers[104] = "Label";
+		writer.writeNext(headers);
+	    
+		assert data.size() == labels.size() : "duh!!";
+		
+		for (int i = 0; i < data.size(); i++) {
+			String[] line = new String[105];
+			// Take only 2 first features
+			for (int feature = 0; feature < data.get(i).length - 1; feature++) {
+				  String strArray[] = Arrays.stream(data.get(i)[feature])
+							.mapToObj(String::valueOf)
+							.toArray(String[]::new);
+				  System.arraycopy(strArray, 0, line, 52 * feature, strArray.length);
+			}
+			line[104] = String.valueOf(labels.get(i));
+			writer.writeNext(line);
+		}
+		
+		writer.close();
+	    System.out.println("Data entered!!!");
+	}
+	
+	public static void toCSV_discard(String filename, ArrayList<int[][]> data, ArrayList<Integer> labels) throws IOException {
+		//Instantiating the CSVWriter class
+		CSVWriter writer = new CSVWriter(new FileWriter(filename));
+		//Writing data to a csv file
+		        
+		// Header
+		String[] headers = new String[105];
+		for (int p = 0; p < 2; p++) {
+			for (int i = 0; i < 52; i++) {
+		    	String header = Card.getCard(i).toString();
+		    	headers[52*p + i] = header;
+		    }
+		}
+		headers[104] = "Label";
+		writer.writeNext(headers);
+	    
+		assert data.size() == labels.size() : "duh!!";
+		
+		for (int i = 0; i < data.size(); i++) {
+			String[] line = new String[105];
+			// Take only feature 1 and feature 3 first features
+			for (int feature = 0; feature < data.get(i).length - 1; feature++) {
+				int tmp_feature = 0;
+				if (feature == 1) tmp_feature = 2;
+				String strArray[] = Arrays.stream(data.get(i)[tmp_feature])
+							.mapToObj(String::valueOf)
+							.toArray(String[]::new);
+				System.arraycopy(strArray, 0, line, 52 * feature, strArray.length);
+			}
+			line[104] = String.valueOf(labels.get(i));
+			writer.writeNext(line);
+		}
+		
+		writer.close();
+	    System.out.println("Data entered!!!");
+	}
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void toCSV_linear(String filename, ArrayList<ArrayList<ArrayList<int[]>>> hands, ArrayList<ArrayList<Integer>> labels) throws IOException {
 	      //Instantiating the CSVWriter class
@@ -119,37 +288,57 @@ public class DataCollector {
 	      //Writing data to a csv file
 	            
 	      // Header
+//	      String[] headers = new String[105];
 	      String[] headers = new String[53];
-	      for (int i = 0; i < 52; i++) {
-	    	  String header = Card.getCard(i).toString();
-	    	  headers[i] = header;
+//	      for (int p = 0; p < 2; p++) {
+	      for (int p = 0; p < 1; p++) {
+	    	  for (int i = 0; i < 52; i++) {
+		    	  String header = Card.getCard(i).toString();
+		    	  headers[i] = header;
+		      }
 	      }
+//	      headers[104] = "Label";
 	      headers[52] = "Label";
 	      writer.writeNext(headers);
 	      
 	      System.out.println("Writing to file ...");
-	      for (int player = 0; player < 2; player++) {
-	    	  ArrayList<ArrayList<int[]>> player_matches = hands.get(player);
-	    	  ArrayList<Integer> player_labels = labels.get(player);
-	    	  int n_matches = player_matches.size();
-	    	  assert n_matches == player_labels.size() : "Duh";
-	    	  
+	      
+    	  ArrayList<ArrayList<int[]>> player_matches = hands.get(0);
+    	  ArrayList<Integer> player_labels = labels.get(0);
+    	  
+    	  ArrayList<ArrayList<int[]>> opp_matches = hands.get(0);
+//    	  ArrayList<Integer> opp_labels = labels.get(0);
+    	  
+    	  int n_matches = player_matches.size();
+    	  assert n_matches == player_labels.size() : "Duh";
+    	  
 
-    		  for (int match = 0; match < n_matches; match++) {
-    			  for (int[] turns : player_matches.get(match)) {
-    				  String[] line = new String[53];
-    				  String strArray[] = Arrays.stream(turns)
-								.mapToObj(String::valueOf)
-								.toArray(String[]::new);
-    				  assert strArray.length == 52 : "Duhhh!";
-    				  System.arraycopy(strArray, 0, line, 0, strArray.length);
-    				  line[52] = Integer.toString(player_labels.get(match));
-    				  writer.writeNext(line);
-    			  }
-    			  System.out.println("Written one match in match " + match);
-    		  }
-    		  System.out.println("Written one player!");
-	      }
+		  for (int match = 0; match < n_matches; match++) {
+			  for (int turn_id = 0; turn_id < player_matches.get(match).size(); turn_id++) {
+//				  String[] line = new String[105];
+				  String[] line = new String[53];
+				  String strArray_c[] = Arrays.stream(player_matches.get(match).get(turn_id))
+							.mapToObj(String::valueOf)
+							.toArray(String[]::new);
+				  assert strArray_c.length == 52 : "Duhhh!";
+				  System.arraycopy(strArray_c, 0, line, 0, strArray_c.length);
+				  
+				  
+//				  String strArray_o[] = Arrays.stream(opp_matches.get(match).get(turn_id))
+//							.mapToObj(String::valueOf)
+//							.toArray(String[]::new);
+//				  assert strArray_c.length == 52 : "Duhhh!";
+//				  assert strArray_o.length == 52 : "Duhhh!";
+//				  System.arraycopy(strArray_o, 0, line, 52, strArray_o.length);
+				  
+//				  line[104] = Integer.toString(player_labels.get(match));
+				  line[52] = Integer.toString(player_labels.get(match));
+				  writer.writeNext(line);
+			  }
+			  System.out.println("Written one match in match " + match);
+		  }
+		  System.out.println("Written one player!");
+	      
 	      
 	      //Writing data to the csv file
 //	      writer.writeAll(list);
@@ -173,6 +362,31 @@ public class DataCollector {
 			Stream.of(label).forEach(win -> System.out.print(win + " "));
 			System.out.println();
 		}
+	}
+	
+	public void displayData_picking() {
+		
+		for (ArrayList<ArrayList<int[]>> player : hands) {
+			
+			for (ArrayList<int[]> game: player) {
+				for(int[] match : game) {
+					
+					print_mat1D_card(match, "Turn");
+				}
+			}
+		}
+		
+		for (int turn = 0; turn < picking_data.size(); turn++) {
+			int[][] turn_arr = picking_data.get(turn);
+			
+			print_mat1D_card(turn_arr[0], "Hand");
+			print_mat1D_card(turn_arr[1], "Face Up Card");
+			print_mat1D_card(turn_arr[2], "Card to be discarded");
+			
+			int label = picking_labels.get(turn);
+			System.out.println("This player have " + (label == 1 ? "picked the card!" : "not picked the card!"));
+		}
+		
 	}
 	
 	@SuppressWarnings("unused")
@@ -269,7 +483,18 @@ public class DataCollector {
 					if (playVerbose)
 						System.out.printf("Player %d discards %s.\n", currentPlayer, discardCard);
 					discards.push(discardCard);
-					collectData(turnsTaken, currentPlayer, faceUpCard, drawCard, discardCard, hands.get(currentPlayer), hands.get(opponent));
+					
+					
+					
+					
+					
+//					collectData(turnsTaken, currentPlayer, faceUpCard, drawCard, discardCard, hands.get(currentPlayer), hands.get(opponent));
+					collectDataLabel_bayes(turnsTaken, currentPlayer, faceUpCard, drawCard, discardCard, hands.get(currentPlayer), hands.get(opponent));
+					
+					
+					
+					
+					
 					if (playVerbose) {
 						ArrayList<Card> unmeldedCards = (ArrayList<Card>) hands.get(currentPlayer).clone();
 						ArrayList<ArrayList<ArrayList<Card>>> bestMelds = GinRummyUtil.cardsToBestMeldSets(unmeldedCards);
@@ -394,21 +619,43 @@ public class DataCollector {
 				if (knockingDeadwood == 0) { // gin round win
 					scores[currentPlayer] += GinRummyUtil.GIN_BONUS + opponentDeadwood;
 					collectLabel(turnsTaken, currentPlayer, true);
+					
+					
+					collectKnock(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
+					collectKnock(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+					
+					
 					if (playVerbose)
 						System.out.printf("Player %d scores the gin bonus of %d plus opponent deadwood %d for %d total points.\n", currentPlayer, GinRummyUtil.GIN_BONUS, opponentDeadwood, GinRummyUtil.GIN_BONUS + opponentDeadwood); 
 				}
 				else if (knockingDeadwood < opponentDeadwood) { // non-gin round win
 					scores[currentPlayer] += opponentDeadwood - knockingDeadwood;
 					collectLabel(turnsTaken, currentPlayer, true);
+					
+					collectKnock(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
+					collectKnock(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+					
+					
 					if (playVerbose)
 						System.out.printf("Player %d scores the deadwood difference of %d.\n", currentPlayer, opponentDeadwood - knockingDeadwood); 
 				}
 				else { // undercut win for opponent
 					scores[opponent] += GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood;
 					collectLabel(turnsTaken, currentPlayer, false);
+					
+					
+					
+					collectKnock(turnsTaken, knockingDeadwood, knockMelds.size() - 1, false);
+					collectKnock(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, true);
+					
+					
+					
 					if (playVerbose)
 						System.out.printf("Player %d undercuts and scores the undercut bonus of %d plus deadwood difference of %d for %d total points.\n", opponent, GinRummyUtil.UNDERCUT_BONUS, knockingDeadwood - opponentDeadwood, GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood); 
 				}
+				
+				
+				collectData_linear(turnsTaken, currentPlayer, null, null, null, hands.get(currentPlayer), hands.get(opponent));
 				
 				
 				startingPlayer = (startingPlayer == 0) ? 1 : 0; // starting player alternates
@@ -461,18 +708,21 @@ public class DataCollector {
 	 */
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
 		setPlayVerbose(false);
-		int numGames = 100;
+		System.out.println("Playing games...");
+		int numGames = 50000;
 		DataCollector collector = new DataCollector();
 		
-		GinRummyPlayer p0 = new SimpleGinRummyPlayer();
+		GinRummyPlayer p0 = new SimplePlayer2();
 		GinRummyPlayer p1 = new SimpleGinRummyPlayer();
 		
 		collector.match(p0, p1, numGames);
 		
 		
-//		collector.displayData();
+//		collector.displayData_picking();
 		
-		DataCollector.toCSV_linear("data_linear_small.csv", collector.hands, collector.labels);
-		
+//		DataCollector.toCSV_discard("data_picking.csv", collector.picking_data, collector.picking_labels);
+//		DataCollector.toCSV_discard("data_discard.csv", collector.picking_data, collector.picking_labels);
+//		DataCollector.toCSV_linear("data_linear.csv", collector.hands, collector.labels);
+		DataCollector.to_CSV_knock("data_knock_undercut.csv", collector.knock_data);
 	}
 }

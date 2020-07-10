@@ -296,7 +296,7 @@ public class GinRummyGame {
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
 			
-			break;
+//			break;
 			
 		}
 		if (playVerbose)
@@ -312,9 +312,9 @@ public class GinRummyGame {
 	public static void main(String[] args) {
 		// Single verbose demonstration game
 		setPlayVerbose(true);
-		new GinRummyGame(new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer()).play();
+		new GinRummyGame(new SimplePlayer2(), new SimpleGinRummyPlayer()).play();
 		
-		// Multiple non-verbose games 
+//		// Multiple non-verbose games 
 //		setPlayVerbose(false);
 //		int numGames = 1000;
 //		int numP1Wins = 0;
@@ -323,7 +323,7 @@ public class GinRummyGame {
 //		int sec_quadrant = 0;
 //		int third_quadrant = 0;
 //		int fourth_quadrant = 0;
-//		GinRummyGame game = new GinRummyGame(new CFRPlayer(), new SimpleGinRummyPlayer());
+//		GinRummyGame game = new GinRummyGame(new SimplePlayer2(), new SimpleGinRummyPlayer());
 //		long startMs = System.currentTimeMillis();
 //		for (int i = 0; i < numGames; i++) {
 //			int win = game.play();
@@ -349,7 +349,7 @@ public class GinRummyGame {
 //		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
 //		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
 //		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
-		
+	
 	}
 	
 }

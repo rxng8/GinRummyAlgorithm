@@ -540,27 +540,44 @@ public class CFRPlayer implements GinRummyPlayer {
 		System.out.println();
 	}
 	
-//	public static void main(String[] args) {
-//		CFRPlayer c = new CFRPlayer();
-//		Random RANDOM = new Random();
-//		Stack<Card> deck = Card.getShuffle(RANDOM.nextInt());
-//		Card[] cardsHand = new Card[52];
-//
-//		for (int i = 0; i < 52; i++) {
-//			cardsHand[i] = deck.pop();
-//			System.out.print(cardsHand[i].getId() + " ");
-//		}
-//		System.out.println();
-//		
-//		c.startGame(1, 1, cardsHand);
-//		for (int i = 0; i < 10; i++) {
-//			System.out.print(c.cards.get(i).getId() + " " );
-//		}
-//		System.out.println();
-//		System.out.println(GinRummyUtil.cardsToBitstring(c.cards));
-//		
-//		
-//		
-//	}
+	@SuppressWarnings("unused")
+	private static void print_mat1D_card(int[] mat, String name) {
+		System.out.println();
+		System.out.println(name + ": ");
+		int a = 0;
+		for (int i = 0; i < mat.length; i++) {
+			// Debugging
+			System.out.printf("%s: %d ",Card.getCard(i).toString(), mat[i]);
+			a++;
+			if(a == 13) {
+				a = 0;
+				System.out.println();
+			}
+		}
+		System.out.println();
+	}
+	
+	public static void main(String[] args) {
+		CFRPlayer c = new CFRPlayer();
+		Random RANDOM = new Random();
+		Stack<Card> deck = Card.getShuffle(RANDOM.nextInt());
+		Card[] cardsHand = new Card[52];
+
+		for (int i = 0; i < 52; i++) {
+			cardsHand[i] = deck.pop();
+			System.out.print(cardsHand[i].getId() + " ");
+		}
+		System.out.println();
+		
+		c.startGame(1, 1, cardsHand);
+		for (int i = 0; i < 10; i++) {
+			System.out.print(c.cards.get(i).getId() + " " );
+		}
+		System.out.println();
+		System.out.println(GinRummyUtil.cardsToBitstring(c.cards));
+		
+		
+		
+	}
 	
 }

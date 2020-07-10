@@ -72,6 +72,14 @@
 		    <version>2.0.0-alpha1</version>
 		</dependency>
 		
+		<!-- https://mvnrepository.com/artifact/ai.djl/api -->
+		<dependency>
+		    <groupId>ai.djl</groupId>
+		    <artifactId>api</artifactId>
+		    <version>0.6.0</version>
+		</dependency>
+		
+		
 	    <dependency>
 		    <groupId>org.deeplearning4j</groupId>
 		    <artifactId>deeplearning4j-modelimport</artifactId>

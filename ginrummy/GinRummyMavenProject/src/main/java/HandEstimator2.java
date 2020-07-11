@@ -4,7 +4,9 @@ public class HandEstimator2 {
 
 	private static final boolean VERBOSE = true;
 
-	private static final float IGNORE_THRESHOLD_RATIO = 0.1f;
+	private static final float IGNORE_THRESHOLD_RATIO = 0.5f;
+	
+	private static final float PREV_TURN_IMPORTANT_POWER = 0.1f;
 	
 	// Known card in the opponent hand
 	boolean[] op_known;
@@ -67,7 +69,7 @@ public class HandEstimator2 {
 	
 
 	private static float prob_bayes_discard(float meld_prop, float to_prop) {
-		return meld_prop * to_prop * 11;
+		return meld_prop * (float) Math.pow(to_prop, PREV_TURN_IMPORTANT_POWER) * 11;
 	}
 	
 	private static float[] prob_bayes_discard(float[] meld_prop, float[] to_prop) {
@@ -80,7 +82,7 @@ public class HandEstimator2 {
 	}
 
 	private static float prob_bayes_draw(float meld_prop, float to_prop) {
-		return meld_prop * to_prop * 2;
+		return meld_prop * (float) Math.pow(to_prop, PREV_TURN_IMPORTANT_POWER) * 2;
 	}
 	
 	private static float[] prob_bayes_draw(float[] meld_prop, float[] to_prop) {
@@ -178,32 +180,80 @@ public class HandEstimator2 {
 	 * @return
 	 */
 	@SuppressWarnings("unused")
+	private static float[] normalize(float[] mat, String method) {
+		// 84.35 % and vary ( 60 - 80)
+		if (method.equals("maxmin")) {
+			float[] y = new float[mat.length];
+			
+			float min = Float.MAX_VALUE;
+			float max = Float.MIN_VALUE;
+			
+			// Get max min
+			for(int i = 0; i < mat.length; i++) {
+				if (mat[i] > max) {
+					max = mat[i];
+				}
+				if (mat[i] < min) {
+					min = mat[i];
+				}			
+			}
+			
+			float distance = max - min;
+			
+			for(int i = 0; i < mat.length; i++) {
+				y[i] = (mat[i] - min) / distance;	
+			}
+			
+			return y;
+		} 
+		
+		// 82.67 % acc
+		else if (method.equals("probone")) {
+			float normalizing_sum = 0;
+			float[] y = new float[mat.length];
+			
+			for (int i = 0; i < y.length; i++) {
+				double prob = mat[i];
+				if (prob < 0) {
+					prob = 0;
+				}
+				normalizing_sum += prob;
+			}
+			
+			
+			for (int i = 0; i < y.length; i++) {
+				if (normalizing_sum != 0) {
+					y[i] = (float) (Math.max(0.0, mat[i]) / normalizing_sum);
+				} else {
+					y[i] = (float) (1.0 / 42);
+				}
+			}
+			
+			return y;
+		} 
+		// 60 % acc due to out side 1
+		else if (method.equals("standard_scale")) {
+			float mean = Maths.mean(mat);
+			float std = Maths.std(mat);
+			
+			float[] y = new float[mat.length];
+			for(int i = 0; i < y.length; i++) {
+				y[i] = (mat[i] - mean) / std;
+			}
+			return y;
+		} else {
+			return mat;
+		}
+	}
+	
+	/**
+	 * Default normalize method min-max scaling
+	 * https://en.wikipedia.org/wiki/Feature_scaling
+	 * @param mat
+	 * @return
+	 */
+	@SuppressWarnings("unused")
 	private static float[] normalize(float[] mat) {
-		
-//		float[] y = new float[mat.length];
-//		
-//		float min = Float.MAX_VALUE;
-//		float max = Float.MIN_VALUE;
-//		
-//		// Get max min
-//		for(int i = 0; i < mat.length; i++) {
-//			if (mat[i] > max) {
-//				max = mat[i];
-//			}
-//			if (mat[i] < min) {
-//				min = mat[i];
-//			}			
-//		}
-//		
-//		float distance = max - min;
-//		
-//		for(int i = 0; i < mat.length; i++) {
-//			y[i] = (mat[i] - min) / distance;	
-//		}
-//		
-//		return y;
-		
-		
 		float normalizing_sum = 0;
 		float[] y = new float[mat.length];
 		
@@ -225,16 +275,38 @@ public class HandEstimator2 {
 		}
 		
 		return y;
-//		float[] y = new float[mat.length];
-//		for (int i = 0; i < y.length; i++) {
-//			y[i] = mat[i] * 10000;
-//		}
-//		
-//		return y;
-		
-//		return mat;
 	}
 	
+	/**
+	 * Default normalize method
+	 * https://en.wikipedia.org/wiki/Feature_scaling
+	 * @param mat
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	private static float[] normalize(float[] mat, int turn) {
+		if (turn == 0) {
+			return mat;
+		}
+		float threshold = 1 - (1.0f / turn);
+//		System.out.println("Turn : " + turn + " ; Threshold: " + threshold);
+		float[] y = new float[52];
+		float max = Float.MIN_VALUE;
+		// Get max min
+		for(int i = 0; i < mat.length; i++) {
+			if (mat[i] > max) {
+				max = mat[i];
+			}		
+		}
+//		System.out.println(" ; ratio: " + threshold / max);
+		for(int i = 0; i < mat.length; i++) {
+			y[i] = mat[i] * (threshold / max);
+//			System.out.println("Before: " + mat[i]);
+//			System.out.println("After: " + mat[i] * (threshold / max));
+		}
+
+		return y;
+	}
 	
 	public void setOpKnown(Card card, boolean b) {
 //		if (VERBOSE) if (b) System.out.println("The opponent has the card " + card.toString());
@@ -258,7 +330,7 @@ public class HandEstimator2 {
 		}
 	}
 
-	public void reportDrawDiscard(Card faceUpCard, boolean drawn, Card discardedCard) {
+	public void reportDrawDiscard(Card faceUpCard, boolean drawn, Card discardedCard, int turn) {
 //		if (VERBOSE) System.out.println("The opponent " + (b ? "" : "does not ") +"draw card " + faceUpCard.toString() + " and discard " + (discardedCard == null ? "null" : discardedCard.toString()));
 		// Set known everything
 		setOpKnown(faceUpCard, drawn);
@@ -270,7 +342,7 @@ public class HandEstimator2 {
 		// Recalculate n_unknown card
 		re_calculate_unknown();
 		// normalize
-		normalize(this.probs);
+		this.probs = normalize(this.probs);
 		
 		// Get masking melding
 		float[] meld_draw = get_meld_draw(faceUpCard, drawn);
@@ -292,7 +364,10 @@ public class HandEstimator2 {
 		this.probs = prob_card(bayes_draw, bayes_discard);
 		re_mask_prob();
 		this.probs = normalize(this.probs);
+		
 	}
+	
+	
 	
 	private void re_mask_prob() {
 		for (int i = 0; i < this.probs.length; i++) {
@@ -316,6 +391,25 @@ public class HandEstimator2 {
 //		System.out.println("Number of unknown cards: " + n_unknown);
 	}
 	
+	
+	
+	public static float cal_accuracy(ArrayList<Card> op_hand, float[] pred) {
+		
+		float[] op_mat = new float[pred.length];
+		
+		for (Card c : op_hand) {
+			op_mat[c.getId()] = 1;
+		}
+		
+		float sum = 0;
+		for (int i = 0; i < op_mat.length; i++) {
+			sum += 1 - Math.abs(op_mat[i] - pred[i]);
+		}
+		
+		return sum / 52;
+	}
+	
+	
 	public void view() {
 		print_mat(this.op_known, "Cards that are exactly in opponent's hand");
 		print_mat(this.other_known, "Cards that are in my hand or discard pile");
@@ -332,7 +426,7 @@ public class HandEstimator2 {
 				System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
 			System.out.print("\t");
 			System.out.printf("%1.1e", mat[i]);
-//			System.out.printf("%.5f", mat[i]);
+//			System.out.printf("%.4f", mat[i]);
 		}
 		System.out.println();
 		System.out.println();

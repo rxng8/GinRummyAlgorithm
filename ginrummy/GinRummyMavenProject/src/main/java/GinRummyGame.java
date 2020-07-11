@@ -312,7 +312,7 @@ public class GinRummyGame {
 	public static void main(String[] args) {
 		// Single verbose demonstration game
 		setPlayVerbose(true);
-		new GinRummyGame(new SimplePlayer2(), new SimpleGinRummyPlayer()).play();
+		new GinRummyGame(new SimplePlayer3(), new SimpleGinRummyPlayer()).play();
 		
 //		// Multiple non-verbose games 
 //		setPlayVerbose(false);

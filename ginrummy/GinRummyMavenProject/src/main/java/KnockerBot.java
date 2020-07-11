@@ -12,6 +12,8 @@ import org.nd4j.linalg.io.ClassPathResource;
 
 public class KnockerBot {
 	
+	public static final float THRESHOLD = 0.95f;
+	
 	static ComputationGraph network;
 	static {
 		try {

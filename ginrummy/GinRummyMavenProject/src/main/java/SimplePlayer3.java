@@ -142,9 +142,9 @@ public class SimplePlayer3 implements GinRummyPlayer {
 			if (faceUpCard == null) {
 				// the statement faceupcard == null ? drawnCard : faceupcard is to say that although the faceup card is always not null,
 				// when the opponent draw the faceupcard in the first turn, it will be null. So we report the draw card instead
-				estimator.reportDrawDiscard(drawnCard, true, discardedCard);
+				estimator.reportDrawDiscard(drawnCard, true, discardedCard, turn);
 			} else {
-				estimator.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard);
+				estimator.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard, turn);
 			}
 		}
 		faceUpCard = discardedCard;
@@ -225,6 +225,9 @@ public class SimplePlayer3 implements GinRummyPlayer {
 //			for (double ratio : ratios)
 //				sum += ratio;
 //			System.out.println("Average ratio: " + sum / ratios.size());
+			
+			System.out.println("Accuracy: " + HandEstimator2.cal_accuracy(hand, estimator.probs));
+			
 		}
 	}
 

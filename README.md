@@ -64,7 +64,7 @@ Hitting bot keeps track of the cards that are in the opponent hand and the disca
 * `SimplePlayer3` (SP3): Simple player 2 with `HittingBot` and `KnockerBot` function (Threshold = 0.85). Wisely draw card, and choose the right time the knock!
 * `SimplePlayer4` (SP4): Simple player 3 with `HittingBot` function. Wisely draw card and wisely discard (not discarding base on opponent hand estimation)!
 
-Let's player 100 matches among each others! And here is the win rate (of players in column over those in row) :
+Let's playezz 100 matches among each others! And here is the win rate (of players in column over those in row) :
 
 |     | SimplePlayer1 | SimplePlayer2 | SimplePlayer3 | SimplePlayer4 |
 |:---:|:---:|:---:|:---:|:---:|

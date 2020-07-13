@@ -334,7 +334,7 @@ def lstm_model_2 (input_max_length=None, config=None):
 
     # adam = Adam(learning_rate=0.01)
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['binary_accuracy'])
     model.summary()
 
     return model
@@ -389,9 +389,23 @@ model = lstm_model_2()
 
 # %%
 
+model_b = lstm_model_2()
+# %%
+
+
+# %%
+
 # model.fit(x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], epochs=1, verbose=1)
 
-history = model.fit_generator(one_generator(x0, x1, x2, x3, y, n_match), steps_per_epoch=n_match, epochs=50,verbose=1)
+
+
+history = model_b.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[:1500], y[:1500], 1499), \
+    steps_per_epoch=1499, \
+    epochs=50,\
+    verbose=1,\
+    validation_data= one_generator(x0[500:], x1[500:], x2[500:], x3[500:], y[500:], 499),\
+    validation_steps= 100,)
+
 
 # %%
 

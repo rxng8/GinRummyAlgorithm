@@ -38,6 +38,13 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 
  */
+
+
+/**
+ * 
+ * Simple player with bayes estimation
+ *
+ */
 public class SimplePlayer2 implements GinRummyPlayer {
 	private int playerNum;
 	@SuppressWarnings("unused")
@@ -50,7 +57,7 @@ public class SimplePlayer2 implements GinRummyPlayer {
 	
 	KnockerBot kn_bot;
 	
-	boolean VERBOSE = true;
+	boolean VERBOSE = false;
 	
 	Card op_discard, op_draw, op_not_draw;
 	ArrayList<Card> discardPile;

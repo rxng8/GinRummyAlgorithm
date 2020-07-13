@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class HandEstimator2 {
 
-	private static final boolean VERBOSE = true;
+	private static final boolean VERBOSE = false;
 
 	private static final float IGNORE_THRESHOLD_RATIO = 0.5f;
 	
@@ -308,6 +308,21 @@ public class HandEstimator2 {
 		return y;
 	}
 	
+	
+	/**
+	 * Return the probability of opponent meld
+	 * @return
+	 */
+	public int get_op_nmeld() {
+		// Hard code
+		int count = 1;
+		for (boolean b : this.op_known) {
+			if (b) count++;
+		}
+		return count;
+	}
+	
+	
 	public void setOpKnown(Card card, boolean b) {
 //		if (VERBOSE) if (b) System.out.println("The opponent has the card " + card.toString());
 		op_known[card.getId()] = b;
@@ -391,6 +406,13 @@ public class HandEstimator2 {
 //		System.out.println("Number of unknown cards: " + n_unknown);
 	}
 	
+	/**
+	 * Get set
+	 * @return
+	 */
+	public float[] get_probs() {
+		return this.probs;
+	}
 	
 	
 	public static float cal_accuracy(ArrayList<Card> op_hand, float[] pred) {
@@ -409,43 +431,21 @@ public class HandEstimator2 {
 		return sum / 52;
 	}
 	
+	public static float cal_accuracy(float[] op_mat, float[] pred) {
+			
+		float sum = 0;
+		for (int i = 0; i < op_mat.length; i++) {
+			sum += 1 - Math.abs(op_mat[i] - pred[i]);
+		}
+		
+		return sum / 52;
+	}
+	
 	
 	public void view() {
-		print_mat(this.op_known, "Cards that are exactly in opponent's hand");
-		print_mat(this.other_known, "Cards that are in my hand or discard pile");
-		print_mat(this.probs, "Probability of opponent's hand");
-	}
-	
-	public static void print_mat(float[] mat, String name) {
-		System.out.println(name + ": ");
-		System.out.print("Rank");
-		for (int i = 0; i < Card.NUM_RANKS; i++)
-			System.out.print("\t" + Card.rankNames[i]);
-		for (int i = 0; i < Card.NUM_CARDS; i++) {
-			if (i % Card.NUM_RANKS == 0)
-				System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
-			System.out.print("\t");
-			System.out.printf("%1.1e", mat[i]);
-//			System.out.printf("%.4f", mat[i]);
-		}
-		System.out.println();
-		System.out.println();
-	}
-	
-	public static void print_mat(boolean[] mat, String name) {
-		System.out.println(name + ": ");
-		System.out.print("Rank");
-		for (int i = 0; i < Card.NUM_RANKS; i++)
-			System.out.print("\t" + Card.rankNames[i]);
-		for (int i = 0; i < Card.NUM_CARDS; i++) {
-			if (i % Card.NUM_RANKS == 0)
-				System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
-			System.out.print("\t");
-//			System.out.printf("%2.4f", mat[i]);
-			System.out.printf(mat[i] ? "TRUE" : "_");
-		}
-		System.out.println();
-		System.out.println();
+		Util.print_mat(this.op_known, "Cards that are exactly in opponent's hand");
+		Util.print_mat(this.other_known, "Cards that are in my hand or discard pile");
+		Util.print_mat(this.probs, "Probability of opponent's hand");
 	}
 	
 	public static void main(String[] args) {

@@ -42,7 +42,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /**
  * 
- * Simple player with bayes estimation
+ * Simple player with bayes estimation. And Knocker Bot (threshold 0.99)
  *
  */
 public class SimplePlayer2 implements GinRummyPlayer {

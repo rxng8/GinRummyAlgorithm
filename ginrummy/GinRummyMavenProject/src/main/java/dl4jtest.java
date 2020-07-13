@@ -441,8 +441,8 @@ public class dl4jtest {
 		
 		int max_match = obj.X.size();
 		
-		int match_from = 190;
-		int match_to = 200;
+		int match_from = 345;
+		int match_to = 346;
 		assert match_from < match_to : "Duhhhh!!";
 		int length = match_to - match_from;
 		assert match_to < max_match : "Invalid ending match index!";
@@ -514,8 +514,8 @@ public class dl4jtest {
 					System.out.println("Turn " + turn);
 					print_mat1D_card(y_pred[turn], "Predicted");
 					print_mat1D_card(dy[turn], "Actual");
+					System.out.println("Acc: " + HandEstimator2.cal_accuracy(dy[turn], y_pred[turn]));
 				}
-								
 			}
 			
 

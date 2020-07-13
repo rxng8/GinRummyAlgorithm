@@ -1,10 +1,10 @@
 # Algorithm of Reinforment Leanring for Imperfect Information Card Game: Gin Rummy
 
-## Current Work and Code:
+<!-- ## Current Work and Code:
 
 
 
--------------
+------------- -->
 <!-- 
 ## Past Work and Code:
 * Please navigate to `/ginrummy/hand_estimation_model.ipynb` to see what I'm working on with hand estimation lstm model.

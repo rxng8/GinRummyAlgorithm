@@ -1,4 +1,4 @@
-# Algorithm of Reinforment Leanring for Imperfect Information Card Game: Gin Rummy
+# Algorithm of Reinforcement Learning for Imperfect Information Card Game: Gin Rummy
 
 <!-- ## Current Work and Code:
 

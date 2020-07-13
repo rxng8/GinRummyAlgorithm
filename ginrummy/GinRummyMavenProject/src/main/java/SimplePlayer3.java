@@ -12,10 +12,12 @@ import java.util.Random;
 /**
  * 
  * BUG: The player is not informed when in the first turn, the opponent draw the face up card (Solve)
- *
+ * Feature: Knocker Bot, Hand estimation
  */
 
 public class SimplePlayer3 implements GinRummyPlayer {
+	public static final boolean VERBOSE = false;
+	
 	private int playerNum;
 	@SuppressWarnings("unused")
 	private int startingPlayerNum;
@@ -148,7 +150,7 @@ public class SimplePlayer3 implements GinRummyPlayer {
 			}
 		}
 		faceUpCard = discardedCard;
-		estimator.view();
+		if (VERBOSE) estimator.view();
 		turn++;
 	}
 
@@ -226,7 +228,7 @@ public class SimplePlayer3 implements GinRummyPlayer {
 //				sum += ratio;
 //			System.out.println("Average ratio: " + sum / ratios.size());
 			
-			System.out.println("Accuracy: " + HandEstimator2.cal_accuracy(hand, estimator.probs));
+//			System.out.println("Accuracy: " + HandEstimator2.cal_accuracy(hand, estimator.probs));
 			
 		}
 	}

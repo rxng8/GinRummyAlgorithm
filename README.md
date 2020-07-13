@@ -43,7 +43,7 @@
 
 # Report:
 
-## Report 8, date: July 8, 2020
+## Report 8, date: July 14, 2020
 
 Please navigate to [this link](./reference/report8.pdf) to see report 8.
 
@@ -73,7 +73,7 @@ Let's player 100 matches among each others! And here is the win rate (of players
 | SimplePlayer3 | 61% | 63% | 50% | 59% |
 | SimplePlayer4 | 52% | 50% | 41% | 50% |
 
-## Report 7, date: July 8, 2020
+## Report 7, date: July 7, 2020
 
 Please navigate to [this link](./reference/report7.pdf) to see report 7
 

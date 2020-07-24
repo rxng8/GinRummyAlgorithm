@@ -16,6 +16,22 @@ public class Util {
 		System.out.println();
 	}
 	
+	public static void print_mat(double[] mat, String name) {
+		System.out.println(name + ": ");
+		System.out.print("Rank");
+		for (int i = 0; i < Card.NUM_RANKS; i++)
+			System.out.print("\t" + Card.rankNames[i]);
+		for (int i = 0; i < Card.NUM_CARDS; i++) {
+			if (i % Card.NUM_RANKS == 0)
+				System.out.printf("\n%s", Card.suitNames[i / Card.NUM_RANKS]);
+			System.out.print("\t");
+			System.out.printf("%1.1e", mat[i]);
+//			System.out.printf("%.4f", mat[i]);
+		}
+		System.out.println();
+		System.out.println();
+	}
+	
 	public static void print_mat(boolean[] mat, String name) {
 		System.out.println(name + ": ");
 		System.out.print("Rank");

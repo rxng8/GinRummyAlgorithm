@@ -60,7 +60,4 @@ public abstract class HandEstimatorGeneral{
 //		estimatedHand = hand;
 		return hand;
 	}
-
-
-	
 }

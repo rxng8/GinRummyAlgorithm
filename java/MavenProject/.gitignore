@@ -1,0 +1,9 @@
+/target/
+*.class
+*.dat
+doc
+target
+.classpath
+.settings
+.project
+.factorypath

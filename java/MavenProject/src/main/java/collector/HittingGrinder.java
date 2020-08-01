@@ -29,17 +29,40 @@ public class HittingGrinder extends DataGrinder {
 
 	int turnsTaken = 0;
 	
-	// Matches / Turns / deadwood, turnstate, n_meld in winning game
-	ArrayList<int[]> knock_data;	
-	
+	int[] total_hit_stat;
+
+	HittingModule hitEngine = new HittingModule();
 	
 	public HittingGrinder () {
-		knock_data = new ArrayList<>();
+		hitEngine.init();
+		total_hit_stat = new int[2]; // [0]: total_drawn_hitting; [1]: total melds;
 	}
 	
 	public void collectData(int turnsTaken, int deadwood, int n_meld, boolean win) {
-		 int[] line = {turnsTaken, deadwood, n_meld, win? 1 : 0};
-		 knock_data.add(line);
+		 
+	}
+	
+	public void trackHit (ArrayList<Card> hand, Card faceUp, ArrayList<ArrayList<Card>> melds) {
+		// check hitting card in hand
+		
+		if (faceUp != null) {
+			boolean ishit = false;
+			for (Card c : hand) {
+				if (hitEngine.isHittingCard(c, faceUp)) ishit = true;
+			}
+			
+			this.total_hit_stat[0] += ishit ? 1 : 0;
+		}
+		
+		// If there is meld, plus into meld.
+		if (melds != null) {
+			total_hit_stat[1] += melds.size();
+			hitEngine.init();
+		}
+	}
+	
+	public void displayTrackHit() {
+		System.out.printf("Total number of hitting cards drawn: %d\nTotal of melds formed: %d\n", total_hit_stat[0], total_hit_stat[1]);
 	}
 	
 	public void to_CSV(String filename) {
@@ -52,24 +75,24 @@ public class HittingGrinder extends DataGrinder {
 			//Writing data to a csv file
 			        
 			// Header
-			String[] headers = new String[4];
-			headers[0] = "Turnstaken";
-			headers[1] = "Deadwood";
-			headers[2] = "N_meld";
-			headers[3] = "Label";
-			writer.writeNext(headers);
-			
-			for (int i = 0; i < knock_data.size(); i++) {
-				String[] line = new String[4];
-				
-				
-				String strArray[] = Arrays.stream(knock_data.get(i))
-							.mapToObj(String::valueOf)
-							.toArray(String[]::new);
-				System.arraycopy(strArray, 0, line, 0, strArray.length);
-				
-				writer.writeNext(line);
-			}
+//			String[] headers = new String[4];
+//			headers[0] = "Turnstaken";
+//			headers[1] = "Deadwood";
+//			headers[2] = "N_meld";
+//			headers[3] = "Label";
+//			writer.writeNext(headers);
+//			
+//			for (int i = 0; i < knock_data.size(); i++) {
+//				String[] line = new String[4];
+//				
+//				
+//				String strArray[] = Arrays.stream(knock_data.get(i))
+//							.mapToObj(String::valueOf)
+//							.toArray(String[]::new);
+//				System.arraycopy(strArray, 0, line, 0, strArray.length);
+//				
+//				writer.writeNext(line);
+//			}
 			
 			writer.close();
 		    System.out.println("Data entered!!!");
@@ -81,15 +104,6 @@ public class HittingGrinder extends DataGrinder {
 
 	public void displayData() {
 		
-	}
-	
-	
-	/**
-	 * Set whether or not there is to be printed output during gameplay.
-	 * @param playVerbose whether or not there is to be printed output during gameplay
-	 */
-	public static void setPlayVerbose(boolean playVerbose) {
-		HittingGrinder.playVerbose = playVerbose;
 	}
 
 	/**
@@ -163,7 +177,11 @@ public class HittingGrinder extends DataGrinder {
 					discards.push(discardCard);
 					
 					
-
+					// Collect data after each turn
+					if (currentPlayer == 0) {
+						trackHit(hands.get(currentPlayer), faceUpCard, null);
+					}
+					
 					
 					
 					if (playVerbose) {
@@ -290,8 +308,8 @@ public class HittingGrinder extends DataGrinder {
 				if (knockingDeadwood == 0) { // gin round win
 					scores[currentPlayer] += GinRummyUtil.GIN_BONUS + opponentDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+//					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
+//					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
 					
 					
 					if (playVerbose)
@@ -300,8 +318,8 @@ public class HittingGrinder extends DataGrinder {
 				else if (knockingDeadwood < opponentDeadwood) { // non-gin round win
 					scores[currentPlayer] += opponentDeadwood - knockingDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+//					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
+//					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
 					
 					
 					if (playVerbose)
@@ -310,8 +328,8 @@ public class HittingGrinder extends DataGrinder {
 				else { // undercut win for opponent
 					scores[opponent] += GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, false);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, true);
+//					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, false);
+//					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, true);
 					
 					
 					if (playVerbose)
@@ -319,6 +337,14 @@ public class HittingGrinder extends DataGrinder {
 				}
 				
 				startingPlayer = (startingPlayer == 0) ? 1 : 0; // starting player alternates
+				
+				// Collect data after each turn
+				if (currentPlayer == 0) {
+					trackHit(hands.get(currentPlayer), null, knockMelds);
+				} else {
+					trackHit(hands.get(opponent), null, opponentMelds);
+				}
+				
 			}
 			else { // If the round ends due to a two card draw pile with no knocking, the round is cancelled.
 				if (playVerbose)
@@ -330,6 +356,7 @@ public class HittingGrinder extends DataGrinder {
 				System.out.printf("Player\tScore\n0\t%d\n1\t%d\n", scores[0], scores[1]);
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
+			
 			
 			
 //			break;
@@ -369,7 +396,7 @@ public class HittingGrinder extends DataGrinder {
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
 		setPlayVerbose(false);
 		System.out.println("Playing games...");
-		int numGames = 50;
+		int numGames = 100;
 		HittingGrinder collector = new HittingGrinder();
 		
 		GinRummyPlayer p0 = new SimplePlayer();
@@ -377,12 +404,13 @@ public class HittingGrinder extends DataGrinder {
 		
 		collector.match(p0, p1, numGames);
 		
+		collector.displayTrackHit();
 		
 //		collector.displayData_picking();
 		
 //		DataCollector.toCSV_discard("data_picking.csv", collector.picking_data, collector.picking_labels);
 //		DataCollector.toCSV_discard("data_discard.csv", collector.picking_data, collector.picking_labels);
 //		DataCollector.toCSV_linear("data_linear.csv", collector.hands, collector.labels);
-		collector.to_CSV("data_knock_undercut.csv");
+//		collector.to_CSV("data_knock_undercut.csv");
 	}
 }

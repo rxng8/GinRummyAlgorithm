@@ -28,6 +28,10 @@ public class HittingModule {
 	// current player hand
 	ArrayList<Card> cards;
 	
+	public HittingModule() {
+		
+	}
+	
 	public HittingModule(HandEstimator2 estimator) {
 		this.estimator = estimator;
 	}

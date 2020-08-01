@@ -1,4 +1,9 @@
 package collector;
+
+/**
+ * @author Alex Nguyen
+ */
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -7,7 +12,9 @@ import module.*;
 import player.*;
 import util.*;
 
-public class DataGrinder {
+
+
+public abstract class DataGrinder {
 	/**
 	 * Random number generator
 	 */
@@ -27,7 +34,19 @@ public class DataGrinder {
 	
 	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
 	
-//	public void to_CSV(String filename);
-
-//	public void displayData();
+	/**
+	 * Set whether or not there is to be printed output during gameplay.
+	 * @param playVerbose whether or not there is to be printed output during gameplay
+	 */
+	public static void setPlayVerbose(boolean playVerbose) {
+		DataGrinder.playVerbose = playVerbose;
+	}
+	
+	// Needed methods
+	public abstract void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames);
+	public abstract int play(int startingPlayer);
+	public abstract void to_CSV(String filename) throws IOException;
+//	public abstract void collectData(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand);
+	public abstract void displayData();
+	
 }

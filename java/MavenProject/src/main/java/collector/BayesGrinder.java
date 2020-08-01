@@ -23,50 +23,12 @@ import core.*;
 import module.*;
 import player.*;
 import util.*;
-/*
- * @author Todd W. Neller
- * @version 1.0
 
-Copyright (C) 2020 Todd Neller
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-Information about the GNU General Public License is available online at:
-  http://www.gnu.org/licenses/
-To receive a copy of the GNU General Public License, write to the Free
-Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.
-
- */
 
 public class BayesGrinder extends DataGrinder {
-	/**
-	 * Random number generator
-	 */
-	private static final Random RANDOM = new Random();
-	/**
-	 * Hand size (before and after turn). After draw and before discard there is one extra card.
-	 */
-	private static final int HAND_SIZE = 10;
-	/**
-	 * Whether or not to print information during game play
-	 */
-	private static boolean playVerbose = false;
-	/**
-	 * Two Gin Rummy players numbered according to their array index.
-	 */
-	private GinRummyPlayer[] players = new GinRummyPlayer[2];
-	
-	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
-	
+
 	int turnsTaken = 0;
 	
 	// Players / Matches / Turns / hand, pick/unpick, discard / cards
@@ -129,7 +91,7 @@ public class BayesGrinder extends DataGrinder {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void toCSV_picking(String filename) throws IOException {
+	private void toCSV_picking(String filename) throws IOException {
 		
 		ArrayList<int[][]> data = this.picking_data;
 		ArrayList<Integer> labels = this.picking_labels;
@@ -168,7 +130,7 @@ public class BayesGrinder extends DataGrinder {
 	    System.out.println("Data entered!!!");
 	}
 	
-	public void toCSV_discard(String filename) throws IOException {
+	private void toCSV_discard(String filename) throws IOException {
 		
 		ArrayList<int[][]> data = this.picking_data;
 		ArrayList<Integer> labels = this.picking_labels;
@@ -234,17 +196,6 @@ public class BayesGrinder extends DataGrinder {
 		
 	}
 	
-	@SuppressWarnings("unused")
-
-	
-	/**
-	 * Set whether or not there is to be printed output during gameplay.
-	 * @param playVerbose whether or not there is to be printed output during gameplay
-	 */
-	public static void setPlayVerbose(boolean playVerbose) {
-		BayesGrinder.playVerbose = playVerbose;
-	}
-
 	/**
 	 * Play a game of Gin Rummy and return the winning player number 0 or 1.
 	 * @return the winning player number 0 or 1
@@ -530,6 +481,19 @@ public class BayesGrinder extends DataGrinder {
 		
 		collector.toCSV_picking("data_picking.csv");
 		collector.toCSV_discard("data_discard.csv");
+	}
+
+	private boolean drawMode = false;
+	
+	public void setDrawMode(boolean b) {
+		this.drawMode = b;
+	}
+	
+	@Override
+	public void to_CSV(String filename) throws IOException {
+		// TODO Auto-generated method stub
+		if (drawMode) toCSV_picking(filename);
+		else toCSV_discard(filename);
 	}
 
 

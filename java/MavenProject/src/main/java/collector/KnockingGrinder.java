@@ -82,15 +82,6 @@ public class KnockingGrinder extends DataGrinder {
 	public void displayData() {
 		
 	}
-	
-	
-	/**
-	 * Set whether or not there is to be printed output during gameplay.
-	 * @param playVerbose whether or not there is to be printed output during gameplay
-	 */
-	public static void setPlayVerbose(boolean playVerbose) {
-		KnockingGrinder.playVerbose = playVerbose;
-	}
 
 	/**
 	 * Play a game of Gin Rummy and return the winning player number 0 or 1.

@@ -1,18 +1,12 @@
 package player;
-/**
-
- * @author Alex Nguyen
- * Gettysburg College
- * 
- * Advisor: Professor Neller.
- */
 
 import java.util.ArrayList;
 import java.util.Random;
-import core.*;
 import collector.*;
+import core.*;
 import module.*;
 import util.*;
+
 /**
  * Implements a random dummy Gin Rummy player that has the following trivial, poor play policy: 
  * Ignore opponent actions and cards no longer in play.
@@ -43,12 +37,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
  */
 public class SimplePlayer implements GinRummyPlayer {
-	private int playerNum;
+	protected int playerNum;
 	@SuppressWarnings("unused")
-	private int startingPlayerNum;
-	private ArrayList<Card> cards = new ArrayList<Card>();
-	private Random random = new Random();
-	private boolean opponentKnocked = false;
+	protected int startingPlayerNum;
+	protected ArrayList<Card> cards = new ArrayList<Card>();
+	protected Random random = new Random();
+	protected boolean opponentKnocked = false;
 	Card faceUpCard, drawnCard; 
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
 

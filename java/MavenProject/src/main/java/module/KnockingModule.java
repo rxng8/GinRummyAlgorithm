@@ -1,5 +1,9 @@
 package module;
 
+import collector.*;
+import core.*;
+import player.*;
+import util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -11,18 +15,13 @@ import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfig
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.io.ClassPathResource;
-import collector.*;
-import core.*;
-import player.*;
-import util.*;
-public class KnockingModule {
-	
-	public static final float THRESHOLD = 0.95f;
+
+public class KnockingModule extends Module{
 	
 	static ComputationGraph network;
 	static {
 		try {
-			String file_name = "knocking_100";
+			String file_name = "knocking_100_v2";
 			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
@@ -42,7 +41,7 @@ public class KnockingModule {
 	}
 	
 	/**
-	 * Input : turn, deadwood, n_meld
+	 * Input : turn, deadwood, n_meld, n_hits, n_oppick
 	 * Output: Knock or not
 	 * @param args
 	 */

@@ -1,6 +1,8 @@
 package module;
 
 import java.util.ArrayList;
+import org.nd4j.linalg.api.ops.impl.accum.CountZero;
+import java.util.HashSet;
 import collector.*;
 import core.*;
 import player.*;
@@ -26,7 +28,7 @@ public class HittingModule {
 	boolean[] hand;
 	
 	// current player hand
-	ArrayList<Card> cards;
+	// ArrayList<Card> cards;
 	
 	public HittingModule() {
 		
@@ -47,6 +49,73 @@ public class HittingModule {
 			if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2)) {
 				return true;
 			}
+		}
+		return false;
+	}
+	
+	public int count_hitting(ArrayList<Card> hand) {
+		
+		return get_hitting(hand).size();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public HashSet<Card> get_hitting(ArrayList<Card> hand) {
+		
+		// Get all meld sets
+		ArrayList<ArrayList<ArrayList<Card>>> meldSet = GinRummyUtil.cardsToBestMeldSets(hand);
+		
+		// Construct remaining cards list
+		ArrayList<Card> cards;
+		
+		if (meldSet.size() == 0) {
+			if (VERBOSE)
+			System.out.println("This turn the player does not have any meld, here is the hand: " + hand);
+			cards = (ArrayList<Card>) hand.clone();
+		} else {
+			ArrayList<ArrayList<Card>> handmelds = meldSet.get(0);
+			if (VERBOSE) {
+				System.out.println("Hand: " + hand);
+				System.out.println("Melds: " + handmelds);
+			}
+			
+			cards = Util.get_unmelded_cards(handmelds, hand);
+			
+			if (VERBOSE)
+			System.out.println("Unmelded Cards: " + cards);
+		}
+		
+		ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(get_availability());
+		HashSet<Card> result = new HashSet<>();
+		ArrayList<Card> rm_cards = (ArrayList<Card>) cards.clone();
+
+		if (VERBOSE)
+		System.out.println("count_hitting debug: unmelded cards size: " + rm_cards.size());
+
+		for (Card c1 : rm_cards) {
+			ArrayList<Card> tmp_cards = (ArrayList<Card>) rm_cards.clone();
+			tmp_cards.remove(c1);
+			for (Card c2 : tmp_cards) {
+				
+				for (ArrayList<Card> meld : melds) {
+					if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2)) {
+						result.add(c1);
+						result.add(c2);
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+
+	@SuppressWarnings("unchecked")
+	public boolean isMeld(ArrayList<Card> hand, Card c) {
+		ArrayList<Card> newCards = (ArrayList<Card>) hand.clone();
+		newCards.add(c);
+		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards)) {
+			if (meld.contains(c)) {
+				return true;
+			}	
 		}
 		return false;
 	}
@@ -95,6 +164,23 @@ public class HittingModule {
 		return list;
 	}
 	
+	public ArrayList<Card> get_op_hand_absolute() {
+		ArrayList<Card> op = new ArrayList<>();
+		for (int i = 0; i < this.op_known.length; i++) {
+			 if (this.op_known[i]) op.add(Card.getCard(i));
+		}
+		return op;
+	}
+	
+	public int get_n_op_pick() {
+		int count = 0;
+		for (int i = 0; i < this.op_known.length; i++) {
+			 if (this.op_known[i]) count++;
+		}
+		return count;
+	}
+	
+
 	public ArrayList<Card> get_availability_probs() {
 		
 		ArrayList<Card> list = new ArrayList<Card>();
@@ -111,6 +197,10 @@ public class HittingModule {
 		//Use some more data in estimaor here
 		float[] probs_op = estimator.get_probs();
 		
+		// TODO: write algorithms
+		
+		
+
 		
 		return list;
 	}

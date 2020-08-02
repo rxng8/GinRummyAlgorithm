@@ -1,4 +1,5 @@
 package collector;
+
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,17 +20,65 @@ import java.util.stream.Stream;
 import javax.xml.crypto.Data;
 
 import com.opencsv.CSVWriter;
+
 import core.*;
 import module.*;
 import player.*;
 import util.*;
 
+/*
+ * @author Todd W. Neller
+ * @version 1.0
 
+Copyright (C) 2020 Todd Neller
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Information about the GNU General Public License is available online at:
+  http://www.gnu.org/licenses/
+To receive a copy of the GNU General Public License, write to the Free
+Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.
+
+ */
+
+
+/**
+ * 
+ * @author alexv
+ * Feature: Matches / Turns / ( turnstate, deadwood, n_meld, n_hitting, n_op_pickup ) in winning game and losing games
+ */
 public class KnockingGrinder extends DataGrinder {
+	/**
+	 * Random number generator
+	 */
+	private static final Random RANDOM = new Random();
+	/**
+	 * Hand size (before and after turn). After draw and before discard there is one extra card.
+	 */
+	private static final int HAND_SIZE = 10;
+	/**
+	 * Whether or not to print information during game play
+	 */
+	private static boolean playVerbose = false;
+	/**
+	 * Two Gin Rummy players numbered according to their array index.
+	 */
+	private SimplePlayer5[] players = new SimplePlayer5[2];
+	
+	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
 
 	int turnsTaken = 0;
 	
-	// Matches / Turns / deadwood, turnstate, n_meld in winning game
+	// Matches / Turns / turnstate, deadwood, n_meld, n_hitting, n_op_pickup in winning game and losing games
 	ArrayList<int[]> knock_data;	
 	
 	
@@ -37,30 +86,48 @@ public class KnockingGrinder extends DataGrinder {
 		knock_data = new ArrayList<>();
 	}
 	
-	public void collectData(int turnsTaken, int deadwood, int n_meld, boolean win) {
-		 int[] line = {turnsTaken, deadwood, n_meld, win? 1 : 0};
+	/**
+	 * 
+	 * @param turnsTaken
+	 * @param deadwood
+	 * @param n_meld
+	 * @param n_hit
+	 * @param n_oppick
+	 * @param win
+	 */
+	public void collectData(int turnsTaken, int deadwood, int n_meld, int n_hit, int n_oppick, boolean win) {
+		 int[] line = {turnsTaken, deadwood, n_meld, n_hit, n_oppick, win? 1 : 0};
 		 knock_data.add(line);
 	}
 	
-	public void to_CSV(String filename) {
+	/**
+	 * 
+	 * @param filename name of file
+	 * @param cont Appending to the data file
+	 */
+	public void to_CSV(String filename, boolean cont) {
 		//Instantiating the CSVWriter class
 		
 		try {
 			CSVWriter writer;
-			writer = new CSVWriter(new FileWriter(filename));
+			writer = new CSVWriter(new FileWriter(filename, cont));
 		
 			//Writing data to a csv file
 			        
 			// Header
-			String[] headers = new String[4];
-			headers[0] = "Turnstaken";
-			headers[1] = "Deadwood";
-			headers[2] = "N_meld";
-			headers[3] = "Label";
-			writer.writeNext(headers);
+			if (!cont) {
+				String[] headers = new String[6];
+				headers[0] = "Turn";
+				headers[1] = "Deadwood";
+				headers[2] = "N_melds";
+				headers[3] = "N_hits";
+				headers[4] = "N_oppicks";
+				headers[5] = "Label";
+				writer.writeNext(headers);
+			}
 			
 			for (int i = 0; i < knock_data.size(); i++) {
-				String[] line = new String[4];
+				String[] line = new String[6];
 				
 				
 				String strArray[] = Arrays.stream(knock_data.get(i))
@@ -81,6 +148,15 @@ public class KnockingGrinder extends DataGrinder {
 
 	public void displayData() {
 		
+	}
+	
+	
+	/**
+	 * Set whether or not there is to be printed output during gameplay.
+	 * @param playVerbose whether or not there is to be printed output during gameplay
+	 */
+	public static void setPlayVerbose(boolean playVerbose) {
+		KnockingGrinder.playVerbose = playVerbose;
 	}
 
 	/**
@@ -281,9 +357,21 @@ public class KnockingGrinder extends DataGrinder {
 				if (knockingDeadwood == 0) { // gin round win
 					scores[currentPlayer] += GinRummyUtil.GIN_BONUS + opponentDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							true);
 					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							false);
 					
 					if (playVerbose)
 						System.out.printf("Player %d scores the gin bonus of %d plus opponent deadwood %d for %d total points.\n", currentPlayer, GinRummyUtil.GIN_BONUS, opponentDeadwood, GinRummyUtil.GIN_BONUS + opponentDeadwood); 
@@ -291,9 +379,21 @@ public class KnockingGrinder extends DataGrinder {
 				else if (knockingDeadwood < opponentDeadwood) { // non-gin round win
 					scores[currentPlayer] += opponentDeadwood - knockingDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, true);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, false);
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							true);
 					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							false);
 					
 					if (playVerbose)
 						System.out.printf("Player %d scores the deadwood difference of %d.\n", currentPlayer, opponentDeadwood - knockingDeadwood); 
@@ -301,8 +401,21 @@ public class KnockingGrinder extends DataGrinder {
 				else { // undercut win for opponent
 					scores[opponent] += GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood;
 					
-					collectData(turnsTaken, knockingDeadwood, knockMelds.size() - 1, false);
-					collectData(turnsTaken, opponentDeadwood, opponentMelds.size() - 1, true);
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							false);
+					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							true);
 					
 					
 					if (playVerbose)
@@ -334,9 +447,11 @@ public class KnockingGrinder extends DataGrinder {
 	
 	public void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames) {
 		
-		this.players[0] = p0;
-		this.players[1] = p1;
+		this.players[0] = (SimplePlayer5) p0;
+		this.players[1] = (SimplePlayer5) p1;
 
+		
+		
 		long startMs = System.currentTimeMillis();
 		int numP1Wins = 0;
 		for (int i = 0; i < numGames; i++) {
@@ -360,20 +475,35 @@ public class KnockingGrinder extends DataGrinder {
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
 		setPlayVerbose(false);
 		System.out.println("Playing games...");
-		int numGames = 50;
+		int numGames = 100;
 		KnockingGrinder collector = new KnockingGrinder();
 		
-		GinRummyPlayer p0 = new SimplePlayer();
-		GinRummyPlayer p1 = new SimplePlayer();
+		GinRummyPlayer p0 = new SimplePlayer5();
+		GinRummyPlayer p1 = new SimplePlayer5();
 		
 		collector.match(p0, p1, numGames);
 		
+		/**
+		 * Change to false to write new file
+		 * Change to true to append to current file
+		 * 
+		 * LIST (DATA have to cover all the cases):
+		 * 		win with point over (P1 vs P1), (P5 (low th) vs P1), (P5 (th=low) vs P3(low th))
+		 * 		win with gin (P5 (th=1) vs P3(low th))
+		 *		win with undercut (P5 (th=1) vs P3(low th))
+		 *		lose with point over (P1 vs P1), (P5 (low th) vs P1), (P5 (th=low) vs P3(low th))
+		 * 		lose with being gined (P5 (th=0) vs P3(low th))
+		 *		lose with being undercut. (P5 (th=0) vs P3(low th))
+		 */
 		
-//		collector.displayData_picking();
+		collector.to_CSV("data_knock_v2.csv", true);
 		
-//		DataCollector.toCSV_discard("data_picking.csv", collector.picking_data, collector.picking_labels);
-//		DataCollector.toCSV_discard("data_discard.csv", collector.picking_data, collector.picking_labels);
-//		DataCollector.toCSV_linear("data_linear.csv", collector.hands, collector.labels);
-		collector.to_CSV("data_knock_undercut.csv");
+		
+	}
+
+	@Override
+	public void to_CSV(String filename) throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }

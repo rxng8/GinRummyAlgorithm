@@ -8,8 +8,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Stack;
@@ -17,6 +20,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.xml.crypto.Data;
+
+import org.bytedeco.javacpp.hdf5.H5FD_class_t.Truncate_H5FD_t_long_boolean;
 
 import com.opencsv.CSVWriter;
 import core.*;
@@ -27,21 +32,132 @@ import util.*;
 
 public class HittingGrinder extends DataGrinder {
 
+	private static final int HITTING_REWARD_CONST = 2;
+//	private static final int MELD_REWARD_CONST = 10;
+	
 	int turnsTaken = 0;
 	
+	/**
+	 * Stats
+	 */
 	int[] total_hit_stat;
 
+	/**
+	 * Module support
+	 */
 	HittingModule hitEngine = new HittingModule();
+	
+	/**
+	 * each int[] is a line data. [0,1,2,3,4]: turn, card rank, ishit, turn before game end, actual label
+	 */
+	ArrayList<int[]> lines_data;
+	
+	
+	/**
+	 * One line of data (turn)
+	 */
+	int[] current_line;
+	
+	/**
+	 * current collection of line data in a match to be append to lines_data.
+	 */
+	HashMap<int[], Card> current_match;
+	
 	
 	public HittingGrinder () {
 		hitEngine.init();
 		total_hit_stat = new int[2]; // [0]: total_drawn_hitting; [1]: total melds;
+		lines_data = new ArrayList<>();
+		current_match = new HashMap<>();
 	}
 	
-	public void collectData(int turnsTaken, int deadwood, int n_meld, boolean win) {
+	/**
+	 * Onlly collect the player 0
+	 * update line[0124]
+	 * @param turnsTaken
+	 * @param hand
+	 * @param faceUp
+	 */
+	@SuppressWarnings("unchecked")
+	public void collectData(int turnsTaken, ArrayList<Card> hand, Card faceUp) {
+		
+		if (faceUp != null) {
+			// Reset new line
+			current_line = new int[5];
+			current_line[0] = turnsTaken;
+			current_line[1] = faceUp.rank + 1;
+			
+			boolean ishit = false;
+			boolean ismeld = hitEngine.isMeld(hand, faceUp);
+					
+//			if (!ismeld) {
+			for (Card c : hand) {
+				if (hitEngine.isHittingCard(c, faceUp)) {
+					ishit = true;
+				}
+			}
+//			}
+			
+			current_line[2] = ishit ? 1 : 0;
+			
+			// Label
+			current_line[4] = 13 + (ishit ? HITTING_REWARD_CONST : 0) - (ismeld ? 0 : faceUp.rank);
+			
+			// put to current match
+			current_match.put(current_line, faceUp);
+			
+//			System.out.println("Currnet_mathc's size: " + current_match.size());
+		}
+	}
+	
+	/**
+	 * Only collect player 0
+	 * update line[3], edit line[4]. check paper
+	 * 
+	 * @param turnsTaken
+	 * @param hand
+	 * @param melds
+	 */
+	public void collectLabel(int turnsTaken, ArrayList<Card> hand, ArrayList<ArrayList<Card>> melds) {
+		 for (Entry<int[], Card> e : current_match.entrySet()) {
+			 int[] line = e.getKey();
+			 Card card = e.getValue();
+			 
+			 // check if card is in a meld
+			 boolean ismeld = false;
+			 for (ArrayList<Card> meld : melds) {
+				 if (meld.contains(card)) {
+					 ismeld = true;
+					 break;
+				 }
+			 }
+			 
+			 // compute turn waste
+			 int turnWaste = 0;
+			 if (!ismeld) {
+				 turnWaste = turnsTaken - line[0];
+			 }
+			 
+			 line[3] = turnsTaken - line[0];
+			 line[4] -= (turnWaste / 3);
+			 
+			 // Concatenate to all data
+			 
+			 lines_data.add(line);
+			 
+		 }
+		 
+		 // reset current match
+		 current_match = new HashMap<>();
 		 
 	}
 	
+	/**
+	 * Only collect player 0
+	 * @param hand
+	 * @param faceUp
+	 * @param melds
+	 */
 	public void trackHit (ArrayList<Card> hand, Card faceUp, ArrayList<ArrayList<Card>> melds) {
 		// check hitting card in hand
 		
@@ -65,6 +181,16 @@ public class HittingGrinder extends DataGrinder {
 		System.out.printf("Total number of hitting cards drawn: %d\nTotal of melds formed: %d\n", total_hit_stat[0], total_hit_stat[1]);
 	}
 	
+	public void display_line_data() {
+		System.out.printf("This is lines_data:\nTurn\tRank\tHitting\tEnd in\tValue\n");
+		for (int[] line : lines_data) {
+			for (int v : line) {
+				System.out.printf(v + "\t");
+			}
+			System.out.println();
+		}
+	}
+	
 	public void to_CSV(String filename) {
 		//Instantiating the CSVWriter class
 		
@@ -75,24 +201,24 @@ public class HittingGrinder extends DataGrinder {
 			//Writing data to a csv file
 			        
 			// Header
-//			String[] headers = new String[4];
-//			headers[0] = "Turnstaken";
-//			headers[1] = "Deadwood";
-//			headers[2] = "N_meld";
-//			headers[3] = "Label";
-//			writer.writeNext(headers);
-//			
-//			for (int i = 0; i < knock_data.size(); i++) {
-//				String[] line = new String[4];
-//				
-//				
-//				String strArray[] = Arrays.stream(knock_data.get(i))
-//							.mapToObj(String::valueOf)
-//							.toArray(String[]::new);
-//				System.arraycopy(strArray, 0, line, 0, strArray.length);
-//				
-//				writer.writeNext(line);
-//			}
+			String[] headers = new String[5];
+			headers[0] = "Turn";
+			headers[1] = "Rank";
+			headers[2] = "IsHit";
+			headers[3] = "EndsIn";
+			headers[4] = "Value";
+			writer.writeNext(headers);
+			
+			for (int i = 0; i < lines_data.size(); i++) {
+				
+				String line[] = Arrays.stream(lines_data.get(i))
+							.mapToObj(String::valueOf)
+							.toArray(String[]::new);
+				
+				assert line.length == 5 : "Wrong system of features";
+				
+				writer.writeNext(line);
+			}
 			
 			writer.close();
 		    System.out.println("Data entered!!!");
@@ -179,7 +305,11 @@ public class HittingGrinder extends DataGrinder {
 					
 					// Collect data after each turn
 					if (currentPlayer == 0) {
-						trackHit(hands.get(currentPlayer), faceUpCard, null);
+						trackHit(hands.get(currentPlayer), drawFaceUp ? faceUpCard : null, null);
+					}
+					
+					if (currentPlayer == 0) {
+						collectData(turnsTaken, hands.get(currentPlayer), faceUpCard);
 					}
 					
 					
@@ -338,12 +468,24 @@ public class HittingGrinder extends DataGrinder {
 				
 				startingPlayer = (startingPlayer == 0) ? 1 : 0; // starting player alternates
 				
+				
+				
+				
+				
 				// Collect data after each turn
 				if (currentPlayer == 0) {
 					trackHit(hands.get(currentPlayer), null, knockMelds);
 				} else {
 					trackHit(hands.get(opponent), null, opponentMelds);
 				}
+				
+				// Collect data after each turn
+				if (currentPlayer == 0) {
+					collectLabel(turnsTaken, hands.get(currentPlayer), knockMelds);
+				} else {
+					collectLabel(turnsTaken, hands.get(opponent), opponentMelds);
+				}
+				
 				
 			}
 			else { // If the round ends due to a two card draw pile with no knocking, the round is cancelled.
@@ -396,7 +538,7 @@ public class HittingGrinder extends DataGrinder {
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
 		setPlayVerbose(false);
 		System.out.println("Playing games...");
-		int numGames = 100;
+		int numGames = 10000;
 		HittingGrinder collector = new HittingGrinder();
 		
 		GinRummyPlayer p0 = new SimplePlayer();
@@ -404,13 +546,13 @@ public class HittingGrinder extends DataGrinder {
 		
 		collector.match(p0, p1, numGames);
 		
-		collector.displayTrackHit();
+//		collector.displayTrackHit();
 		
 //		collector.displayData_picking();
 		
-//		DataCollector.toCSV_discard("data_picking.csv", collector.picking_data, collector.picking_labels);
-//		DataCollector.toCSV_discard("data_discard.csv", collector.picking_data, collector.picking_labels);
-//		DataCollector.toCSV_linear("data_linear.csv", collector.hands, collector.labels);
-//		collector.to_CSV("data_knock_undercut.csv");
+//		collector.display_line_data();
+		
+		collector.to_CSV("./dataset/hit_sp_10000.csv");
+
 	}
 }

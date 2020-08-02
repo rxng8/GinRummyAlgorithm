@@ -25,7 +25,7 @@ public class TurnStatesDataCollector {
 	/**
 	 * Random number generator
 	 */
-	private static final Random RANDOM = new Random();
+	private static Random random;
 	
 	/**
 	 * Hand size (before and after turn). After draw and before discard there is one extra card.
@@ -57,7 +57,8 @@ public class TurnStatesDataCollector {
 	 * Play a game of Gin Rummy and return the winning player number 0 or 1. Add a new TurnState in line 132
 	 * @return the winning player number 0 or 1
 	 */
-	public int play(int startingPlayer, GinRummyPlayer player0, GinRummyPlayer player1) {
+	public int play(int startingPlayer, GinRummyPlayer player0, GinRummyPlayer player1, long randSeed) {
+		random = new Random(randSeed);
 		players = new GinRummyPlayer[] {player0, player1};
 		int[] scores = new int[2];
 		ArrayList<ArrayList<Card>> hands = new ArrayList<>();
@@ -67,7 +68,7 @@ public class TurnStatesDataCollector {
 		
 		//game states with 2 vectors of turnStates to store one's own actions and hands		
 		ArrayList<ArrayList<ArrayList<short[][]>>> gameData = new ArrayList<>();
-
+		
 		while (scores[0] < GinRummyUtil.GOAL_SCORE && scores[1] < GinRummyUtil.GOAL_SCORE) { // while game not over
 			
 			//create a variable to store turns' states			
@@ -82,7 +83,7 @@ public class TurnStatesDataCollector {
 			int opponent = (currentPlayer == 0) ? 1 : 0;
 			
 			// get shuffled deck and deal cards
-			Stack<Card> deck = Card.getShuffle(RANDOM.nextInt());
+			Stack<Card> deck = Card.getShuffle(random.nextInt());
 			hands.get(0).clear();
 			hands.get(1).clear();
 			for (int i = 0; i < 2 * HAND_SIZE; i++)
@@ -427,7 +428,7 @@ public class TurnStatesDataCollector {
 		TurnStatesDataCollector collector = new TurnStatesDataCollector();
 		int numGameBig = 25000;
 		for(int i = 0; i < numGameBig; i++) 
-			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer());
+			collector.play(i%2, new SimpleGinRummyPlayer(), new SimpleGinRummyPlayer(), (long)i);
 		
 		long startMs = System.currentTimeMillis();
 		collector.saveGame("play_data_SimplePlayer.dat", playData);

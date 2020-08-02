@@ -407,5 +407,11 @@ public class SimplePlayer2 implements GinRummyPlayer {
 		GinRummyPlayer p = new SimplePlayer2();
 		
 	}
+
+	@Override
+	public HittingBot getHittingBot() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }

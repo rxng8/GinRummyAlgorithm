@@ -10,18 +10,18 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.io.ClassPathResource;
 
-public class KnockerBot {
+public class KnockerBot2 {
 	
 	static ComputationGraph network;
 	static {
 		try {
-			String file_name = "knocking_100";
+			String file_name = "knocking_100_v2";
 			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
 			String modelWeights = new ClassPathResource("./model/" + file_name + "_weights.h5").getFile().getPath();
 			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
-			KnockerBot.network = network;
+			KnockerBot2.network = network;
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -30,12 +30,12 @@ public class KnockerBot {
 			e.printStackTrace();
 		}
 	}
-	public KnockerBot() {
+	public KnockerBot2() {
 
 	}
 	
 	/**
-	 * Input : turn, deadwood, n_meld
+	 * Input : turn, deadwood, n_meld, n_hits, n_oppick
 	 * Output: Knock or not
 	 * @param args
 	 */
@@ -56,7 +56,7 @@ public class KnockerBot {
 	}
 	
 	public static void main(String[] args) {
-		KnockerBot k = new KnockerBot();
+		KnockerBot2 k = new KnockerBot2();
 		int[] X = {25, 10, -1};
 		System.out.println(k.predict(X));
 	}

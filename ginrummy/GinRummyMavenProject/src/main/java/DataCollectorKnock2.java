@@ -1,12 +1,26 @@
 
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.Stack;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import javax.xml.crypto.Data;
 
-/**
- * A class for modeling a game of Gin Rummy
- * 
+import com.opencsv.CSVWriter;
+
+/*
  * @author Todd W. Neller
  * @version 1.0
 
@@ -29,43 +43,114 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 
  */
-public class GinRummyGame {
-	
+
+
+/**
+ * 
+ * @author alexv
+ * Feature: Matches / Turns / ( turnstate, deadwood, n_meld, n_hitting, n_op_pickup ) in winning game and losing games
+ */
+public class DataCollectorKnock2 implements DataCollector {
 	/**
 	 * Random number generator
 	 */
 	private static final Random RANDOM = new Random();
-	
 	/**
 	 * Hand size (before and after turn). After draw and before discard there is one extra card.
 	 */
 	private static final int HAND_SIZE = 10;
-	
 	/**
 	 * Whether or not to print information during game play
 	 */
-	public static boolean playVerbose = false;
-	
+	private static boolean playVerbose = false;
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private GinRummyPlayer[] players;
+	private GinRummyPlayer[] players = new GinRummyPlayer[2];
+	
+	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
+
+	int turnsTaken = 0;
+	
+	// Matches / Turns / turnstate, deadwood, n_meld, n_hitting, n_op_pickup in winning game and losing games
+	ArrayList<int[]> knock_data;	
+	
+	
+	public DataCollectorKnock2 () {
+		knock_data = new ArrayList<>();
+	}
+	
+	/**
+	 * 
+	 * @param turnsTaken
+	 * @param deadwood
+	 * @param n_meld
+	 * @param n_hit
+	 * @param n_oppick
+	 * @param win
+	 */
+	public void collectData(int turnsTaken, int deadwood, int n_meld, int n_hit, int n_oppick, boolean win) {
+		 int[] line = {turnsTaken, deadwood, n_meld, n_hit, n_oppick, win? 1 : 0};
+		 knock_data.add(line);
+	}
+	
+	/**
+	 * 
+	 * @param filename name of file
+	 * @param cont Appending to the data file
+	 */
+	public void to_CSV(String filename, boolean cont) {
+		//Instantiating the CSVWriter class
+		
+		try {
+			CSVWriter writer;
+			writer = new CSVWriter(new FileWriter(filename, cont));
+		
+			//Writing data to a csv file
+			        
+			// Header
+			if (!cont) {
+				String[] headers = new String[6];
+				headers[0] = "Turn";
+				headers[1] = "Deadwood";
+				headers[2] = "N_melds";
+				headers[3] = "N_hits";
+				headers[4] = "N_oppicks";
+				headers[5] = "Label";
+				writer.writeNext(headers);
+			}
+			
+			for (int i = 0; i < knock_data.size(); i++) {
+				String[] line = new String[6];
+				
+				
+				String strArray[] = Arrays.stream(knock_data.get(i))
+							.mapToObj(String::valueOf)
+							.toArray(String[]::new);
+				System.arraycopy(strArray, 0, line, 0, strArray.length);
+				
+				writer.writeNext(line);
+			}
+			
+			writer.close();
+		    System.out.println("Data entered!!!");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void displayData() {
+		
+	}
+	
 	
 	/**
 	 * Set whether or not there is to be printed output during gameplay.
 	 * @param playVerbose whether or not there is to be printed output during gameplay
 	 */
 	public static void setPlayVerbose(boolean playVerbose) {
-		GinRummyGame.playVerbose = playVerbose;
-	}
-	
-	/**
-	 * Create a GinRummyGame with two given players
-	 * @param player0 Player 0
-	 * @param player1 Player 1
-	 */
-	public GinRummyGame(GinRummyPlayer player0, GinRummyPlayer player1) {
-		players = new GinRummyPlayer[] {player0, player1};
+		DataCollectorKnock2.playVerbose = playVerbose;
 	}
 
 	/**
@@ -73,12 +158,12 @@ public class GinRummyGame {
 	 * @return the winning player number 0 or 1
 	 */
 	@SuppressWarnings("unchecked")
-	public int play() {
+	public int play(int startingPlayer) {
 		int[] scores = new int[2];
 		ArrayList<ArrayList<Card>> hands = new ArrayList<ArrayList<Card>>();
 		hands.add(new ArrayList<Card>());
 		hands.add(new ArrayList<Card>());
-		int startingPlayer = RANDOM.nextInt(2);
+//		int startingPlayer = RANDOM.nextInt(2);
 		
 		while (scores[0] < GinRummyUtil.GOAL_SCORE && scores[1] < GinRummyUtil.GOAL_SCORE) { // while game not over
 			int currentPlayer = startingPlayer;
@@ -107,10 +192,6 @@ public class GinRummyGame {
 			int turnsTaken = 0;
 			ArrayList<ArrayList<Card>> knockMelds = null;
 			while (deck.size() > 2) { // while the deck has more than two cards remaining, play round
-				
-				
-				
-				
 				// DRAW
 				boolean drawFaceUp = false;
 				Card faceUpCard = discards.peek();
@@ -141,6 +222,11 @@ public class GinRummyGame {
 					if (playVerbose)
 						System.out.printf("Player %d discards %s.\n", currentPlayer, discardCard);
 					discards.push(discardCard);
+					
+					
+
+					
+					
 					if (playVerbose) {
 						ArrayList<Card> unmeldedCards = (ArrayList<Card>) hands.get(currentPlayer).clone();
 						ArrayList<ArrayList<ArrayList<Card>>> bestMelds = GinRummyUtil.cardsToBestMeldSets(unmeldedCards);
@@ -165,12 +251,6 @@ public class GinRummyGame {
 				turnsTaken++;
 				currentPlayer = (currentPlayer == 0) ? 1 : 0;
 				opponent = (currentPlayer == 0) ? 1 : 0;
-				
-				
-				
-				
-				
-				
 			}
 			
 			if (knockMelds != null) { // round didn't end due to non-knocking and 2 cards remaining in draw pile
@@ -270,19 +350,72 @@ public class GinRummyGame {
 				// compare deadwood and compute new scores
 				if (knockingDeadwood == 0) { // gin round win
 					scores[currentPlayer] += GinRummyUtil.GIN_BONUS + opponentDeadwood;
+					
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							true);
+					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							false);
+					
 					if (playVerbose)
 						System.out.printf("Player %d scores the gin bonus of %d plus opponent deadwood %d for %d total points.\n", currentPlayer, GinRummyUtil.GIN_BONUS, opponentDeadwood, GinRummyUtil.GIN_BONUS + opponentDeadwood); 
 				}
 				else if (knockingDeadwood < opponentDeadwood) { // non-gin round win
 					scores[currentPlayer] += opponentDeadwood - knockingDeadwood;
+					
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							true);
+					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							false);
+					
 					if (playVerbose)
 						System.out.printf("Player %d scores the deadwood difference of %d.\n", currentPlayer, opponentDeadwood - knockingDeadwood); 
 				}
 				else { // undercut win for opponent
 					scores[opponent] += GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood;
+					
+					// Collect current player's data
+					collectData(turnsTaken, 
+							knockingDeadwood, 
+							knockMelds.size(), 
+							players[currentPlayer].getHittingBot().count_hitting(hands.get(currentPlayer)), 
+							players[currentPlayer].getHittingBot().get_n_op_pick(), 
+							false);
+					
+					// Collect opponent's data
+					collectData(turnsTaken, 
+							opponentDeadwood, 
+							opponentMelds.size(), 
+							players[opponent].getHittingBot().count_hitting(hands.get(opponent)), 
+							players[opponent].getHittingBot().get_n_op_pick(), 
+							true);
+					
+					
 					if (playVerbose)
 						System.out.printf("Player %d undercuts and scores the undercut bonus of %d plus deadwood difference of %d for %d total points.\n", opponent, GinRummyUtil.UNDERCUT_BONUS, knockingDeadwood - opponentDeadwood, GinRummyUtil.UNDERCUT_BONUS + knockingDeadwood - opponentDeadwood); 
 				}
+				
 				startingPlayer = (startingPlayer == 0) ? 1 : 0; // starting player alternates
 			}
 			else { // If the round ends due to a two card draw pile with no knocking, the round is cancelled.
@@ -290,19 +423,15 @@ public class GinRummyGame {
 					System.out.println("The draw pile was reduced to two cards without knocking, so the hand is cancelled.");
 			}
 
-			
-			// final hand reporting
-			for (int i = 0; i < 2; i++) 
-				for (int j = 0; j < 2; j++)
-				players[i].reportFinalHand(j, hands.get(j));
-			
 			// score reporting
 			if (playVerbose) 
 				System.out.printf("Player\tScore\n0\t%d\n1\t%d\n", scores[0], scores[1]);
 			for (int i = 0; i < 2; i++) 
 				players[i].reportScores(scores.clone());
 			
+			
 //			break;
+			
 			
 		}
 		if (playVerbose)
@@ -310,54 +439,59 @@ public class GinRummyGame {
 		return scores[0] >= GinRummyUtil.GOAL_SCORE ? 0 : 1;
 	}
 	
+	public void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames) {
+		
+		this.players[0] = (SimplePlayer5) p0;
+		this.players[1] = p1;
+
+		
+		
+		long startMs = System.currentTimeMillis();
+		int numP1Wins = 0;
+		for (int i = 0; i < numGames; i++) {
+			numP1Wins += play(i % 2);
+		}
+		long totalMs = System.currentTimeMillis() - startMs;
+
+		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
+		System.out.printf("Games Won: %s: %d, %s: %d.\n", "Player1", numGames - numP1Wins, "Player2", numP1Wins);
+
+	}
 	
 	/**
 	 * Test and demonstrate the use of the GinRummyGame class.
 	 * @param args (unused)
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
-		// Single verbose demonstration game
-		setPlayVerbose(true);
-		SimplePlayer5.VERBOSE = true;
-		new GinRummyGame(new SimpleGinRummyPlayer(), new SimplePlayer4()).play();
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
+		setPlayVerbose(false);
+		System.out.println("Playing games...");
+		int numGames = 100;
+		DataCollectorKnock2 collector = new DataCollectorKnock2();
 		
-//		// Multiple non-verbose games 
-//		setPlayVerbose(false);
-//		int numGames = 100;
-//		int numP1Wins = 0;
-//		int quadrant = numGames / 4;
-//		int first_quadrant = 0;
-//		int sec_quadrant = 0;
-//		int third_quadrant = 0;
-//		int fourth_quadrant = 0;
-//		SimplePlayer5.VERBOSE = false;
-//		GinRummyGame game = new GinRummyGame(new SimplePlayer5(), new SimplePlayer3());
-//		long startMs = System.currentTimeMillis();
-//		for (int i = 0; i < numGames; i++) {
-//			int win = game.play();
-//			numP1Wins += win;
-//			if (win != 0) {
-//				if (i < quadrant) {
-//					first_quadrant ++;
-//				} else if (i < 2 * quadrant) {
-//					sec_quadrant ++;
-//				} else if (i < 3 * quadrant) {
-//					third_quadrant ++;
-//				} else {
-//					fourth_quadrant ++;
-//				}
-//			}
-//		}
-//		
-//		long totalMs = System.currentTimeMillis() - startMs;		
-//		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
-//		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
-//		
-//		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
-//		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
-//		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
-//		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
-	
+		GinRummyPlayer p0 = new SimplePlayer5();
+		GinRummyPlayer p1 = new SimplePlayer4();
+		
+		collector.match(p0, p1, numGames);
+		
+		/**
+		 * Change to false to write new file
+		 * Change to true to append to current file
+		 * 
+		 * LIST (DATA have to cover all the cases):
+		 * 		win with point over (P1 vs P1), (P5 (low th) vs P1), (P5 (th=low) vs P3(low th))
+		 * 		win with gin (P5 (th=1) vs P3(low th))
+		 *		win with undercut (P5 (th=1) vs P3(low th))
+		 *		lose with point over (P1 vs P1), (P5 (low th) vs P1), (P5 (th=low) vs P3(low th))
+		 * 		lose with being gined (P5 (th=0) vs P3(low th))
+		 *		lose with being undercut. (P5 (th=0) vs P3(low th))
+		 */
+		
+		collector.to_CSV("data_knock_v2.csv", true);
+		
+		
 	}
-	
 }

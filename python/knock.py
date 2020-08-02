@@ -86,7 +86,7 @@ def build_model():
 # %%
 
 (x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
-    import_csv("./GinRummyMavenProject/data_knock_v2.csv", 0.9)
+    import_csv("../java/MavenProject/dataset/data_knock_v2.csv", 0.9)
 
 
 # %%
@@ -100,18 +100,20 @@ batch_size = 100
 history = model.fit(x = x_train[:size], \
     y = y_train[:size],\
     batch_size = batch_size,\
-    epochs=100,\
+    epochs=35,\
     verbose=1,\
     validation_split=0.75)
 
 
 # %%
 
-model.save('knocking_100_v2.h5')  # save everything in HDF5 format
+MODEL_PATH = '../java/MavenProject/src/main/java/model/'
+
+model.save(MODEL_PATH + 'knocking_100_v2.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("knocking_100_v2_config.json", "w") as f:
+with open(MODEL_PATH + "knocking_100_v2_config.json", "w") as f:
     f.write(model_json)
-model.save_weights('knocking_100_v2_weights.h5') # save just the weights.
+model.save_weights(MODEL_PATH + 'knocking_100_v2_weights.h5') # save just the weights.
 
 # %%
 # convert the history.history dict to a pandas DataFrame:     

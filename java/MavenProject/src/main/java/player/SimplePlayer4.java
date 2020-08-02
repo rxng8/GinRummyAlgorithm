@@ -23,6 +23,7 @@ import util.*;
 
 public class SimplePlayer4 implements GinRummyPlayer {
 	public static final boolean VERBOSE = false;
+	public static final float KNOCKING_THRESHOLD = 0.1f;
 	private int playerNum;
 	@SuppressWarnings("unused")
 	private int startingPlayerNum;
@@ -287,7 +288,7 @@ public class SimplePlayer4 implements GinRummyPlayer {
 		}
 		
 		
-		if (!opponentKnocked && (bestMeldSets.isEmpty() || knock_prob < KnockingModule.THRESHOLD))
+		if (!opponentKnocked && (bestMeldSets.isEmpty() || knock_prob < KNOCKING_THRESHOLD))
 			return null;
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
 	}

@@ -120,5 +120,7 @@ public interface GinRummyPlayer {
 	 * @param hand complete hand of given player
 	 */
 	void reportFinalHand(int playerNum, ArrayList<Card> hand);
+
+	HittingBot getHittingBot();
 	
 }

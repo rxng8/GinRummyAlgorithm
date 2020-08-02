@@ -296,7 +296,7 @@ public class HandEstimator2 {
 		for(int i = 0; i < mat.length; i++) {
 			if (mat[i] > max) {
 				max = mat[i];
-			}		
+			}
 		}
 //		System.out.println(" ; ratio: " + threshold / max);
 		for(int i = 0; i < mat.length; i++) {

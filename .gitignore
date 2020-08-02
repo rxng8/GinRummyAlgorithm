@@ -1,0 +1,10 @@
+reference/HandEstimationExperiment
+
+**/history/
+**/model/
+
+**/dataset/
+
+ginrummy/.ipynb_checkpoints/*
+
+**.csv

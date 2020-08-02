@@ -29,6 +29,8 @@ public class SimplePlayer4 implements GinRummyPlayer {
 	HandEstimator2 estimator = new HandEstimator2();
 	private int totalDiscarded = 0;
 	
+	public static final float KNOCKING_THRESHOLD = 0.95f;
+	
 	int turn;
 	KnockerBot kn_bot = new KnockerBot();
 	HittingBot ht_bot = new HittingBot(estimator);
@@ -242,6 +244,20 @@ public class SimplePlayer4 implements GinRummyPlayer {
 		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
 			ht_bot.setDiscardKnown(discardedCard, true);
+			
+			// Count the number of hitting cards except for melds in hand
+//			ArrayList<ArrayList<ArrayList<Card>>> meldSet = GinRummyUtil.cardsToBestMeldSets(cards);
+//			if (meldSet.size() != 0) {
+//				ArrayList<ArrayList<Card>> melds = meldSet.get(0);
+//				System.out.println("Melds: " + melds);
+//				System.out.println("Hand: " + cards);
+//				ArrayList<Card> unmelds = Util.get_unmelded_cards(melds, cards);
+//				System.out.println("Unmeld Melds: " + unmelds);
+//				System.out.println("Number of cards that are hitting card in the unmelds set: " + ht_bot.count_hitting(unmelds));
+//			}
+			if (VERBOSE)
+			System.out.println("Number of cards that are hitting card in the unmelds set: " + ht_bot.count_hitting(cards));
+			
 		}
 		else {
 			if (faceUpCard == null) {
@@ -282,7 +298,7 @@ public class SimplePlayer4 implements GinRummyPlayer {
 		}
 		
 		
-		if (!opponentKnocked && (bestMeldSets.isEmpty() || knock_prob < KnockerBot.THRESHOLD))
+		if (!opponentKnocked && (bestMeldSets.isEmpty() || knock_prob < KNOCKING_THRESHOLD))
 			return null;
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
 	}
@@ -341,5 +357,11 @@ public class SimplePlayer4 implements GinRummyPlayer {
 
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, FileNotFoundException, UnsupportedEncodingException {
 		
+	}
+
+	@Override
+	public HittingBot getHittingBot() {
+		// TODO Auto-generated method stub
+		return this.ht_bot;
 	}
 }

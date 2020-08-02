@@ -1,5 +1,8 @@
-/target/
+*.class
+*.dat
+doc
+target
 .classpath
-.gitignore
-.project
 .settings
+.project
+.factorypath

@@ -394,18 +394,49 @@ model_b = lstm_model_2()
 
 
 # %%
+import keras
+from datetime import datetime
+from packaging import version
+import tensorboard
+tensorboard.__version__
+logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
-# model.fit(x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], epochs=1, verbose=1)
+# %%
+
+# model.fit(\
+#     x=one_generator(x0, x1, x2, x3, y, n_match, 0)[0], \
+#     y=one_generator(x0, x1, x2, x3, y, n_match, 0)[1], \
+#     epochs=1, \
+#     verbose=1, \
+#     callbacks=[tensorboard_callback])
 
 
 
-history = model_b.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[:1500], y[:1500], 1499), \
+history = model.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[:1500], y[:1500], 1499), \
     steps_per_epoch=1499, \
-    epochs=50,\
+    epochs=1,\
     verbose=1,\
     validation_data= one_generator(x0[500:], x1[500:], x2[500:], x3[500:], y[500:], 499),\
-    validation_steps= 100,)
+    validation_steps= 100,\
+    callbacks=[tensorboard_callback])
 
+# %%
+
+# View tensorboard
+
+# Load tensorboard extension
+%load_ext tensorboard
+
+# %%
+
+# View
+%tensorboard --logdir logs
+
+# %%
+
+# View func
+%tensorboard --logdir logs/func
 
 # %%
 

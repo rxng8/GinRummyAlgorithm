@@ -51,7 +51,7 @@ def build_model():
     input: in
     output: out
     '''
-    inp = Input(shape=(3,))
+    inp = Input(shape=(5,))
 
     tensor = Dense(64, activation='relu', kernel_initializer='random_normal') (inp)
 
@@ -67,20 +67,28 @@ def build_model():
 
 # %%
 
-(x_train_1, y_train_1, n_train_1), (x_val_1, y_val_1, n_val_1), n_match_1 = \
-    import_csv("./GinRummyMavenProject/data_knock_2_simple.csv", 0.95)
+# (x_train_1, y_train_1, n_train_1), (x_val_1, y_val_1, n_val_1), n_match_1 = \
+#     import_csv("./GinRummyMavenProject/data_knock_2_simple.csv", 0.95)
 
-(x_train_2, y_train_2, n_train_2), (x_val_2, y_val_2, n_val_2), n_match_2 = \
-    import_csv("./GinRummyMavenProject/data_knock_undercut.csv", 0.95)
+# (x_train_2, y_train_2, n_train_2), (x_val_2, y_val_2, n_val_2), n_match_2 = \
+#     import_csv("./GinRummyMavenProject/data_knock_undercut.csv", 0.95)
 
 
-x_train = np.append(x_train_1, x_train_2, axis=0)
-y_train = np.append(y_train_1, y_train_2, axis=0)
-x_val = np.append(x_val_1, x_val_2, axis=0)
-y_val = np.append(y_val_1, y_val_2, axis=0)
-n_train = n_train_1 + n_train_2
-n_val = n_val_1 + n_val_2
-n_match = n_match_1 + n_match_2
+# x_train = np.append(x_train_1, x_train_2, axis=0)
+# y_train = np.append(y_train_1, y_train_2, axis=0)
+# x_val = np.append(x_val_1, x_val_2, axis=0)
+# y_val = np.append(y_val_1, y_val_2, axis=0)
+# n_train = n_train_1 + n_train_2
+# n_val = n_val_1 + n_val_2
+# n_match = n_match_1 + n_match_2
+
+
+# %%
+
+(x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
+    import_csv("./GinRummyMavenProject/data_knock_v2.csv", 0.9)
+
+
 # %%
 
 model = build_model()
@@ -88,29 +96,29 @@ model = build_model()
 
 # %%
 size = y_train.shape[0]
-batch_size = 1000
+batch_size = 100
 history = model.fit(x = x_train[:size], \
     y = y_train[:size],\
     batch_size = batch_size,\
-    epochs=30,\
+    epochs=100,\
     verbose=1,\
     validation_split=0.75)
 
 
 # %%
 
-model.save('knocking_30.h5')  # save everything in HDF5 format
+model.save('knocking_100_v2.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("knocking_30_config.json", "w") as f:
+with open("knocking_100_v2_config.json", "w") as f:
     f.write(model_json)
-model.save_weights('knocking_30_weights.h5') # save just the weights.
+model.save_weights('knocking_100_v2_weights.h5') # save just the weights.
 
 # %%
 # convert the history.history dict to a pandas DataFrame:     
 hist_df = pd.DataFrame(history.history) 
 
 # or save to csv: 
-hist_csv_file = 'knock_30_history.csv'
+hist_csv_file = 'knock_100_v2_history.csv'
 with open(hist_csv_file, mode='w') as f:
     hist_df.to_csv(f)
 

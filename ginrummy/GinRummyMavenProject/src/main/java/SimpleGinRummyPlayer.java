@@ -6,6 +6,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 
 /**
@@ -46,7 +47,9 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 	private boolean opponentKnocked = false;
 	Card faceUpCard, drawnCard; 
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
-
+	HandEstimator2 estimator = new HandEstimator2();
+	private HittingBot ht_bot = new HittingBot(estimator);
+	int turn;
 	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {
 		this.playerNum = playerNum;
@@ -56,12 +59,20 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 			this.cards.add(card);
 		opponentKnocked = false;
 		drawDiscardBitstrings.clear();
+		estimator.init();
+		ht_bot.init();
+		ArrayList<Card> hand = new ArrayList<Card>();
+		for (Card c : cards)
+			hand.add(c);
+		ht_bot.setOpKnown(hand, false);
+		turn = 0;
 	}
 
 	@Override
 	public boolean willDrawFaceUpCard(Card card) {
 		// Return true if card would be a part of a meld, false otherwise.
 		this.faceUpCard = card;
+		ht_bot.setOpKnown(card, false);
 		@SuppressWarnings("unchecked")
 		ArrayList<Card> newCards = (ArrayList<Card>) cards.clone();
 		newCards.add(card);
@@ -77,6 +88,7 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 		if (playerNum == this.playerNum) {
 			cards.add(drawnCard);
 			this.drawnCard = drawnCard;
+			ht_bot.setOpKnown(drawnCard, false);
 		}
 	}
 
@@ -86,6 +98,24 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
 		int minDeadwood = Integer.MAX_VALUE;
 		ArrayList<Card> candidateCards = new ArrayList<Card>();
+		
+		
+		ArrayList<Card> op_hand = ht_bot.get_op_hand_absolute();
+		ArrayList<ArrayList<ArrayList<Card>>> meldSet = GinRummyUtil.cardsToBestMeldSets(cards);
+		ArrayList<Card> unmelds;
+		
+		if (meldSet.size() == 0) {
+			unmelds = (ArrayList<Card>) cards.clone();
+		} else {
+			unmelds = Util.get_unmelded_cards(meldSet.get(0), cards);
+		}
+		
+		HashSet<Card> hitCards = ht_bot.get_hitting(cards);
+		
+		
+		
+		
+		
 		for (Card card : cards) {
 			// Cannot draw and discard face up card.
 			if (card == drawnCard && drawnCard == faceUpCard)
@@ -96,6 +126,15 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 			drawDiscard.add(card);
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
+			
+			
+			// No discard card in opponent hand melds
+						for (Card op_card : op_hand) {
+							boolean hit = ht_bot.isHittingCard(op_card, card);
+							System.out.println("Checking if the card " + card + " is in meld with opponent drawned ( " + op_card + " ) : " + hit);
+						}
+			
+			
 			
 			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 			remainingCards.remove(card);
@@ -109,6 +148,7 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 				candidateCards.add(card);
 			}
 		}
+		System.out.println("Candidates cards : " + candidateCards);
 		Card discard = candidateCards.get(random.nextInt(candidateCards.size()));
 		// Prevent future repeat of draw, discard pair.
 		ArrayList<Card> drawDiscard = new ArrayList<Card>();
@@ -120,9 +160,24 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
+		
 		// Ignore other player discards.  Remove from cards if playerNum is this player.
-		if (playerNum == this.playerNum)
+		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
+			ht_bot.setDiscardKnown(discardedCard, true);
+		}else {
+			if (faceUpCard == null) {
+				// the statement faceupcard == null ? drawnCard : faceupcard is to say that although the faceup card is always not null,
+				// when the opponent draw the faceupcard in the first turn, it will be null. So we report the draw card instead
+				estimator.reportDrawDiscard(drawnCard, true, discardedCard, turn);
+				ht_bot.reportDrawDiscard(drawnCard, true, discardedCard, turn);
+			} else {
+				estimator.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard, turn);
+				ht_bot.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard, turn);
+			}
+		}
+		faceUpCard = discardedCard;
+		turn++;
 	}
 
 	@Override
@@ -155,6 +210,12 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 	@Override
 	public void reportFinalHand(int playerNum, ArrayList<Card> hand) {
 		// Ignored by simple player, but could affect strategy of more complex player.		
+	}
+
+	@Override
+	public HittingBot getHittingBot() {
+		
+		return this.ht_bot;
 	}
 	
 }

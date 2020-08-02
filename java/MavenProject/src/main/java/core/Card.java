@@ -1,13 +1,8 @@
 package core;
-
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Stack;
-import collector.*;
-import module.*;
-import player.*;
-import util.*;
+
 
 /**
  * A class for representing standard (French) playing cards.
@@ -48,7 +43,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 
  */
-public class Card {
+public class Card implements Comparable<Card> {
 
 	/**
 	 * an array of all unique Card objects
@@ -230,5 +225,11 @@ public class Card {
 		for (int i = 0; i < NUM_CARDS; i++)
 			System.out.print(deck.pop() + (i % 8 == 7 ? "\n" : " "));
 		System.out.println();
+	}
+
+	@Override
+	public int compareTo(Card c) {
+		
+		return this.getId() - c.getId();
 	}
 }

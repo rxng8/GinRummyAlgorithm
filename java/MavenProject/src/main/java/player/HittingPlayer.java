@@ -25,7 +25,7 @@ public class HittingPlayer implements GinRummyPlayer {
 	/**
 	 * Knocking threshold
 	 */
-	public static final float HIT_CARD_VALUE_THRESHOLD = 6f; // Min 0, Max > 15
+	public static final float HIT_CARD_VALUE_THRESHOLD = 15f; // Min 0, Max > 15
 	
 	/**
 	 * current turn
@@ -115,30 +115,30 @@ public class HittingPlayer implements GinRummyPlayer {
 		float cardValue = hitEngine.predict(line);
 		if (cardValue > HIT_CARD_VALUE_THRESHOLD) canPick = true;
 		
-		if (canPick) {
-			canPick = false;
-			// for every other unmelded cards in hand, if this card value is min, then we don't draw anymore.
-			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
-			ArrayList<ArrayList<Card>>  melds = new ArrayList<>();
-			if (!bestMeldSets.isEmpty()) {
-				melds = bestMeldSets.get(0);
-			}
-			ArrayList<Card> unmelds = Util.get_unmelded_cards(melds, cards);
-			
-			float minCardValue = cardValue;
-			for (Card c : unmelds) {
-				int[] lineVal = new int[4];
-				lineVal[0] = turn;
-				lineVal[1] = c.rank;
-				lineVal[2] = hitEngine.countHitMeld(cards, c);
-				lineVal[3] = ENDGAME - turn;
-				float val = hitEngine.predict(lineVal);
-				if (val < minCardValue) {
-					canPick = true;
-					break;
-				}
-			}
-		}
+//		if (canPick) {
+//			canPick = false;
+//			// for every other unmelded cards in hand, if this card value is min, then we don't draw anymore.
+//			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
+//			ArrayList<ArrayList<Card>>  melds = new ArrayList<>();
+//			if (!bestMeldSets.isEmpty()) {
+//				melds = bestMeldSets.get(0);
+//			}
+//			ArrayList<Card> unmelds = Util.get_unmelded_cards(melds, cards);
+//			
+//			float minCardValue = cardValue;
+//			for (Card c : unmelds) {
+//				int[] lineVal = new int[4];
+//				lineVal[0] = turn;
+//				lineVal[1] = c.rank;
+//				lineVal[2] = hitEngine.countHitMeld(cards, c);
+//				lineVal[3] = ENDGAME - turn;
+//				float val = hitEngine.predict(lineVal);
+//				if (val < minCardValue) {
+//					canPick = true;
+//					break;
+//				}
+//			}
+//		}
 		
 		return canPick;
 	}
@@ -253,15 +253,15 @@ public class HittingPlayer implements GinRummyPlayer {
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
 			
-			// If turn left < 5, disable agressive mode
-			if (ENDGAME - turn < 5) aggressiveMode = false;
-			
-			// if in aggresive mode, omit discarding hitting card
-			if (aggressiveMode) {
-				if (hitEngine.isHittingCard(cards, card)) {
-					continue;
-				}
-			}
+//			// If turn left < 5, disable agressive mode
+//			if (ENDGAME - turn < 5) aggressiveMode = false;
+//			
+//			// if in aggresive mode, omit discarding hitting card
+//			if (aggressiveMode) {
+//				if (hitEngine.isHittingCard(cards, card)) {
+//					continue;
+//				}
+//			}
 			
 			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 			remainingCards.remove(card);

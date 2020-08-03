@@ -32,7 +32,7 @@ import util.*;
 
 public class HittingGrinder extends DataGrinder {
 
-	private static final int HITTING_REWARD_CONST = 2;
+	private static final int HITTING_REWARD_CONST = 1;
 //	private static final int MELD_REWARD_CONST = 10;
 	
 	int turnsTaken = 0;
@@ -78,6 +78,45 @@ public class HittingGrinder extends DataGrinder {
 	 * @param hand
 	 * @param faceUp
 	 */
+//	@SuppressWarnings("unchecked")
+//	public void collectData(int turnsTaken, ArrayList<Card> hand, Card faceUp) {
+//		
+//		if (faceUp != null) {
+//			// Reset new line
+//			current_line = new int[5];
+//			current_line[0] = turnsTaken;
+//			current_line[1] = faceUp.rank + 1;
+//			
+//			boolean ishit = false;
+//			boolean ismeld = hitEngine.isMeld(hand, faceUp);
+//					
+////			if (!ismeld) {
+//			for (Card c : hand) {
+//				if (hitEngine.isHittingCard(c, faceUp)) {
+//					ishit = true;
+//				}
+//			}
+////			}
+//			
+//			current_line[2] = ishit ? 1 : 0;
+//			
+//			// Label
+//			current_line[4] = 13 + (ishit ? HITTING_REWARD_CONST : 0) - (ismeld ? 0 : faceUp.rank);
+//			
+//			// put to current match
+//			current_match.put(current_line, faceUp);
+//			
+////			System.out.println("Currnet_mathc's size: " + current_match.size());
+//		}
+//	}
+	
+	/**
+	 * Onlly collect the player 0
+	 * update line[0124]. Turn, rank, hit melds, label
+	 * @param turnsTaken
+	 * @param hand
+	 * @param faceUp
+	 */
 	@SuppressWarnings("unchecked")
 	public void collectData(int turnsTaken, ArrayList<Card> hand, Card faceUp) {
 		
@@ -87,21 +126,15 @@ public class HittingGrinder extends DataGrinder {
 			current_line[0] = turnsTaken;
 			current_line[1] = faceUp.rank + 1;
 			
-			boolean ishit = false;
+			
 			boolean ismeld = hitEngine.isMeld(hand, faceUp);
 					
-//			if (!ismeld) {
-			for (Card c : hand) {
-				if (hitEngine.isHittingCard(c, faceUp)) {
-					ishit = true;
-				}
-			}
-//			}
+			int hitMelds = hitEngine.countHitMeldType(hand, faceUp);
 			
-			current_line[2] = ishit ? 1 : 0;
+			current_line[2] = hitMelds;
 			
 			// Label
-			current_line[4] = 13 + (ishit ? HITTING_REWARD_CONST : 0) - (ismeld ? 0 : faceUp.rank);
+			current_line[4] = 13 + (hitMelds * HITTING_REWARD_CONST) - (ismeld ? 0 : faceUp.rank);
 			
 			// put to current match
 			current_match.put(current_line, faceUp);
@@ -552,7 +585,7 @@ public class HittingGrinder extends DataGrinder {
 		
 //		collector.display_line_data();
 		
-		collector.to_CSV("./dataset/hit_sp_10000.csv");
+		collector.to_CSV("./dataset/hit_sp_10000_v2.csv");
 
 	}
 }

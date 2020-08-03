@@ -119,7 +119,7 @@ public class GinRummyGame {
 				boolean drawFaceUp = false;
 				Card faceUpCard = discards.peek();
 				// offer draw face-up iff not 3rd turn with first face up card (decline automatically in that case) 
-				if (!(turnsTaken == 3 && faceUpCard == firstFaceUpCard)) { // both players declined and 1st player must draw face down
+				if (!(turnsTaken == 2 && faceUpCard == firstFaceUpCard)) { // both players declined and 1st player must draw face down
 					drawFaceUp = players[currentPlayer].willDrawFaceUpCard(faceUpCard);
 					if (playVerbose && !drawFaceUp && faceUpCard == firstFaceUpCard && turnsTaken < 2)
 						System.out.printf("Player %d declines %s.\n", currentPlayer, firstFaceUpCard);
@@ -212,9 +212,9 @@ public class GinRummyGame {
 
 				// get opponent meld
 				ArrayList<ArrayList<Card>> opponentMelds = players[opponent].getFinalMelds();
+				meldsCopy = new ArrayList<ArrayList<Card>>();
 				for (ArrayList<Card> meld : opponentMelds)
 					meldsCopy.add((ArrayList<Card>) meld.clone());
-				meldsCopy = new ArrayList<ArrayList<Card>>();
 				for (int i = 0; i < 2; i++) 
 					players[i].reportFinalMelds(opponent, meldsCopy);
 				
@@ -322,43 +322,43 @@ public class GinRummyGame {
 	public static void main(String[] args) {
 		// Single verbose demonstration game
 		setPlayVerbose(true);
-		new GinRummyGame(new SimplePlayer3(), new SimplePlayer()).play();
+		new GinRummyGame(new HittingPlayer(), new SimplePlayer()).play();
 		
 //		// Multiple non-verbose games 
-//		setPlayVerbose(false);
-//		int numGames = 1000;
-//		int numP1Wins = 0;
-//		int quadrant = numGames / 4;
-//		int first_quadrant = 0;
-//		int sec_quadrant = 0;
-//		int third_quadrant = 0;
-//		int fourth_quadrant = 0;
-//		GinRummyGame game = new GinRummyGame(new SimplePlayer2(), new SimpleGinRummyPlayer());
-//		long startMs = System.currentTimeMillis();
-//		for (int i = 0; i < numGames; i++) {
-//			int win = game.play();
-//			numP1Wins += win;
-//			if (win != 0) {
-//				if (i < quadrant) {
-//					first_quadrant ++;
-//				} else if (i < 2 * quadrant) {
-//					sec_quadrant ++;
-//				} else if (i < 3 * quadrant) {
-//					third_quadrant ++;
-//				} else {
-//					fourth_quadrant ++;
-//				}
-//			}
-//		}
-//		
-//		long totalMs = System.currentTimeMillis() - startMs;		
-//		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
-//		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
-//		
-//		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
-//		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
-//		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
-//		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
+		setPlayVerbose(false);
+		int numGames = 1000;
+		int numP1Wins = 0;
+		int quadrant = numGames / 4;
+		int first_quadrant = 0;
+		int sec_quadrant = 0;
+		int third_quadrant = 0;
+		int fourth_quadrant = 0;
+		GinRummyGame game = new GinRummyGame(new HittingPlayer(), new SimplePlayer());
+		long startMs = System.currentTimeMillis();
+		for (int i = 0; i < numGames; i++) {
+			int win = game.play();
+			numP1Wins += win;
+			if (win != 0) {
+				if (i < quadrant) {
+					first_quadrant ++;
+				} else if (i < 2 * quadrant) {
+					sec_quadrant ++;
+				} else if (i < 3 * quadrant) {
+					third_quadrant ++;
+				} else {
+					fourth_quadrant ++;
+				}
+			}
+		}
+		
+		long totalMs = System.currentTimeMillis() - startMs;		
+		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
+		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
+		
+		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
+		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
+		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
+		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
 	
 	}
 	

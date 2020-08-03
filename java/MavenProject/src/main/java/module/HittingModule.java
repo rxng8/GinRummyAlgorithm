@@ -1,7 +1,18 @@
 package module;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
+
+import org.deeplearning4j.nn.graph.ComputationGraph;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.accum.CountZero;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.io.ClassPathResource;
+
 import java.util.HashSet;
 import collector.*;
 import core.*;
@@ -12,7 +23,32 @@ import util.*;
  * @author Alex Nguyen
  * Class for collecting data to process hitting operations
  */
-public class HittingModule {
+
+/**
+ * 
+ * TODO: Bug: count hit meld need to be set a ceiling to limit the value of having more hit value
+ *
+ */
+
+public class HittingModule extends Module {
+	static ComputationGraph network;
+	static {
+		try {
+			String file_name = "hit_100_v3";
+			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
+//			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
+			
+			String modelWeights = new ClassPathResource("./model/" + file_name + "_weights.h5").getFile().getPath();
+			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
+			HittingModule.network = network;
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException | InvalidKerasConfigurationException | UnsupportedKerasConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	private static final boolean VERBOSE = false;
 	
@@ -43,6 +79,29 @@ public class HittingModule {
 		discard_known = new boolean[52];
 	}
 	
+	/**
+	 * Input : turn, rank, isHittingCard, expected turn before end
+	 * Output: The card value.
+	 * @param args
+	 */
+	public float predict(int[] X) {
+		
+		assert X.length == 4 : "Wrong features system";
+		
+		float[] arr = new float[X.length];
+		for (int i = 0; i < X.length; i++) {
+			arr[i] = (float) X[i];
+		}
+		
+		INDArray input = Nd4j.create(arr, new int[] {1, arr.length}, 'c');
+		
+		INDArray[] out = network.output(input);
+		
+		float out_value = out[0].getFloat(0, 0);
+		
+		return out_value;
+	}
+	
 	public boolean isHittingCard(Card c1, Card c2) {
 		
 		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(get_availability())) {
@@ -51,6 +110,89 @@ public class HittingModule {
 			}
 		}
 		return false;
+	}
+	
+	public boolean isHittingCard(ArrayList<Card> hand, Card c2) {
+		ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(get_availability());
+		for (Card c1 : hand) {
+			for (ArrayList<Card> meld : melds) {
+				if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Read the code
+	 * @param hand
+	 * @param c2
+	 * @return
+	 */
+	public int countHitMeldType(ArrayList<Card> hand, Card c2) {
+		int count = 0;
+		
+		// Everyone can just take maximum point for at most 1 suit and 1 json
+		
+		// checksuit wild card left
+		boolean checkSuit = true;
+		
+		// Check JSON wild card left
+		boolean checkJSON = true;
+		
+		ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(get_availability());
+		for (Card c1 : hand) {
+			for (ArrayList<Card> meld : melds) {
+				
+				// Consider if it is a potential suit or json
+				boolean suited = isSuit(meld);
+				
+				// If it's a potential suit and still have suit wildcard left
+				if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2) && suited && checkSuit) {
+					count ++;
+				} 
+				
+				// If it's a potential json and still have json wildcard left
+				else if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2) && !suited && checkJSON) {
+					count ++;
+				}
+				
+				// If no wildcard left, break for performance
+				if (!checkSuit && !checkJSON) break;
+				
+			}
+		}
+//		System.out.println("Meld hit count : " + count);
+		return count;
+	}
+	
+	private boolean isSuit(ArrayList<Card> meld) {
+		if (meld.get(0).rank == meld.get(1).rank) return true;
+		return false;
+	}
+	
+	
+	/**
+	 * return the number of possible hitting melds associated with this card considering melds in hand
+	 * @param hand
+	 * @param c2
+	 * @return
+	 */
+	public int countHitMeld(ArrayList<Card> hand, Card c2) {
+		int count = 0;
+		
+		ArrayList<ArrayList<Card>> melds = GinRummyUtil.cardsToAllMelds(get_availability());
+		for (Card c1 : hand) {
+			for (ArrayList<Card> meld : melds) {
+				if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2)) {
+//					System.out.println("MELDLWELFLEF" + meld);
+					count ++;
+				}
+			}
+		}
+//		System.out.println("Meld hit count : " + count);
+		return count;
 	}
 	
 	public int count_hitting(ArrayList<Card> hand) {
@@ -211,6 +353,12 @@ public class HittingModule {
 			wall[i] = !(op_known[i] || discard_known[i]);
 		}
 		Util.print_mat(wall, "Card Availability (True value)");
+	}
+	
+	public static void main(String[] args) {
+		HittingModule h = new HittingModule();
+		int[] X = {4, 7, 2, 100};
+		System.out.println(h.predict(X));
 	}
 	
 }

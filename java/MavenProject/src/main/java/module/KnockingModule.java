@@ -36,6 +36,7 @@ public class KnockingModule extends Module{
 			e.printStackTrace();
 		}
 	}
+	
 	public KnockingModule() {
 
 	}
@@ -63,7 +64,8 @@ public class KnockingModule extends Module{
 	
 	public static void main(String[] args) {
 		KnockingModule k = new KnockingModule();
-		int[] X = {25, 10, -1};
-		System.out.println(k.predict(X));
+//		int[] X = {25, 10, -1};
+//		System.out.println(k.predict(X));
+		System.out.println(KnockingModule.network == null);
 	}
 }

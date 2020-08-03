@@ -89,7 +89,7 @@ def build_model():
 # %%
 
 (x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
-    import_csv("../java/MavenProject/dataset/hit_sp_10000.csv", 0.9)
+    import_csv("../java/MavenProject/dataset/hit_sp_10000_v2.csv", 0.9)
 
 # %%
 
@@ -114,18 +114,18 @@ history = model.fit(x = x_train[:size], \
 
 # %%
 MODEL_PATH = '../java/MavenProject/src/main/java/model/'
-model.save(MODEL_PATH + 'hit_100_v1.h5')  # save everything in HDF5 format
+model.save(MODEL_PATH + 'hit_100_v3.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open(MODEL_PATH + "hit_100_v1_config.json", "w") as f:
+with open(MODEL_PATH + "hit_100_v3_config.json", "w") as f:
     f.write(model_json)
-model.save_weights(MODEL_PATH + 'hit_100_v1_weights.h5') # save just the weights.
+model.save_weights(MODEL_PATH + 'hit_100_v3_weights.h5') # save just the weights.
 
 # %%
 # convert the history.history dict to a pandas DataFrame:     
 hist_df = pd.DataFrame(history.history) 
 
 # or save to csv: 
-hist_csv_file = './history/hit_100_v1.csv'
+hist_csv_file = './history/hit_100_v3.csv'
 with open(hist_csv_file, mode='w') as f:
     hist_df.to_csv(f)
 
@@ -142,13 +142,28 @@ plt.show()
 
 # %%
 
+# Load history if needed
+import pandas as pd
+hist_csv_file = './history/hit_100_v3.csv'
+pd.read_csv(hist_csv_file)
+# summarize history for loss
+plt.plot(history['loss'])
+plt.plot(history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'val'], loc='upper right')
+plt.show()
+
+# %%
+
 # summarize history for loss
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
-plt.legend(['train', 'val'], loc='upper left')
+plt.legend(['train', 'val'], loc='upper right')
 plt.show()
 
 # %%

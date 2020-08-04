@@ -48,12 +48,12 @@ def import_csv(filename: str, separate_rate: float=0.75):
     return (x_train, y_train, n_match_train), (x_val, y_val, n_match_val), n_match
 
 
-def build_model():
+def build_model(input_shape):
     '''
     input: in
     output: out
     '''
-    inp = Input(shape=(4,))
+    inp = Input(shape=input_shape)
 
     tensor = Dense(64, activation='relu', kernel_initializer='random_normal') (inp)
 
@@ -89,7 +89,7 @@ def build_model():
 # %%
 
 (x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
-    import_csv("../java/MavenProject/dataset/hit_sp_10000_v2.csv", 0.9)
+    import_csv("../java/MavenProject/dataset/hit_sp_20000_v6.csv", 0.9)
 
 # %%
 
@@ -97,8 +97,8 @@ def build_model():
 x_train[:6]
 
 # %%
-
-model = build_model()
+input_shape = x_train[0].shape
+model = build_model(input_shape)
 
 
 # %%
@@ -107,25 +107,25 @@ batch_size = 100
 history = model.fit(x = x_train[:size], \
     y = y_train[:size],\
     batch_size = batch_size,\
-    epochs=100,\
+    epochs=30,\
     verbose=1,\
     validation_split=0.75)
 
 
 # %%
 MODEL_PATH = '../java/MavenProject/src/main/java/model/'
-model.save(MODEL_PATH + 'hit_100_v3.h5')  # save everything in HDF5 format
+model.save(MODEL_PATH + 'hit_100_v6.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open(MODEL_PATH + "hit_100_v3_config.json", "w") as f:
+with open(MODEL_PATH + "hit_100_v6_config.json", "w") as f:
     f.write(model_json)
-model.save_weights(MODEL_PATH + 'hit_100_v3_weights.h5') # save just the weights.
+model.save_weights(MODEL_PATH + 'hit_100_v6_weights.h5') # save just the weights.
 
 # %%
 # convert the history.history dict to a pandas DataFrame:     
 hist_df = pd.DataFrame(history.history) 
 
 # or save to csv: 
-hist_csv_file = './history/hit_100_v3.csv'
+hist_csv_file = './history/hit_100_v6.csv'
 with open(hist_csv_file, mode='w') as f:
     hist_df.to_csv(f)
 

@@ -8,7 +8,7 @@ import module.*;
 import util.*;
 
 
-public class IntermediatePlayerEK implements GinRummyPlayer {
+public class MediumPlayerEK implements GinRummyPlayer {
 	protected int playerNum;
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;

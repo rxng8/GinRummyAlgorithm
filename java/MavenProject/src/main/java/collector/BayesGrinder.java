@@ -91,13 +91,13 @@ public class BayesGrinder extends DataGrinder {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void toCSV_picking(String filename) throws IOException {
+	private void toCSV_picking(String filename, boolean cont) throws IOException {
 		
 		ArrayList<int[][]> data = this.picking_data;
 		ArrayList<Integer> labels = this.picking_labels;
 		
 		//Instantiating the CSVWriter class
-		CSVWriter writer = new CSVWriter(new FileWriter(filename));
+		CSVWriter writer = new CSVWriter(new FileWriter(filename, cont));
 		//Writing data to a csv file
 		        
 		// Header
@@ -130,13 +130,13 @@ public class BayesGrinder extends DataGrinder {
 	    System.out.println("Data entered!!!");
 	}
 	
-	private void toCSV_discard(String filename) throws IOException {
+	private void toCSV_discard(String filename, boolean cont) throws IOException {
 		
 		ArrayList<int[][]> data = this.picking_data;
 		ArrayList<Integer> labels = this.picking_labels;
 		
 		//Instantiating the CSVWriter class
-		CSVWriter writer = new CSVWriter(new FileWriter(filename));
+		CSVWriter writer = new CSVWriter(new FileWriter(filename, cont));
 		//Writing data to a csv file
 		        
 		// Header
@@ -479,8 +479,8 @@ public class BayesGrinder extends DataGrinder {
 		
 //		collector.displayData_picking();
 		
-		collector.toCSV_picking("data_picking.csv");
-		collector.toCSV_discard("data_discard.csv");
+		collector.toCSV_picking("data_picking.csv", false);
+		collector.toCSV_discard("data_discard.csv", false);
 	}
 
 	private boolean drawMode = false;
@@ -490,10 +490,10 @@ public class BayesGrinder extends DataGrinder {
 	}
 	
 	@Override
-	public void to_CSV(String filename) throws IOException {
+	public void to_CSV(String filename, boolean cont) throws IOException {
 		// TODO Auto-generated method stub
-		if (drawMode) toCSV_picking(filename);
-		else toCSV_discard(filename);
+		if (drawMode) toCSV_picking(filename, cont);
+		else toCSV_discard(filename, cont);
 	}
 
 

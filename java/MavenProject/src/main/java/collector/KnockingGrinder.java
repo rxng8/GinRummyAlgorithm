@@ -500,10 +500,4 @@ public class KnockingGrinder extends DataGrinder {
 		
 		
 	}
-
-	@Override
-	public void to_CSV(String filename) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
 }

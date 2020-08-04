@@ -34,7 +34,7 @@ public class HittingModule extends Module {
 	static ComputationGraph network;
 	static {
 		try {
-			String file_name = "hit_100_v3";
+			String file_name = "hit_100_v6";
 			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
@@ -150,11 +150,13 @@ public class HittingModule extends Module {
 				
 				// If it's a potential suit and still have suit wildcard left
 				if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2) && suited && checkSuit) {
+					checkSuit = false;
 					count ++;
 				} 
 				
 				// If it's a potential json and still have json wildcard left
 				else if (meld.size() < 4 && meld.contains(c1) && meld.contains(c2) && !suited && checkJSON) {
+					checkJSON = false;
 					count ++;
 				}
 				
@@ -357,7 +359,7 @@ public class HittingModule extends Module {
 	
 	public static void main(String[] args) {
 		HittingModule h = new HittingModule();
-		int[] X = {4, 7, 2, 100};
+		int[] X = {100, 7, 2};
 		System.out.println(h.predict(X));
 	}
 	

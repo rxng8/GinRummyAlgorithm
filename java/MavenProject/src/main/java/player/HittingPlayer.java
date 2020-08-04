@@ -23,9 +23,9 @@ public class HittingPlayer implements GinRummyPlayer {
 	public boolean VERBOSE = false;
 	
 	/**
-	 * Knocking threshold
+	 * Hitting threshold
 	 */
-	public static final float HIT_CARD_VALUE_THRESHOLD = 15f; // Min 0, Max > 15
+	public static final float HIT_CARD_VALUE_THRESHOLD = 14f; // Min 0, Max > 15
 	
 	/**
 	 * current turn
@@ -105,11 +105,11 @@ public class HittingPlayer implements GinRummyPlayer {
 		
 		// First, we evaluate hitting value of the face Up card by putting line data in pretrained model.
 		// Check if it's hitting.
-		int[] line = new int[4];
+		int[] line = new int[3];
 		line[0] = turn;
 		line[1] = card.rank;
 		line[2] = hitEngine.countHitMeld(cards, card);
-		line[3] = ENDGAME - turn;
+//		line[3] = ENDGAME - turn;
 		// Evaluate if we can pick the card or not based on the threshold
 		boolean canPick = false;
 		float cardValue = hitEngine.predict(line);
@@ -253,15 +253,15 @@ public class HittingPlayer implements GinRummyPlayer {
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
 			
-//			// If turn left < 5, disable agressive mode
-//			if (ENDGAME - turn < 5) aggressiveMode = false;
-//			
-//			// if in aggresive mode, omit discarding hitting card
-//			if (aggressiveMode) {
-//				if (hitEngine.isHittingCard(cards, card)) {
-//					continue;
-//				}
-//			}
+			// If turn left < 5, disable agressive mode
+			if (ENDGAME - turn < 5) aggressiveMode = false;
+			
+			// if in aggresive mode, omit discarding hitting card
+			if (aggressiveMode) {
+				if (hitEngine.isHittingCard(cards, card)) {
+					continue;
+				}
+			}
 			
 			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 			remainingCards.remove(card);

@@ -1,6 +1,7 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Stack;
 import collector.*;
@@ -321,44 +322,64 @@ public class GinRummyGame {
 	 */
 	public static void main(String[] args) {
 		// Single verbose demonstration game
-		setPlayVerbose(true);
-		new GinRummyGame(new HittingPlayer(), new SimplePlayer()).play();
+//		setPlayVerbose(true);
+//		new GinRummyGame(new HittingPlayer(), new SimplePlayer()).play();
 		
-//		// Multiple non-verbose games 
+//		// Multiple non-verbose games quadrants
 		setPlayVerbose(false);
 		int numGames = 1000;
 		int numP1Wins = 0;
-		int quadrant = numGames / 4;
-		int first_quadrant = 0;
-		int sec_quadrant = 0;
-		int third_quadrant = 0;
-		int fourth_quadrant = 0;
-		GinRummyGame game = new GinRummyGame(new HittingPlayer(), new SimplePlayer());
+
+		GinRummyGame game = new GinRummyGame(new KnockingPlayer(), new MediumPlayerKH());
 		long startMs = System.currentTimeMillis();
 		for (int i = 0; i < numGames; i++) {
 			int win = game.play();
 			numP1Wins += win;
-			if (win != 0) {
-				if (i < quadrant) {
-					first_quadrant ++;
-				} else if (i < 2 * quadrant) {
-					sec_quadrant ++;
-				} else if (i < 3 * quadrant) {
-					third_quadrant ++;
-				} else {
-					fourth_quadrant ++;
-				}
-			}
 		}
 		
 		long totalMs = System.currentTimeMillis() - startMs;		
 		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
 		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
 		
-		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
-		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
-		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
-		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
+		// Calculate Wilson interval
+		double[] interval = WilsonInterval.getWilsonInterval(numGames, numGames - numP1Wins, .9);
+		System.out.println("Win rate interval of player 0: " + Arrays.toString(interval));
+		
+//		// Multiple non-verbose games quadrants
+//		setPlayVerbose(false);
+//		int numGames = 1000;
+//		int numP1Wins = 0;
+//		int quadrant = numGames / 4;
+//		int first_quadrant = 0;
+//		int sec_quadrant = 0;
+//		int third_quadrant = 0;
+//		int fourth_quadrant = 0;
+//		GinRummyGame game = new GinRummyGame(new HittingPlayer(), new SimplePlayer());
+//		long startMs = System.currentTimeMillis();
+//		for (int i = 0; i < numGames; i++) {
+//			int win = game.play();
+//			numP1Wins += win;
+//			if (win != 0) {
+//				if (i < quadrant) {
+//					first_quadrant ++;
+//				} else if (i < 2 * quadrant) {
+//					sec_quadrant ++;
+//				} else if (i < 3 * quadrant) {
+//					third_quadrant ++;
+//				} else {
+//					fourth_quadrant ++;
+//				}
+//			}
+//		}
+//		
+//		long totalMs = System.currentTimeMillis() - startMs;		
+//		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
+//		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
+//		
+//		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
+//		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
+//		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
+//		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
 	
 	}
 	

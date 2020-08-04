@@ -32,10 +32,10 @@ import util.*;
 
 public class HittingGrinder extends DataGrinder {
 
-	private static final int HITTING_REWARD_CONST = 1;
+	private static final int HITTING_REWARD_CONST = 2;
 //	private static final int MELD_REWARD_CONST = 10;
 	
-	int turnsTaken = 0;
+//	int turnsTaken = 0;
 	
 	/**
 	 * Stats
@@ -119,7 +119,7 @@ public class HittingGrinder extends DataGrinder {
 	 */
 	@SuppressWarnings("unchecked")
 	public void collectData(int turnsTaken, ArrayList<Card> hand, Card faceUp) {
-		
+//		System.out.println("Turn: " + turnsTaken);
 		if (faceUp != null) {
 			// Reset new line
 			current_line = new int[5];
@@ -134,7 +134,8 @@ public class HittingGrinder extends DataGrinder {
 			current_line[2] = hitMelds;
 			
 			// Label
-			current_line[4] = 13 + (hitMelds * HITTING_REWARD_CONST) - (ismeld ? 0 : faceUp.rank);
+//			current_line[4] = 13 + (hitMelds * HITTING_REWARD_CONST) - (ismeld ? 0 : faceUp.rank);
+			current_line[4] = 13 + (hitMelds * HITTING_REWARD_CONST);
 			
 			// put to current match
 			current_match.put(current_line, faceUp);
@@ -152,6 +153,9 @@ public class HittingGrinder extends DataGrinder {
 	 * @param melds
 	 */
 	public void collectLabel(int turnsTaken, ArrayList<Card> hand, ArrayList<ArrayList<Card>> melds) {
+		
+//		System.out.println("Turn: " + turnsTaken);
+		
 		 for (Entry<int[], Card> e : current_match.entrySet()) {
 			 int[] line = e.getKey();
 			 Card card = e.getValue();
@@ -166,12 +170,26 @@ public class HittingGrinder extends DataGrinder {
 			 }
 			 
 			 // compute turn waste
-			 int turnWaste = 0;
-			 if (!ismeld) {
-				 turnWaste = turnsTaken - line[0];
-			 }
+//			 int turnWaste = 0;
+//			 if (!ismeld) {
+//				 turnWaste = turnsTaken - line[0];
+//			 }
+			 
+			 int turnWaste = turnsTaken - line[0];
 			 
 			 line[3] = turnsTaken - line[0];
+			 
+			 // Bug: turn can be < 0, so omit
+			 // Hotfix
+			 if (line[3] < 0) {
+//				 System.out.println("WHAT THE FUCK KKKK");
+//				 System.out.println("Current turn: " + turnsTaken);
+//				 display_current_match_data();
+				// reset current match
+				current_match = new HashMap<>();
+				return;
+			 }
+			 
 			 line[4] -= (turnWaste / 3);
 			 
 			 // Concatenate to all data
@@ -214,7 +232,10 @@ public class HittingGrinder extends DataGrinder {
 		System.out.printf("Total number of hitting cards drawn: %d\nTotal of melds formed: %d\n", total_hit_stat[0], total_hit_stat[1]);
 	}
 	
-	public void display_line_data() {
+	/**
+	 * Dis play the whole bunch of big data
+	 */
+	public void display_lines_data() {
 		System.out.printf("This is lines_data:\nTurn\tRank\tHitting\tEnd in\tValue\n");
 		for (int[] line : lines_data) {
 			for (int v : line) {
@@ -224,12 +245,25 @@ public class HittingGrinder extends DataGrinder {
 		}
 	}
 	
-	public void to_CSV(String filename) {
+	/**
+	 * Display current match data
+	 */
+	public void display_current_match_data() {
+		for (Entry<int[], Card> e : current_match.entrySet()) {
+			System.out.printf("This is lines_data:\nTurn\tRank\tHitting\tEnd in\tValue\twith card %s\n", e.getValue());
+			for (int v : e.getKey()) {
+				System.out.printf(v + "\t");
+			}
+			System.out.println();
+		}
+	}
+	
+	public void to_CSV(String filename, boolean cont) {
 		//Instantiating the CSVWriter class
 		
 		try {
 			CSVWriter writer;
-			writer = new CSVWriter(new FileWriter(filename));
+			writer = new CSVWriter(new FileWriter(filename, cont));
 		
 			//Writing data to a csv file
 			        
@@ -308,7 +342,7 @@ public class HittingGrinder extends DataGrinder {
 				boolean drawFaceUp = false;
 				Card faceUpCard = discards.peek();
 				// offer draw face-up iff not 3rd turn with first face up card (decline automatically in that case) 
-				if (!(turnsTaken == 3 && faceUpCard == firstFaceUpCard)) { // both players declined and 1st player must draw face down
+				if (!(turnsTaken == 2 && faceUpCard == firstFaceUpCard)) { // both players declined and 1st player must draw face down
 					drawFaceUp = players[currentPlayer].willDrawFaceUpCard(faceUpCard);
 					if (playVerbose && !drawFaceUp && faceUpCard == firstFaceUpCard && turnsTaken < 2)
 						System.out.printf("Player %d declines %s.\n", currentPlayer, firstFaceUpCard);
@@ -585,7 +619,7 @@ public class HittingGrinder extends DataGrinder {
 		
 //		collector.display_line_data();
 		
-		collector.to_CSV("./dataset/hit_sp_10000_v2.csv");
+		collector.to_CSV("./dataset/hit_sp_10000_v3.csv", false);
 
 	}
 }

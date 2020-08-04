@@ -45,7 +45,7 @@ public abstract class DataGrinder {
 	// Needed methods
 	public abstract void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames);
 	public abstract int play(int startingPlayer);
-	public abstract void to_CSV(String filename) throws IOException;
+	public abstract void to_CSV(String filename, boolean cont) throws IOException;
 //	public abstract void collectData(int turnsTaken, int currentPlayer, Card faceUpCard, Card drawCard, Card discardCard, ArrayList<Card> hand, ArrayList<Card> opponentHand);
 	public abstract void displayData();
 	

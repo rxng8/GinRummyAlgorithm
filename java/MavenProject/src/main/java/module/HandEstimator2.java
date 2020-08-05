@@ -437,7 +437,7 @@ public class HandEstimator2 {
 	}
 	
 	public static float cal_accuracy(float[] op_mat, float[] pred) {
-			
+		
 		float sum = 0;
 		for (int i = 0; i < op_mat.length; i++) {
 			sum += 1 - Math.abs(op_mat[i] - pred[i]);

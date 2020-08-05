@@ -605,21 +605,21 @@ public class HittingGrinder extends DataGrinder {
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
 		setPlayVerbose(false);
 		System.out.println("Playing games...");
-		int numGames = 10000;
+		int numGames = 1000;
 		HittingGrinder collector = new HittingGrinder();
 		
-		GinRummyPlayer p0 = new SimplePlayer();
-		GinRummyPlayer p1 = new SimplePlayer();
+		GinRummyPlayer p0 = new HittingPlayer(14);
+		GinRummyPlayer p1 = new HittingPlayer(6);
 		
 		collector.match(p0, p1, numGames);
 		
-//		collector.displayTrackHit();
+		collector.displayTrackHit();
 		
 //		collector.displayData_picking();
 		
 //		collector.display_line_data();
 		
-		collector.to_CSV("./dataset/hit_sp_10000_v3.csv", false);
+//		collector.to_CSV("./dataset/hit_sp_10000_v3.csv", false);
 
 	}
 }

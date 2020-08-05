@@ -1,10 +1,9 @@
 reference/HandEstimationExperiment
 
-**/history/
-# **/model/
+# **/history/
 
 **/dataset/
+**.csv
 **/logs/
 **/.ipynb_checkpoints/*
 
-**.csv

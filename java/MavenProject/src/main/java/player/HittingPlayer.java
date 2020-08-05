@@ -25,7 +25,7 @@ public class HittingPlayer implements GinRummyPlayer {
 	/**
 	 * Hitting threshold
 	 */
-	public static final float HIT_CARD_VALUE_THRESHOLD = 14f; // Min 0, Max > 15
+	private float HIT_CARD_VALUE_THRESHOLD; // Min 0, Max > 15
 	
 	/**
 	 * current turn
@@ -51,6 +51,14 @@ public class HittingPlayer implements GinRummyPlayer {
 	 * Hitting module
 	 */
 	HittingModule hitEngine = new HittingModule();
+	
+	public HittingPlayer() {
+		this.HIT_CARD_VALUE_THRESHOLD = 13f;
+	}
+	
+	public HittingPlayer(float HIT_CARD_VALUE_THRESHOLD) {
+		this.HIT_CARD_VALUE_THRESHOLD = HIT_CARD_VALUE_THRESHOLD;
+	}
 	
 	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {

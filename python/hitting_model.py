@@ -24,6 +24,8 @@ from keras.activations import sigmoid, softmax, relu, tanh
 from keras.metrics import Accuracy
 from keras.optimizers import Adam
 
+import keras.backend as K
+
 import pickle
 
 
@@ -47,6 +49,8 @@ def import_csv(filename: str, separate_rate: float=0.75):
 
     return (x_train, y_train, n_match_train), (x_val, y_val, n_match_val), n_match
 
+def root_mean_squared_error(y_true, y_pred):
+    return K.sqrt(K.mean(K.square(y_pred - y_true)))
 
 def build_model(input_shape):
     '''
@@ -107,7 +111,7 @@ batch_size = 100
 history = model.fit(x = x_train[:size], \
     y = y_train[:size],\
     batch_size = batch_size,\
-    epochs=30,\
+    epochs=20,\
     verbose=1,\
     validation_split=0.75)
 
@@ -121,37 +125,31 @@ with open(MODEL_PATH + "hit_100_v6_config.json", "w") as f:
 model.save_weights(MODEL_PATH + 'hit_100_v6_weights.h5') # save just the weights.
 
 # %%
-# convert the history.history dict to a pandas DataFrame:     
-hist_df = pd.DataFrame(history.history) 
+# New method of saving history
 
-# or save to csv: 
-hist_csv_file = './history/hit_100_v6.csv'
-with open(hist_csv_file, mode='w') as f:
-    hist_df.to_csv(f)
+filename = 'hit_100_v6'
+
+# %%
+
+with open('./history/' + filename + '_history.pkl', 'ab') as file_pi:
+    pickle.dump(history.history, file_pi)
+
+# %%
+
+# Reading history
+
+with open('./history/' + filename + '_history.pkl', 'rb') as file_pi:
+    history = pickle.load(file_pi)
+
 
 # %%
 
 # summarize history for accuracy
-plt.plot(history.history['root_mean_squared_error'])
-plt.plot(history.history['val_root_mean_squared_error'])
-plt.title('model rmse loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'val'], loc='upper left')
-plt.show()
-
-# %%
-
-# Load history if needed
-import pandas as pd
-hist_csv_file = './history/hit_100_v3.csv'
-pd.read_csv(hist_csv_file)
-# summarize history for loss
-plt.plot(history['loss'])
-plt.plot(history['val_loss'])
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
+plt.plot(history['root_mean_squared_error'])
+plt.plot(history['val_root_mean_squared_error'])
+plt.title('model RMSE loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
 plt.legend(['train', 'val'], loc='upper right')
 plt.show()
 

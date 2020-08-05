@@ -23,7 +23,7 @@ import util.*;
  * Feature: Hitting Bot + wise Discarding v2
  */
 
-public class SimplePlayer5 implements GinRummyPlayer {
+public class DraftPlayer5 implements GinRummyPlayer {
 	public static boolean VERBOSE = false;
 	private int playerNum;
 	@SuppressWarnings("unused")

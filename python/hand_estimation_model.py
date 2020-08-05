@@ -47,14 +47,14 @@ def __import_data_dense__(filename: str):
             for feature in turn:
                 for card in feature:
                     turn_vector = np.append(turn_vector, [card], axis=0)
-            self.X_dense = np.append(self.X_dense, [turn_vector], axis=0)
+            X_dense = np.append(X_dense, [turn_vector], axis=0)
 
     for match in obj['Y']:
         for turn in match:
             turn_vector = np.empty(shape=(0,))
             for card in feature:
                 turn_vector = np.append(turn_vector, [card], axis=0)
-            self.Y_dense = np.append(self.Y_dense, [turn_vector], axis=0)
+            Y_dense = np.append(Y_dense, [turn_vector], axis=0)
 
     return X_dense, Y_dense
 
@@ -334,7 +334,7 @@ def lstm_model_2 (input_max_length=None, config=None):
 
     # adam = Adam(learning_rate=0.01)
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['binary_accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
 
     return model
@@ -378,20 +378,21 @@ def pad_data (x, max_length):
 
 
 # %%
-x0, x1, x2, x3, y = __import_data_lstm__("./dataset/output_100.json")
+x0, x1, x2, x3, y = __import_data_lstm__("../java/MavenProject/dataset/output_100.json")
 n_match = len(x0)
 # %%
 
 # model = lstm_model_simple()
 
 # model = lstm_model()
-model = lstm_model_2()
+model_lstm = lstm_model_2()
 
 # %%
-
-model_b = lstm_model_2()
+X, Y = __import_data_dense__("../java/MavenProject/dataset/output_100.json")
+n_match = len(x0)
+model_dense = dense_model()
 # %%
-
+n_match
 
 # %%
 import keras
@@ -411,15 +412,26 @@ tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 #     verbose=1, \
 #     callbacks=[tensorboard_callback])
 
+# LSTM
 
-
-history = model.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[:1500], y[:1500], 1499), \
+history = model_lstm.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[:1500], y[:1500], 1499), \
     steps_per_epoch=1499, \
-    epochs=1,\
+    epochs=50,\
     verbose=1,\
     validation_data= one_generator(x0[500:], x1[500:], x2[500:], x3[500:], y[500:], 499),\
     validation_steps= 100,\
     callbacks=[tensorboard_callback])
+
+# %%
+
+history = model_dense.fit(x=X, 
+    y=Y,
+    batch_size=100,
+    epochs=100,
+    verbose=1,
+    callbacks=[tensorboard_callback],
+    validation_split=0.75)
+
 
 # %%
 
@@ -440,7 +452,7 @@ history = model.fit_generator(one_generator(x0[:1500], x1[:1500], x2[:1500], x3[
 
 # %%
 
-filename = 'lstm_simple_200'
+filename = 'lstm_50_p8'
 
 with open('./history/' + filename + '_history.pkl', 'ab') as file_pi:
     pickle.dump(history.history, file_pi)
@@ -453,32 +465,77 @@ with open('./history/' + filename + '_history.pkl', 'rb') as file_pi:
     history = pickle.load(file_pi)
 
 # %%
-import matplotlib.pyplot as plt
-# summarize history for accuracy
-plt.plot(history['accuracy'])
-# plt.plot(history.history['val_accuracy'])
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
 
-# summarize history for loss
-plt.plot(history['loss'])
-# plt.plot(history.history['val_loss'])
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+a = []
+a = a + [3]
+a = a + [5]
+a
 
 # %%
 
-model.save('lstm_200_200epoch.h5')  # save everything in HDF5 format
-model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open("lstm_200_200epoch_config.json", "w") as f:
+history = {}
+history['accuracy'] = []
+history['val_accuracy'] = []
+
+with open('./history/' + 'lstm_150_p1' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p2' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p3' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p4' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p5' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p6' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p7' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+with open('./history/' + 'lstm_50_p8' + '_history.pkl', 'rb') as file_pi:
+    hist = pickle.load(file_pi)
+    history['accuracy'] = history['accuracy'] + hist['accuracy']
+    history['val_accuracy'] = history['val_accuracy'] + hist['val_accuracy']
+# %%
+import matplotlib.pyplot as plt
+# summarize history for accuracy
+plt.plot(history['accuracy'])
+plt.plot(history['val_accuracy'])
+# plt.title('model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epochs')
+plt.legend(['train', 'val'], loc='upper left')
+plt.show()
+# %%
+# summarize history for loss
+plt.plot(history['loss'])
+plt.plot(history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper right')
+plt.show()
+
+# %%
+MODEL_PATH = '../java/MavenProject/src/main/java/model/'
+model_lstm.save(MODEL_PATH + 'lstm_100_500epoch.h5')  # save everything in HDF5 format
+model_json = model_lstm.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
+with open(MODEL_PATH + "lstm_100_500epoch_config.json", "w") as f:
     f.write(model_json)
-model.save_weights('lstm_200_200epoch_weights.h5') # save just the weights.
+model_lstm.save_weights(MODEL_PATH + 'lstm_100_500epoch_weights.h5') # save just the weights.
 
 # %%
 

@@ -20,7 +20,7 @@ import util.*;
  * Feature: Knocker Bot, Hand estimation
  */
 
-public class SimplePlayer3 implements GinRummyPlayer {
+public class DraftPlayer3 implements GinRummyPlayer {
 	public static final boolean VERBOSE = false;
 	public static final float KNOCKING_THRESHOLD = 0.1f;
 	private int playerNum;

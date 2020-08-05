@@ -21,7 +21,7 @@ import util.*;
  * Feature: Hitting Bot + wise Discarding
  */
 
-public class SimplePlayer4 implements GinRummyPlayer {
+public class DraftPlayer4 implements GinRummyPlayer {
 	public static final boolean VERBOSE = false;
 	public static final float KNOCKING_THRESHOLD = 0.1f;
 	private int playerNum;

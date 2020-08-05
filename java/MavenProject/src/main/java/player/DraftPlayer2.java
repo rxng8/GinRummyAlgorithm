@@ -50,7 +50,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * Simple player with bayes estimation. And Knocker Bot (threshold 0.99)
  *
  */
-public class SimplePlayer2 implements GinRummyPlayer {
+public class DraftPlayer2 implements GinRummyPlayer {
 	private int playerNum;
 	@SuppressWarnings("unused")
 	private int startingPlayerNum;
@@ -409,7 +409,7 @@ public class SimplePlayer2 implements GinRummyPlayer {
 	}
 	
 	public static void main(String[] args) {
-		GinRummyPlayer p = new SimplePlayer2();
+		GinRummyPlayer p = new DraftPlayer2();
 		
 	}
 	

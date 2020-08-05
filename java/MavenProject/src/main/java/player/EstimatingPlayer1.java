@@ -8,8 +8,9 @@ import core.*;
 import module.*;
 import util.*;
 
-//this player uses desirability function 0 with neller's estimator
-public class EstimatingPlayer0 implements GinRummyPlayer {
+//this player uses desirability function 1 with neller's estimator
+//TODO
+public class EstimatingPlayer1 implements GinRummyPlayer {
 	protected int playerNum;
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;
@@ -21,6 +22,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 
 	protected HandEstimator3 estimator = new HandEstimator3();
 	int turn;
+	
 	//the less the weight is, the better (draft), function 0 is better than function 1
 	public static final float OPPO_CARD_PROB_WEIGHT = 0.2f;
 	
@@ -125,7 +127,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		
 		Card discard = null;
 		if(candidateCards.size() > 0) {
-			double[] desirableRatio = getCardDesirability0(candidateCards, estimator.getProb());
+			double[] desirableRatio = getCardDesirability1(candidateCards, estimator.getProb());
 			
 			if(VERBOSE) {
 				estimator.print();
@@ -186,6 +188,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
 		return discard;
 	}
+	
 	
 	public double[] getCardDesirability0(ArrayList<Card> candidates, double[] probs) {
 		
@@ -252,6 +255,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		
 		return desirability;
 	}
+	
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {

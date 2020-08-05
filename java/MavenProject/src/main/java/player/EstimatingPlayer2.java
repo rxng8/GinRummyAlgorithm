@@ -8,8 +8,9 @@ import core.*;
 import module.*;
 import util.*;
 
-//this player uses desirability function 0 with neller's estimator
-public class EstimatingPlayer0 implements GinRummyPlayer {
+//this player uses desirability function 0 with alex's estimator
+//TODO
+public class EstimatingPlayer2 implements GinRummyPlayer {
 	protected int playerNum;
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;
@@ -19,9 +20,8 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	Card faceUpCard, drawnCard; 
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
 
-	protected HandEstimator3 estimator = new HandEstimator3();
+	protected HandEstimator2 estimator = new HandEstimator2();
 	int turn;
-	//the less the weight is, the better (draft), function 0 is better than function 1
 	public static final float OPPO_CARD_PROB_WEIGHT = 0.2f;
 	
 	public boolean VERBOSE = false;
@@ -42,7 +42,8 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		for (Card c : cards)
 			hand.add(c);
 		
-		estimator.setKnown(hand, false);
+		estimator.setOpKnown(hand, false);
+		estimator.setOtherKnown(hand, true);
 		
 		turn = 0;
 	}
@@ -50,7 +51,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	@Override
 	public boolean willDrawFaceUpCard(Card card) {
 		
-		estimator.setKnown(card, false);
+		estimator.setOpKnown(card, false);
 		
 		// Return true if card would be a part of a meld, false otherwise.
 		this.faceUpCard = card;
@@ -70,10 +71,12 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			if (playerNum == this.playerNum) {
 				cards.add(drawnCard);
 
-				estimator.setKnown(drawnCard, false);
+				estimator.setOpKnown(drawnCard, false);
+				estimator.setOtherKnown(drawnCard, true);
 			}
 			else {
-				estimator.setKnown(drawnCard, true);
+				estimator.setOpKnown(drawnCard, true);
+				estimator.setOtherKnown(drawnCard, false);
 			}
 		}
 		this.drawnCard = drawnCard;
@@ -125,10 +128,10 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		
 		Card discard = null;
 		if(candidateCards.size() > 0) {
-			double[] desirableRatio = getCardDesirability0(candidateCards, estimator.getProb());
+			double[] desirableRatio = getCardDesirability0(candidateCards, estimator.probs);
 			
 			if(VERBOSE) {
-				estimator.print();
+				estimator.view();
 				for(int i = 0; i < desirableRatio.length; i++)
 					System.out.printf("%.4f ", desirableRatio[i]);
 				System.out.println();
@@ -187,7 +190,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		return discard;
 	}
 	
-	public double[] getCardDesirability0(ArrayList<Card> candidates, double[] probs) {
+	public double[] getCardDesirability0(ArrayList<Card> candidates, float[] probs) {
 		
 		double[] desirability = new double[candidates.size()];
 		
@@ -204,11 +207,10 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 				desirability[i] += numOfMeld / GinRummyUtil.getAllMeldBitstrings().size() * probs[j];
 			}
 		}
-		
 		return desirability;
 	}
 	
-	public double[] getCardDesirability1(ArrayList<Card> candidates, double[] oppoProbs) {
+	public double[] getCardDesirability1(ArrayList<Card> candidates, float[] oppoProbs) {
 		
 		double[] desirability = new double[candidates.size()];
 		
@@ -225,16 +227,6 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			}
 			oppoCards.add(Card.getCard(index));
 		}
-		
-//		//see if any card from the candidates is desirable
-//		for(int i = 0; i < candidates.size(); i++) {
-//			ArrayList<Card> newCards = (ArrayList<Card>) oppoCards.clone();
-//			newCards.add(candidates.get(i));
-//			for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards))
-//				if (meld.contains(candidates.get(i)))
-//					desirability[i] = true;
-//			desirability[i] = false;
-//		}
 		
 		//creating desirability through meld ratio
 		for(int i = 0; i < candidates.size(); i++) {
@@ -262,10 +254,10 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			if (faceUpCard == null) {
 				// the statement faceupcard == null ? drawnCard : faceupcard is to say that although the faceup card is always not null,
 				// when the opponent draw the faceupcard in the first turn, it will be null. So we report the draw card instead
-				estimator.reportDrawDiscard(drawnCard, true, discardedCard);
+				estimator.reportDrawDiscard(drawnCard, true, discardedCard, turn);
 			}
 			else {
-				estimator.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard);
+				estimator.reportDrawDiscard(faceUpCard, faceUpCard == drawnCard, discardedCard, turn);
 			}
 		}
 		faceUpCard = discardedCard;

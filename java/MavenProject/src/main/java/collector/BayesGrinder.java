@@ -471,7 +471,7 @@ public class BayesGrinder extends DataGrinder {
 		int numGames = 50000;
 		BayesGrinder collector = new BayesGrinder();
 		
-		GinRummyPlayer p0 = new SimplePlayer2();
+		GinRummyPlayer p0 = new DraftPlayer2();
 		GinRummyPlayer p1 = new SimplePlayer();
 		
 		collector.match(p0, p1, numGames);

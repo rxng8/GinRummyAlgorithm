@@ -18,7 +18,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	protected boolean opponentKnocked = false;
 	Card faceUpCard, drawnCard; 
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
-
+	
 	protected HandEstimator3 estimator = new HandEstimator3();
 	int turn;
 	//the less the weight is, the better (draft), function 0 is better than function 1
@@ -46,7 +46,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		
 		turn = 0;
 	}
-
+	
 	@Override
 	public boolean willDrawFaceUpCard(Card card) {
 		
@@ -67,14 +67,8 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	public void reportDraw(int playerNum, Card drawnCard) {
 		// Set known variables if the drawnCard is not null
 		if(drawnCard != null) {
-			if (playerNum == this.playerNum) {
-				cards.add(drawnCard);
-
-				estimator.setKnown(drawnCard, false);
-			}
-			else {
-				estimator.setKnown(drawnCard, true);
-			}
+			cards.add(drawnCard);
+			estimator.setKnown(drawnCard, !(playerNum == this.playerNum));
 		}
 		this.drawnCard = drawnCard;
 	}
@@ -82,7 +76,6 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	/**
 	 * other than (1)not discard cards in melds, the player does (2)not discard cards the opponent may have
 	 */
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Card getDiscard() {
@@ -226,16 +219,6 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			oppoCards.add(Card.getCard(index));
 		}
 		
-//		//see if any card from the candidates is desirable
-//		for(int i = 0; i < candidates.size(); i++) {
-//			ArrayList<Card> newCards = (ArrayList<Card>) oppoCards.clone();
-//			newCards.add(candidates.get(i));
-//			for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards))
-//				if (meld.contains(candidates.get(i)))
-//					desirability[i] = true;
-//			desirability[i] = false;
-//		}
-		
 		//creating desirability through meld ratio
 		for(int i = 0; i < candidates.size(); i++) {
 			desirability[i] = 0;
@@ -255,7 +238,7 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
-		// Ignore other player discards.  Remove from cards if playerNum is this player.
+		// Record opponent's discard for the hand estimator.
 		if (playerNum == this.playerNum)
 			cards.remove(discardedCard);
 		else {
@@ -296,7 +279,6 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	@Override
 	public void reportLayoff(int playerNum, Card layoffCard, ArrayList<Card> opponentMeld) {
 		// Ignored by simple player, but could affect strategy of more complex player.
-		
 	}
 
 	@Override

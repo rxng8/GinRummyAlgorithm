@@ -72,7 +72,7 @@ public class KnockingGrinder extends DataGrinder {
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private SimplePlayer5[] players = new SimplePlayer5[2];
+	private DraftPlayer5[] players = new DraftPlayer5[2];
 	
 	final int MAX_TURNS = 100; // TODO - have not determined maximum length legal gin rummy game; truncating if necessary 
 
@@ -447,8 +447,8 @@ public class KnockingGrinder extends DataGrinder {
 	
 	public void match(GinRummyPlayer p0, GinRummyPlayer p1, int numGames) {
 		
-		this.players[0] = (SimplePlayer5) p0;
-		this.players[1] = (SimplePlayer5) p1;
+		this.players[0] = (DraftPlayer5) p0;
+		this.players[1] = (DraftPlayer5) p1;
 
 		
 		
@@ -478,8 +478,8 @@ public class KnockingGrinder extends DataGrinder {
 		int numGames = 100;
 		KnockingGrinder collector = new KnockingGrinder();
 		
-		GinRummyPlayer p0 = new SimplePlayer5();
-		GinRummyPlayer p1 = new SimplePlayer5();
+		GinRummyPlayer p0 = new DraftPlayer5();
+		GinRummyPlayer p1 = new DraftPlayer5();
 		
 		collector.match(p0, p1, numGames);
 		

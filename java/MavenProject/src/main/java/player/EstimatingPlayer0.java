@@ -1,6 +1,7 @@
 package player;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import collector.*;
@@ -22,7 +23,10 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	protected HandEstimator3 estimator = new HandEstimator3();
 	int turn;
 	//the less the weight is, the better (draft), function 0 is better than function 1
-	public static final float OPPO_CARD_PROB_WEIGHT = 0.2f;
+	public static final float OPPO_CARD_PROB_WEIGHT = 1.0f;
+	public static final float CARD_DEADWOOD_WEIGHT = 0.3f;
+	public static final float RUN_MELD_WEIGHT = 1.0f;
+	public static final float SET_MELD_WEIGHT = 1.0f;
 	
 	public boolean VERBOSE = false;
 	
@@ -67,8 +71,12 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	public void reportDraw(int playerNum, Card drawnCard) {
 		// Set known variables if the drawnCard is not null
 		if(drawnCard != null) {
-			cards.add(drawnCard);
-			estimator.setKnown(drawnCard, !(playerNum == this.playerNum));
+			if(this.playerNum == playerNum) {
+				cards.add(drawnCard);
+				estimator.setKnown(drawnCard, false);
+			}
+			else
+				estimator.setKnown(drawnCard, true);
 		}
 		this.drawnCard = drawnCard;
 	}
@@ -86,7 +94,6 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
 		if(bestMeldSets.size() > 0) {
 			for(ArrayList<ArrayList<Card>> meldSet : bestMeldSets) {
-				
 				if(VERBOSE)
 					System.out.println(meldSet);
 				
@@ -111,14 +118,13 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			}
 			candidateCards.addAll(candidatesInSet);
 			
-
 			if(VERBOSE) 
 				System.out.printf("estimating candidates: %s \n", candidateCards);
 		}
 		
 		Card discard = null;
 		if(candidateCards.size() > 0) {
-			double[] desirableRatio = getCardDesirability0(candidateCards, estimator.getProb());
+			double[] desirableRatio = getCardDesirability1(candidateCards);
 			
 			if(VERBOSE) {
 				estimator.print();
@@ -130,12 +136,18 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			double max = 0;
 			int maxIndex = 0;
 			for(int i = 0; i < desirableRatio.length; i++) {
-				double canDiscard = (1/desirableRatio[i] * OPPO_CARD_PROB_WEIGHT + GinRummyUtil.getDeadwoodPoints(candidateCards.get(i)) * (1-OPPO_CARD_PROB_WEIGHT));
-				if(canDiscard >= max) {
-					max = canDiscard;
+				
+//				double canDiscard = (1/desirableRatio[i] * OPPO_CARD_PROB_WEIGHT + GinRummyUtil.getDeadwoodPoints(candidateCards.get(i)) * CARD_DEADWOOD_WEIGHT);
+				double discardSafety = (1-desirableRatio[i]) * OPPO_CARD_PROB_WEIGHT + GinRummyUtil.getDeadwoodPoints(candidateCards.get(i)) * CARD_DEADWOOD_WEIGHT;
+				
+				if(discardSafety >= max) {
+					max = discardSafety;
 					maxIndex = i;
 				}
+				
+				if(VERBOSE) { System.out.printf("%.4f ", discardSafety); }
 			}
+			if(VERBOSE) { System.out.println(); }
 			discard = candidateCards.get(maxIndex);
 		}
 		else {
@@ -180,62 +192,57 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 		return discard;
 	}
 	
-	public double[] getCardDesirability0(ArrayList<Card> candidates, double[] probs) {
+//	public double[] getCardDesirability0(ArrayList<Card> candidates, double[] probs) {
+//		
+//		double[] desirability = new double[candidates.size()];
+//		
+//		//for each card in the oppoProbs, get the ratio of meld created with candidate vs total no. of melds
+//		for(int i = 0; i < candidates.size(); i++) {
+//			desirability[i] = 0;
+//			for(int j = 0; j < Card.NUM_CARDS; j++) {
+//				
+//				float numOfSetMeld = 0;
+//				for(Long meldBitstring : EstimatingUtil.getSetMeldBitstrings()) {
+//					ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
+//					if(cards.contains(candidates.get(i)) && cards.contains(Card.getCard(j)))
+//						numOfSetMeld++;
+//				}
+//				
+//				float numOfRunMeld = 0;
+//				for(Long meldBitstring : EstimatingUtil.getRunMeldBitstrings()) {
+//					ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
+//					if(cards.contains(candidates.get(i)) && cards.contains(Card.getCard(j)))
+//						numOfRunMeld++;
+//				}
+//				
+//				desirability[i] += (numOfRunMeld / EstimatingUtil.getRunMeldBitstrings().size() * RUN_MELD_WEIGHT + numOfSetMeld / EstimatingUtil.getSetMeldBitstrings().size() * SET_MELD_WEIGHT) * probs[j];
+//			}
+//		}		
+//		return desirability;
+//	}
+	
+	public double[] getCardDesirability1(ArrayList<Card> candidates) {
+		double[] desirabilities = new double[candidates.size()];
 		
-		double[] desirability = new double[candidates.size()];
-		
-		//for each card in the oppoProbs, get the ratio of meld created with candidate vs total no. of melds
 		for(int i = 0; i < candidates.size(); i++) {
-			desirability[i] = 0;
-			for(int j = 0; j < Card.NUM_CARDS; j++) {
-				double numOfMeld = 0;
-				for(Long meldBitstring : GinRummyUtil.getAllMeldBitstrings()) {
-					ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
-					if(cards.contains(candidates.get(i)) && cards.contains(Card.getCard(j)))
-						numOfMeld++;
+			double desirability = 0;
+			for(Long meldBitstring : GinRummyUtil.getAllMeldBitstrings()) {
+				ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
+				double probOfMeld = 0;
+				if(cards.contains(candidates.get(i))) {
+					probOfMeld = 1;
+					cards.remove(candidates.get(i));
+					for(Card card : cards) 
+						probOfMeld *= estimator.getProb()[card.getId()];
 				}
-				desirability[i] += numOfMeld / GinRummyUtil.getAllMeldBitstrings().size() * probs[j];
+				desirability += probOfMeld;
 			}
+			desirabilities[i] = desirability;
 		}
-		
-		return desirability;
+		return desirabilities;
 	}
 	
-	public double[] getCardDesirability1(ArrayList<Card> candidates, double[] oppoProbs) {
-		
-		double[] desirability = new double[candidates.size()];
-		
-		//get 10 most probable cards from the estimator
-		ArrayList<Card> oppoCards = new ArrayList<>();
-		for(int i = 0; i < 10; i++) {
-			int index = -1;
-			double maxProb = -1;
-			for(int j = 0; j < Card.NUM_CARDS; j++) {
-				if(maxProb < oppoProbs[j] && !oppoCards.contains(Card.getCard(j))) {
-					maxProb = oppoProbs[j];
-					index = j;
-				}
-			}
-			oppoCards.add(Card.getCard(index));
-		}
-		
-		//creating desirability through meld ratio
-		for(int i = 0; i < candidates.size(); i++) {
-			desirability[i] = 0;
-			for(int j = 0; j < oppoCards.size(); j++) {
-				double numOfMeld = 0;
-				for(Long meldBitstring : GinRummyUtil.getAllMeldBitstrings()) {
-					ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
-					if(cards.contains(candidates.get(i)) && cards.contains(oppoCards.get(j)))
-						numOfMeld++;
-				}
-				desirability[i] += numOfMeld / GinRummyUtil.getAllMeldBitstrings().size();
-			}
-		}
-		
-		return desirability;
-	}
-
+	
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
 		// Record opponent's discard for the hand estimator.
@@ -285,5 +292,4 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	public void reportFinalHand(int playerNum, ArrayList<Card> hand) {
 		// Ignored by simple player, but could affect strategy of more complex player.		
 	}
-	
 }

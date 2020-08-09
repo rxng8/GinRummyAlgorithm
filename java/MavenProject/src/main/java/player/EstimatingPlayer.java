@@ -29,7 +29,7 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	public float CARD_DEADWOOD_WEIGHT = 0.3f;
 	
 	
-	public boolean VERBOSE = false;
+	public boolean VERBOSE = true;
 	
 	public EstimatingPlayer() {}
 	
@@ -93,7 +93,6 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	/**
 	 * other than (1)not discard cards in melds, the player does (2)not discard cards the opponent may have
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Card getDiscard() {
 		Card discard = getEstimatedCandidate();
@@ -110,6 +109,7 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public Card getEstimatedCandidate() {
 		HashSet<Card> candidatesInSet = new HashSet<>();
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
@@ -176,6 +176,7 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public Card getSimpleCandidate() {
 		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
 		int minDeadwood = Integer.MAX_VALUE;

@@ -42,7 +42,7 @@ public class EPlayerWeightDataCollector {
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private GinRummyPlayer[] players = {new SimplePlayer(), new SimplePlayer()};
+	private GinRummyPlayer[] players = {new HittingPlayer(), new HittingPlayer()};
 	
 	private EstimatingPlayer estimator = new EstimatingPlayer();
 	

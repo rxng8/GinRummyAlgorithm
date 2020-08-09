@@ -23,12 +23,19 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	protected HandEstimator3 estimator = new HandEstimator3();
 	int turn;
 	//the less the weight is, the better (draft), function 0 is better than function 1
-	public static final float OPPO_CARD_PROB_WEIGHT = 1.0f;
-	public static final float CARD_DEADWOOD_WEIGHT = 0.3f;
-	public static final float RUN_MELD_WEIGHT = 1.0f;
-	public static final float SET_MELD_WEIGHT = 1.0f;
+	public float OPPO_CARD_PROB_WEIGHT = 1.0f;
+	public float CARD_DEADWOOD_WEIGHT = 0.3f;
+	
 	
 	public boolean VERBOSE = false;
+	
+	public EstimatingPlayer0() {}
+	
+	public EstimatingPlayer0(float oppoProbWeight, float deadwoodWeight) {
+		this.OPPO_CARD_PROB_WEIGHT = oppoProbWeight;
+		this.CARD_DEADWOOD_WEIGHT = deadwoodWeight;
+	}
+	
 	
 	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {
@@ -87,42 +94,44 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Card getDiscard() {
+		Card discard = null;
 		
 		//unmelded card candidates
 		ArrayList<Card> candidateCards = new ArrayList<>();
-		HashSet<Card> candidatesInSet = new HashSet<>();
-		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
-		if(bestMeldSets.size() > 0) {
-			for(ArrayList<ArrayList<Card>> meldSet : bestMeldSets) {
-				if(VERBOSE)
-					System.out.println(meldSet);
-				
-				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
-				for(ArrayList<Card> meld : meldSet)
-					for(Card c : meld)
-						remainingCards.remove(c);
-				for(Card card : remainingCards) {
-					
-					// Cannot draw and discard face up card.
-					if (card == drawnCard && drawnCard == faceUpCard)
-						continue;
-					// Disallow repeat of draw and discard.
-					ArrayList<Card> drawDiscard = new ArrayList<Card>();
-					drawDiscard.add(drawnCard);
-					drawDiscard.add(card);
-					if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
-						continue;
-					
-					candidatesInSet.add(card);
-				}
-			}
-			candidateCards.addAll(candidatesInSet);
-			
-			if(VERBOSE) 
-				System.out.printf("estimating candidates: %s \n", candidateCards);
-		}
+		candidateCards.addAll(getEstimatedCandidates());
 		
-		Card discard = null;
+//		HashSet<Card> candidatesInSet = new HashSet<>();
+//		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
+//		if(bestMeldSets.size() > 0) {
+//			for(ArrayList<ArrayList<Card>> meldSet : bestMeldSets) {
+//				if(VERBOSE)
+//					System.out.println(meldSet);
+//				
+//				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
+//				for(ArrayList<Card> meld : meldSet)
+//					for(Card c : meld)
+//						remainingCards.remove(c);
+//				for(Card card : remainingCards) {
+//					
+//					// Cannot draw and discard face up card.
+//					if (card == drawnCard && drawnCard == faceUpCard)
+//						continue;
+//					// Disallow repeat of draw and discard.
+//					ArrayList<Card> drawDiscard = new ArrayList<Card>();
+//					drawDiscard.add(drawnCard);
+//					drawDiscard.add(card);
+//					if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
+//						continue;
+//					
+//					candidatesInSet.add(card);
+//				}
+//			}
+//			candidateCards.addAll(candidatesInSet);
+//			
+//			if(VERBOSE) 
+//				System.out.printf("estimating candidates: %s \n", candidateCards);
+//		}
+		
 		if(candidateCards.size() > 0) {
 			double[] desirableRatio = getCardDesirability1(candidateCards);
 			
@@ -151,37 +160,39 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 			discard = candidateCards.get(maxIndex);
 		}
 		else {
-			// Discard a random card (not just drawn face up) leaving minimal deadwood points.
-			int minDeadwood = Integer.MAX_VALUE;
-			candidateCards.clear();
-			for (Card card : cards) {
-				
-				// Cannot draw and discard face up card.
-				if (card == drawnCard && drawnCard == faceUpCard)
-					continue;
-				// Disallow repeat of draw and discard.
-				ArrayList<Card> drawDiscard = new ArrayList<Card>();
-				drawDiscard.add(drawnCard);
-				drawDiscard.add(card);
-				if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
-					continue;
-				
-				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
-				remainingCards.remove(card);
-				ArrayList<ArrayList<ArrayList<Card>>> meldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
-				int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards) : GinRummyUtil.getDeadwoodPoints(meldSets.get(0), remainingCards);
-				if (deadwood <= minDeadwood) {
-					if (deadwood < minDeadwood) {
-						minDeadwood = deadwood;
-						candidateCards.clear();
-					}
-					candidateCards.add(card);
-				}
-			}
-			if(VERBOSE) 
-				System.out.printf("simple candidates: %s \n", candidateCards);
+//			// Discard a random card (not just drawn face up) leaving minimal deadwood points.
+//			int minDeadwood = Integer.MAX_VALUE;
+//			candidateCards.clear();
+//			for (Card card : cards) {
+//				
+//				// Cannot draw and discard face up card.
+//				if (card == drawnCard && drawnCard == faceUpCard)
+//					continue;
+//				// Disallow repeat of draw and discard.
+//				ArrayList<Card> drawDiscard = new ArrayList<Card>();
+//				drawDiscard.add(drawnCard);
+//				drawDiscard.add(card);
+//				if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
+//					continue;
+//				
+//				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
+//				remainingCards.remove(card);
+//				ArrayList<ArrayList<ArrayList<Card>>> meldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
+//				int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards) : GinRummyUtil.getDeadwoodPoints(meldSets.get(0), remainingCards);
+//				if (deadwood <= minDeadwood) {
+//					if (deadwood < minDeadwood) {
+//						minDeadwood = deadwood;
+//						candidateCards.clear();
+//					}
+//					candidateCards.add(card);
+//				}
+//			}
+//			if(VERBOSE) 
+//				System.out.printf("simple candidates: %s \n", candidateCards);
+//			
+//			discard = candidateCards.get(random.nextInt(candidateCards.size()));
 			
-			discard = candidateCards.get(random.nextInt(candidateCards.size()));
+			discard = getSimpleCandidate();
 		}
 		
 		// Prevent future repeat of draw, discard pair.
@@ -220,6 +231,73 @@ public class EstimatingPlayer0 implements GinRummyPlayer {
 //		}		
 //		return desirability;
 //	}
+	
+	public HashSet<Card> getEstimatedCandidates() {
+
+		HashSet<Card> candidatesInSet = new HashSet<>();
+		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
+		if(bestMeldSets.size() > 0) {
+			for(ArrayList<ArrayList<Card>> meldSet : bestMeldSets) {
+				if(VERBOSE)
+					System.out.println(meldSet);
+				
+				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
+				for(ArrayList<Card> meld : meldSet)
+					for(Card c : meld)
+						remainingCards.remove(c);
+				for(Card card : remainingCards) {
+					
+					// Cannot draw and discard face up card.
+					if (card == drawnCard && drawnCard == faceUpCard)
+						continue;
+					// Disallow repeat of draw and discard.
+					ArrayList<Card> drawDiscard = new ArrayList<Card>();
+					drawDiscard.add(drawnCard);
+					drawDiscard.add(card);
+					if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
+						continue;
+					
+					candidatesInSet.add(card);
+				}
+			}
+			if(VERBOSE) 
+				System.out.printf("estimating candidates: %s \n", candidatesInSet);
+			
+			return candidatesInSet;
+		}
+		return null;
+	}
+	
+	
+	public Card getSimpleCandidate() {
+		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
+		int minDeadwood = Integer.MAX_VALUE;
+		ArrayList<Card> candidateCards = new ArrayList<Card>();
+		for (Card card : cards) {
+			// Cannot draw and discard face up card.
+			if (card == drawnCard && drawnCard == faceUpCard)
+				continue;
+			// Disallow repeat of draw and discard.
+			ArrayList<Card> drawDiscard = new ArrayList<Card>();
+			drawDiscard.add(drawnCard);
+			drawDiscard.add(card);
+			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
+				continue;
+			
+			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
+			remainingCards.remove(card);
+			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
+			int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards) : GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), remainingCards);
+			if (deadwood <= minDeadwood) {
+				if (deadwood < minDeadwood) {
+					minDeadwood = deadwood;
+					candidateCards.clear();
+				}
+				candidateCards.add(card);
+			}
+		}
+		return candidateCards.get(random.nextInt(candidateCards.size()));
+	}
 	
 	public double[] getCardDesirability1(ArrayList<Card> candidates) {
 		double[] desirabilities = new double[candidates.size()];

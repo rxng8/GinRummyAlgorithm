@@ -135,8 +135,15 @@ public class EPlayerWeightDataCollector {
 					// DISCARD
 					Card discardCard = players[currentPlayer].getDiscard();
 					
-					if(currentPlayer == 0)
+					ArrayList<Card> candidates = new ArrayList<>();
+					double[] desirabilities = null;
+					if(currentPlayer == 0) {
 						estimator.getDiscard();
+						candidates.addAll(estimator.candidateCards);
+						desirabilities = estimator.cardDesirabilities;
+						if(playVerbose)
+							System.out.println(candidates);
+					}
 					
 					if (!hands.get(currentPlayer).contains(discardCard) || discardCard == faceUpCard) {
 						if (playVerbose)
@@ -150,18 +157,31 @@ public class EPlayerWeightDataCollector {
 					//TODO
 					//record data for estimating weights
 					estimator.reportDiscard(currentPlayer, discardCard);
-					isRecordingData = estimator.getTurn() > 5;
-					if(currentPlayer == 0 && isRecordingData) {
-						int index = estimator.candidateCards.indexOf(discardCard);
-						
-						if(index != -1) {
+					if(currentPlayer == 0 && (estimator.getTurn() > 3) && !candidates.isEmpty()) {
+						if(playVerbose) {
+							System.out.println(candidates);
+							for(int i = 0; i < desirabilities.length; i++)
+								System.out.printf("%.4f ", desirabilities[i]);
+						}
+						isRecordingData = true;
+						int index;
+						for(index = 0; index < candidates.size(); index++)
+							if(candidates.get(index).getId() == discardCard.getId())
+								break;
+						if(playVerbose) {
+							System.out.println("size is " + candidates.size());
+							System.out.println("index is " + index);
+//							System.out.println("id is" + candidates.get(index).getId());
+							System.out.println("id is" + discardCard.getId());
+						}
+						if(index < candidates.size()) {
 							currentData = new double[3];
 							currentData[0] = estimator.cardDesirabilities[index];
 							currentData[1] = GinRummyUtil.getDeadwoodPoints(discardCard);
 						}
+					}
 						else
 							isRecordingData = false;
-					}
 					
 					if (playVerbose)
 						System.out.printf("Player %d discards %s.\n", currentPlayer, discardCard);
@@ -370,7 +390,7 @@ public class EPlayerWeightDataCollector {
 //		for(int i = 0; i < numGames; i++)
 //			collector.playWithEstimator();
 		
-		collector.to_CSV("./dataset/est_sp_100_v1.csv", false);;
+		collector.to_CSV(".est_sp_100_v1.csv", false);
 		
 	}
 

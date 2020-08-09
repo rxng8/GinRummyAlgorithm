@@ -43,11 +43,6 @@ public class HittingPlayer implements GinRummyPlayer {
 	static boolean aggressiveMode = true;
 	
 	/**
-	 * Knocking Module
-	 */
-	KnockingModule knockEngine = new KnockingModule();
-	
-	/**
 	 * Hitting module
 	 */
 	HittingModule hitEngine = new HittingModule();

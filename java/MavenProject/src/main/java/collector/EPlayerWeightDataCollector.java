@@ -42,7 +42,7 @@ public class EPlayerWeightDataCollector {
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private GinRummyPlayer[] players = {new SimplePlayer(), new SimplePlayer()};
+	private GinRummyPlayer[] players = {new HittingPlayer(), new HittingPlayer()};
 	
 	private EstimatingPlayer estimator = new EstimatingPlayer();
 	
@@ -118,6 +118,14 @@ public class EPlayerWeightDataCollector {
 					if(currentPlayer == 1 && isRecordingData) {
 						currentData[2] = drawFaceUp ? 0 : GinRummyUtil.getDeadwoodPoints(faceUpCard);
 						estimatingData.add(currentData);
+						
+						if(playVerbose) {
+							for(int i = 0; i < currentData.length; i++)
+								System.out.printf("%.4f ", currentData[i]);
+							System.out.println(); 
+						}
+						
+						currentData = null;
 					}
 					
 					if (playVerbose)
@@ -353,13 +361,14 @@ public class EPlayerWeightDataCollector {
 		
 		playVerbose = true;
 		collector.playWithEstimator();
+//		collector.playWithEstimator();
 		
-		playVerbose = false;
-		System.out.println("Playing games...");
-		int numGames = 1000;
-		
-		for(int i = 0; i < numGames; i++)
-			collector.playWithEstimator();
+//		playVerbose = false;
+//		System.out.println("Playing games...");
+//		int numGames = 100;
+//		
+//		for(int i = 0; i < numGames; i++)
+//			collector.playWithEstimator();
 		
 		collector.to_CSV("./dataset/est_sp_100_v1.csv", false);;
 		

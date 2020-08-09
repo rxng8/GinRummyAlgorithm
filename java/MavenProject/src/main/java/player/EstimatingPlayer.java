@@ -147,10 +147,12 @@ public class EstimatingPlayer implements GinRummyPlayer {
 			double[] desirableRatio = getCardDesirability(candidateCards);
 			
 			if(VERBOSE) {
-				estimator.print();
-				for(int i = 0; i < desirableRatio.length; i++)
-					System.out.printf("%.4f ", desirableRatio[i]);
-				System.out.println();
+//				estimator.print();
+//				for(int i = 0; i < desirableRatio.length; i++)
+//					System.out.printf("%.4f ", desirableRatio[i]);
+//				System.out.println();
+				
+				System.out.println(desirableRatio.length);
 			}
 			
 			double max = 0;
@@ -231,8 +233,10 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
 		// Record opponent's discard for the hand estimator.
-		if (playerNum == this.playerNum)
+		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
+			candidateCards.clear();
+		}
 		else {
 			if (faceUpCard == null) {
 				// the statement faceupcard == null ? drawnCard : faceupcard is to say that although the faceup card is always not null,

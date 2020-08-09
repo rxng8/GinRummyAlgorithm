@@ -441,7 +441,7 @@ public class dl4jtest {
 	
 	public static void main(String[] args) {
 		dl4jtest obj = new dl4jtest();
-		obj.__import_data__("validation_data.dat");
+		obj.__import_data__("dataset/validation_data.dat");
 		obj.__init__(10, 1e-3f, 10);
 		
 		int max_match = obj.X.size();
@@ -453,7 +453,8 @@ public class dl4jtest {
 		assert match_to < max_match : "Invalid ending match index!";
 	
 		try {
-			String file_name = "lstm_200_200epoch";
+//			String file_name = "lstm_200_200epoch";
+			String file_name = "lstm_100_500epoch";
 			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			

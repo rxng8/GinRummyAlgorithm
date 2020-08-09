@@ -7,7 +7,7 @@ import core.*;
 import module.*;
 import util.*;
 
-public class HittingPlayer implements GinRummyPlayer {
+public class EstimatingPlayerFUCK implements GinRummyPlayer {
 	protected int playerNum;
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;
@@ -23,36 +23,21 @@ public class HittingPlayer implements GinRummyPlayer {
 	public boolean VERBOSE = false;
 	
 	/**
-	 * Hitting threshold
-	 */
-	private float HIT_CARD_VALUE_THRESHOLD; // Min 0, Max > 15
-	
-	/**
 	 * current turn
 	 */
 	int turn;
-	
-	/**
-	 * HARD-CODED TURN WHEN THE GAME ENDS
-	 */
-	static int ENDGAME = 10;
-	
-	/**
-	 * HARDCODED PLAYING MODE: if agressive mode is true, then dont discard hitting cards.
-	 */
-	static boolean aggressiveMode = true;
 	
 	/**
 	 * Hitting module
 	 */
 	HittingModule hitEngine = new HittingModule();
 	
-	public HittingPlayer() {
-		this.HIT_CARD_VALUE_THRESHOLD = 13f;
+	public EstimatingPlayerFUCK() {
+		
 	}
 	
-	public HittingPlayer(float HIT_CARD_VALUE_THRESHOLD) {
-		this.HIT_CARD_VALUE_THRESHOLD = HIT_CARD_VALUE_THRESHOLD;
+	public EstimatingPlayerFUCK(float HIT_CARD_VALUE_THRESHOLD) {
+		
 	}
 	
 	@Override

@@ -11,7 +11,8 @@ import pandas as pd
 
 # %%
 
-filename = '../java/MavenProject/dataset/est_sp_100_v1.csv'
+# filename = '../java/MavenProject/dataset/est_sp_100_v1.csv'
+filename = './.est_sp_100_v1.csv'
 
 data = pd.read_csv(filename)
 

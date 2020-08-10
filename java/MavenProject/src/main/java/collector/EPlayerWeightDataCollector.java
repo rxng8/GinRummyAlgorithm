@@ -362,11 +362,13 @@ public class EPlayerWeightDataCollector {
 			//Writing data to a csv file
 			        
 			// Header
-			String[] headers = new String[3];
-			headers[0] = "DiscardSafety";
-			headers[1] = "DeadwoodPoint";
-			headers[2] = "Value";
-			writer.writeNext(headers);
+			if (!cont) {
+				String[] headers = new String[3];
+				headers[0] = "DiscardSafety";
+				headers[1] = "DeadwoodPoint";
+				headers[2] = "Value";
+				writer.writeNext(headers);
+			}
 			
 			for (int i = 0; i < estimatingData.size(); i++) {
 				
@@ -393,12 +395,12 @@ public class EPlayerWeightDataCollector {
 		playVerbose = true;
 		collector.playWithEstimator();
 		
-		playVerbose = false;
-		System.out.println("Playing games...");
-		int numGames = 100;
-		
-		for(int i = 0; i < numGames; i++)
-			collector.playWithEstimator();
+//		playVerbose = false;
+//		System.out.println("Playing games...");
+//		int numGames = 100;
+//		
+//		for(int i = 0; i < numGames; i++)
+//			collector.playWithEstimator();
 		
 		collector.to_CSV(".est_sp_100_v1.csv", false);
 		

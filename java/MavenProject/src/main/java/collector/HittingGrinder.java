@@ -268,13 +268,15 @@ public class HittingGrinder extends DataGrinder {
 			//Writing data to a csv file
 			        
 			// Header
-			String[] headers = new String[5];
-			headers[0] = "Turn";
-			headers[1] = "Rank";
-			headers[2] = "IsHit";
-			headers[3] = "EndsIn";
-			headers[4] = "Value";
-			writer.writeNext(headers);
+			if (!cont) {
+				String[] headers = new String[5];
+				headers[0] = "Turn";
+				headers[1] = "Rank";
+				headers[2] = "IsHit";
+				headers[3] = "EndsIn";
+				headers[4] = "Value";
+				writer.writeNext(headers);
+			}
 			
 			for (int i = 0; i < lines_data.size(); i++) {
 				

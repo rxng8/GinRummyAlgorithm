@@ -101,7 +101,6 @@ public class EstimatingPlayerFUCK implements GinRummyPlayer {
 		// Evaluate if we can pick the card or not based on the threshold
 		boolean canPick = false;
 		float cardValue = hitEngine.predict(line);
-		if (cardValue > HIT_CARD_VALUE_THRESHOLD) canPick = true;
 		
 //		if (canPick) {
 //			canPick = false;
@@ -146,85 +145,6 @@ public class EstimatingPlayerFUCK implements GinRummyPlayer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public Card getDiscard2() {
-		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
-		int minDeadwood = Integer.MAX_VALUE;
-		ArrayList<Card> candidateCards = new ArrayList<Card>();
-		for (Card card : cards) {
-			// Cannot draw and discard face up card.
-			if (card == drawnCard && drawnCard == faceUpCard)
-				continue;
-			// Disallow repeat of draw and discard.
-			ArrayList<Card> drawDiscard = new ArrayList<Card>();
-			drawDiscard.add(drawnCard);
-			drawDiscard.add(card);
-			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard))) {
-				continue;
-			}
-			
-			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
-			remainingCards.remove(card);
-			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
-			
-			// Get the candidate discarded cards by add the unmelded cards.
-			ArrayList<ArrayList<Card>>  melds = new ArrayList<>();
-			if (!bestMeldSets.isEmpty()) {
-				melds = bestMeldSets.get(0);
-			}
-			
-			// If the card is in meld, then continue
-			boolean isMeld = false; 
-			for (ArrayList<Card> m : melds) {
-				if (m.contains(card)) {
-					isMeld = true;
-					break;
-				}
-			}
-			if (isMeld) continue;
-			
-			// If not, then
-			ArrayList<Card> unmelds = Util.get_unmelded_cards(melds, cards);
-			
-			float minCardValue = Float.MAX_VALUE;
-			
-			int[] line = new int[4];
-			line[0] = turn;
-			line[1] = card.rank;
-			line[2] = hitEngine.countHitMeld(cards, card);
-			line[3] = ENDGAME - turn;
-			float val = hitEngine.predict(line);
-			if (val < minCardValue && !card.equals(drawnCard)) {
-				minCardValue = val;
-				Card discard = card;
-				candidateCards.add(discard);
-			}
-			
-		}
-		
-		Card discard = candidateCards.get(random.nextInt(candidateCards.size()));
-		// If discard is still null then we discard the highest deadwood point card
-//		if (discard == null) {
-//			int maxDw = Integer.MIN_VALUE;
-//			for (Card c : unmelds) {
-//				if (c.rank > maxDw) {
-//					maxDw = c.rank;
-//					discard = c;
-//				}
-//			}
-//		}
-		
-		// BUG: Discard the same card
-		
-		// Prevent future repeat of draw, discard pair.
-		ArrayList<Card> drawDiscard = new ArrayList<Card>();
-		drawDiscard.add(drawnCard);
-		drawDiscard.add(discard);
-		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
-		return discard;
-	}
-	
-	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Card getDiscard() {
 		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
@@ -240,16 +160,6 @@ public class EstimatingPlayerFUCK implements GinRummyPlayer {
 			drawDiscard.add(card);
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
-			
-			// If turn left < 5, disable agressive mode
-			if (ENDGAME - turn < 5) aggressiveMode = false;
-			
-			// if in aggresive mode, omit discarding hitting card
-			if (aggressiveMode) {
-				if (hitEngine.isHittingCard(cards, card)) {
-					continue;
-				}
-			}
 			
 			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 			remainingCards.remove(card);

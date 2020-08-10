@@ -147,12 +147,10 @@ public class EstimatingPlayer implements GinRummyPlayer {
 			double[] desirableRatio = getCardDesirability(candidateCards);
 			
 			if(VERBOSE) {
-//				estimator.print();
-//				for(int i = 0; i < desirableRatio.length; i++)
-//					System.out.printf("%.4f ", desirableRatio[i]);
-//				System.out.println();
-				
-				System.out.println(desirableRatio.length);
+				estimator.print();
+				for(int i = 0; i < desirableRatio.length; i++)
+					System.out.printf("%.4f ", desirableRatio[i]);
+				System.out.println();
 			}
 			
 			double max = 0;

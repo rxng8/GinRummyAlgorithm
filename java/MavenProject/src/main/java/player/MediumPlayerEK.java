@@ -20,6 +20,8 @@ public class MediumPlayerEK implements GinRummyPlayer {
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
 	
 	protected HandEstimator3 estimator = new HandEstimator3();
+	public ArrayList<Card> candidateCards = new ArrayList<>();
+	public double[] cardDesirabilities;
 	
 	/**
 	 * Knocking Module
@@ -33,7 +35,8 @@ public class MediumPlayerEK implements GinRummyPlayer {
 	
 	public boolean VERBOSE = false;
 	
-	public static final float OPPO_CARD_PROB_WEIGHT = 0.2f;
+	public static final float OPPO_CARD_PROB_WEIGHT = 1.0f;
+	public static final float CARD_DEADWOOD_WEIGHT = 0.3f;
 	
 	public static final float KNOCKING_THRESHOLD = 0.9f;
 	
@@ -100,17 +103,29 @@ public class MediumPlayerEK implements GinRummyPlayer {
 		this.drawnCard = drawnCard;
 	}
 	
-	@SuppressWarnings("unchecked")
+	
 	@Override
 	public Card getDiscard() {
+		Card discard = getEstimatedCandidate();
 		
-		//unmelded card candidates
-		ArrayList<Card> candidateCards = new ArrayList<>();
+		if (discard == null)
+			discard = getSimpleCandidate();
+		
+		// Prevent future repeat of draw, discard pair.
+		ArrayList<Card> drawDiscard = new ArrayList<Card>();
+		drawDiscard.add(drawnCard);
+		drawDiscard.add(discard);
+		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
+		return discard;
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public Card getEstimatedCandidate() {
 		HashSet<Card> candidatesInSet = new HashSet<>();
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
 		if(bestMeldSets.size() > 0) {
 			for(ArrayList<ArrayList<Card>> meldSet : bestMeldSets) {
-				
 				if(VERBOSE)
 					System.out.println(meldSet);
 				
@@ -133,95 +148,98 @@ public class MediumPlayerEK implements GinRummyPlayer {
 					candidatesInSet.add(card);
 				}
 			}
-			candidateCards.addAll(candidatesInSet);
-			
-
 			if(VERBOSE) 
-				System.out.printf("estimating candidates: %s \n", candidateCards);
+				System.out.printf("estimating candidates: %s \n", candidatesInSet);
+			
+			candidateCards.addAll(candidatesInSet);
 		}
 		
-		Card discard = null;
 		if(candidateCards.size() > 0) {
-			double[] desirableRatio = getCardDesirability(candidateCards, estimator.getProb());
+			double[] desirableRatio = getCardDesirability(candidateCards);
 			
 			if(VERBOSE) {
-				estimator.print();
-				for(int i = 0; i < desirableRatio.length; i++)
-					System.out.printf("%.4f ", desirableRatio[i]);
-				System.out.println();
+//				estimator.print();
+//				for(int i = 0; i < desirableRatio.length; i++)
+//					System.out.printf("%.4f ", desirableRatio[i]);
+//				System.out.println();
+				
+				System.out.println(desirableRatio.length);
 			}
 			
 			double max = 0;
 			int maxIndex = 0;
 			for(int i = 0; i < desirableRatio.length; i++) {
-				double canDiscard = (1/desirableRatio[i] * OPPO_CARD_PROB_WEIGHT + GinRummyUtil.getDeadwoodPoints(candidateCards.get(i)) * (1-OPPO_CARD_PROB_WEIGHT));
-				if(canDiscard >= max) {
-					max = canDiscard;
+				
+				double discardSafety = (1-desirableRatio[i]) * OPPO_CARD_PROB_WEIGHT + GinRummyUtil.getDeadwoodPoints(candidateCards.get(i)) * CARD_DEADWOOD_WEIGHT;
+				
+				if(discardSafety >= max) {
+					max = discardSafety;
 					maxIndex = i;
 				}
-			}
-			discard = candidateCards.get(maxIndex);
-		}
-		else {
-			// Discard a random card (not just drawn face up) leaving minimal deadwood points.
-			int minDeadwood = Integer.MAX_VALUE;
-			candidateCards.clear();
-			for (Card card : cards) {
 				
-				// Cannot draw and discard face up card.
-				if (card == drawnCard && drawnCard == faceUpCard)
-					continue;
-				// Disallow repeat of draw and discard.
-				ArrayList<Card> drawDiscard = new ArrayList<Card>();
-				drawDiscard.add(drawnCard);
-				drawDiscard.add(card);
-				if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
-					continue;
-				
-				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
-				remainingCards.remove(card);
-				ArrayList<ArrayList<ArrayList<Card>>> meldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
-				int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards) : GinRummyUtil.getDeadwoodPoints(meldSets.get(0), remainingCards);
-				if (deadwood <= minDeadwood) {
-					if (deadwood < minDeadwood) {
-						minDeadwood = deadwood;
-						candidateCards.clear();
-					}
-					candidateCards.add(card);
-				}
+				if(VERBOSE) { System.out.printf("%.4f ", discardSafety); }
 			}
-			if(VERBOSE) 
-				System.out.printf("simple candidates: %s \n", candidateCards);
-			
-			discard = candidateCards.get(random.nextInt(candidateCards.size()));
+			if(VERBOSE) { System.out.println(); }
+			return candidateCards.get(maxIndex);
 		}
 		
-		// Prevent future repeat of draw, discard pair.
-		ArrayList<Card> drawDiscard = new ArrayList<Card>();
-		drawDiscard.add(drawnCard);
-		drawDiscard.add(discard);
-		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
-		return discard;
+		return null;
 	}
 	
-	public double[] getCardDesirability(ArrayList<Card> candidates, double[] probs) {
-		
-		double[] desirability = new double[candidates.size()];
-		
-		//for each card in the oppoProbs, get the ratio of meld created with candidate vs total no. of melds
-		for(int i = 0; i < candidates.size(); i++) {
-			desirability[i] = 0;
-			for(int j = 0; j < Card.NUM_CARDS; j++) {
-				double numOfMeld = 0;
-				for(Long meldBitstring : GinRummyUtil.getAllMeldBitstrings()) {
-					ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
-					if(cards.contains(candidates.get(i)) && cards.contains(Card.getCard(j)))
-						numOfMeld++;
+	
+	@SuppressWarnings("unchecked")
+	public Card getSimpleCandidate() {
+		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
+		int minDeadwood = Integer.MAX_VALUE;
+		for (Card card : cards) {
+			// Cannot draw and discard face up card.
+			if (card == drawnCard && drawnCard == faceUpCard)
+				continue;
+			// Disallow repeat of draw and discard.
+			ArrayList<Card> drawDiscard = new ArrayList<Card>();
+			drawDiscard.add(drawnCard);
+			drawDiscard.add(card);
+			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
+				continue;
+			
+			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
+			remainingCards.remove(card);
+			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
+			int deadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(remainingCards) : GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), remainingCards);
+			if (deadwood <= minDeadwood) {
+				if (deadwood < minDeadwood) {
+					minDeadwood = deadwood;
+					candidateCards.clear();
 				}
-				desirability[i] += numOfMeld / GinRummyUtil.getAllMeldBitstrings().size() * probs[j];
+				candidateCards.add(card);
 			}
-		}	
-		return desirability;
+		}
+		return candidateCards.get(random.nextInt(candidateCards.size()));
+	}
+	
+	public double[] getCardDesirability(ArrayList<Card> candidates) {
+		cardDesirabilities = new double[candidates.size()];
+		
+		for(int i = 0; i < candidates.size(); i++) {
+			double desirability = 0;
+			for(Long meldBitstring : GinRummyUtil.getAllMeldBitstrings()) {
+				ArrayList<Card> cards = GinRummyUtil.bitstringToCards(meldBitstring);
+				double probOfMeld = 0;
+				if(cards.contains(candidates.get(i))) {
+					probOfMeld = 1;
+					cards.remove(candidates.get(i));
+					for(Card card : cards) 
+						probOfMeld *= estimator.getProb()[card.getId()];
+				}
+				desirability += probOfMeld;
+			}
+			cardDesirabilities[i] = desirability;
+		}
+		return cardDesirabilities;
+	}
+	
+	public int getTurn() {
+		return turn;
 	}
 	
 	
@@ -230,6 +248,7 @@ public class MediumPlayerEK implements GinRummyPlayer {
 		// Record opponent's discard for the hand estimator.
 		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
+			candidateCards.clear();
 			hitEngine.setDiscardKnown(discardedCard, true);
 			
 			if (VERBOSE) {

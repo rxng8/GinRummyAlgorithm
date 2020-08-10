@@ -146,7 +146,7 @@ public class EPlayerWeightDataCollector {
 							System.out.println("desirability array length is " + desirabilities.length);
 						
 						for(int i = 0; i < desirabilities.length; i++) 
-							desirabilities[i] = estimator.getCardDesirability()[i];
+							desirabilities[i] = 1.0 / estimator.getCardDesirability()[i];
 //						desirabilities.addAll(Arrays.asList(estimator.getCardDesirability()));
 					
 						if(playVerbose)

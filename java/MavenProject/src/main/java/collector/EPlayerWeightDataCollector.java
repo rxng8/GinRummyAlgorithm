@@ -47,7 +47,7 @@ public class EPlayerWeightDataCollector {
 	private EstimatingPlayer estimator = new EstimatingPlayer();
 	
 	private ArrayList<double[]> estimatingData = new ArrayList<>();
-	private double[] currentData = new double[3];
+	private double currDesirability, currDeadwood, currValue;
 	private boolean isRecordingData = false;
 	
 	public EPlayerWeightDataCollector() {
@@ -116,16 +116,15 @@ public class EPlayerWeightDataCollector {
 					//TODO
 					estimator.reportDraw(currentPlayer, (currentPlayer == 0|| drawFaceUp) ? drawCard : null);
 					if(currentPlayer == 1 && isRecordingData) {
-						currentData[2] = drawFaceUp ? 0 : GinRummyUtil.getDeadwoodPoints(faceUpCard);
-						estimatingData.add(currentData);
+						currValue = drawFaceUp ? 0 : GinRummyUtil.getDeadwoodPoints(faceUpCard);
+						double[] currData = {currDesirability, currDeadwood, currValue};
+						estimatingData.add(currData);
 						
 						if(playVerbose) {
-							for(int i = 0; i < currentData.length; i++)
-								System.out.printf("%.4f ", currentData[i]);
+							for(int i = 0; i < currData.length; i++)
+								System.out.printf("%.4f ", currData[i]);
 							System.out.println(); 
 						}
-						
-						currentData = null;
 					}
 					
 					if (playVerbose)
@@ -139,8 +138,17 @@ public class EPlayerWeightDataCollector {
 					double[] desirabilities = null;
 					if(currentPlayer == 0) {
 						estimator.getDiscard();
+						if(!estimator.candidateCards.isEmpty() && estimator.getCardDesirability() != null)
 						candidates.addAll(estimator.candidateCards);
-						desirabilities = estimator.cardDesirabilities;
+						desirabilities = new double[estimator.getCardDesirability().length];
+						
+						if(playVerbose)
+							System.out.println("desirability array length is " + desirabilities.length);
+						
+						for(int i = 0; i < desirabilities.length; i++) 
+							desirabilities[i] = estimator.getCardDesirability()[i];
+//						desirabilities.addAll(Arrays.asList(estimator.getCardDesirability()));
+					
 						if(playVerbose)
 							System.out.println(candidates);
 					}
@@ -157,7 +165,12 @@ public class EPlayerWeightDataCollector {
 					//TODO
 					//record data for estimating weights
 					estimator.reportDiscard(currentPlayer, discardCard);
-					if(currentPlayer == 0 && (estimator.getTurn() > 3) && !candidates.isEmpty()) {
+					
+					if(!candidates.isEmpty() && playVerbose) {
+						System.out.println((candidates.size() + " and " + desirabilities.length));
+					}
+					
+					if(currentPlayer == 0 && (estimator.getTurn() > 3) && !candidates.isEmpty() && (candidates.size() == desirabilities.length)) {
 						if(playVerbose) {
 							System.out.println(candidates);
 							for(int i = 0; i < desirabilities.length; i++)
@@ -168,16 +181,14 @@ public class EPlayerWeightDataCollector {
 						for(index = 0; index < candidates.size(); index++)
 							if(candidates.get(index).getId() == discardCard.getId())
 								break;
-						if(playVerbose) {
-							System.out.println("size is " + candidates.size());
-							System.out.println("index is " + index);
-//							System.out.println("id is" + candidates.get(index).getId());
-							System.out.println("id is" + discardCard.getId());
-						}
 						if(index < candidates.size()) {
-							currentData = new double[3];
-							currentData[0] = estimator.cardDesirabilities[index];
-							currentData[1] = GinRummyUtil.getDeadwoodPoints(discardCard);
+							currDesirability = desirabilities[index];
+							currDeadwood = GinRummyUtil.getDeadwoodPoints(discardCard);
+							
+//							if(playVerbose) {
+//								System.out.println(desirabilities[index]);
+//								System.out.println(GinRummyUtil.getDeadwoodPoints(discardCard));
+//							}
 						}
 					}
 						else
@@ -381,14 +392,13 @@ public class EPlayerWeightDataCollector {
 		
 		playVerbose = true;
 		collector.playWithEstimator();
-//		collector.playWithEstimator();
 		
-//		playVerbose = false;
-//		System.out.println("Playing games...");
-//		int numGames = 100;
-//		
-//		for(int i = 0; i < numGames; i++)
-//			collector.playWithEstimator();
+		playVerbose = false;
+		System.out.println("Playing games...");
+		int numGames = 100;
+		
+		for(int i = 0; i < numGames; i++)
+			collector.playWithEstimator();
 		
 		collector.to_CSV(".est_sp_100_v1.csv", false);
 		

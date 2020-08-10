@@ -95,6 +95,13 @@ def build_model(input_shape):
 (x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
     import_csv("../java/MavenProject/dataset/hit_sp_20000_v6.csv", 0.9)
 
+
+# %%
+
+(x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
+    import_csv("../java/MavenProject/dataset/estimating_10000_v1.csv", 0.9)
+
+
 # %%
 
 # x_train.shape
@@ -107,11 +114,11 @@ model = build_model(input_shape)
 
 # %%
 size = y_train.shape[0]
-batch_size = 100
+batch_size = 10000
 history = model.fit(x = x_train[:size], \
     y = y_train[:size],\
     batch_size = batch_size,\
-    epochs=20,\
+    epochs=1,\
     verbose=1,\
     validation_split=0.75)
 

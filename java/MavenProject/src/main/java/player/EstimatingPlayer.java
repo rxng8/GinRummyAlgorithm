@@ -29,7 +29,7 @@ public class EstimatingPlayer implements GinRummyPlayer {
 	public float CARD_DEADWOOD_WEIGHT = 0.3f;
 	
 	
-	public boolean VERBOSE = true;
+	public boolean VERBOSE = false;
 	
 	public EstimatingPlayer() {}
 	
@@ -226,6 +226,11 @@ public class EstimatingPlayer implements GinRummyPlayer {
 		}
 		return cardDesirabilities;
 	}
+	
+	public double[] getCardDesirability() {
+		return this.cardDesirabilities;
+	}
+	
 	
 	public int getTurn() {
 		return turn;

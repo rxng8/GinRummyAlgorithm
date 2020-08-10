@@ -362,7 +362,7 @@ public class EPlayerWeightDataCollector {
 			//Writing data to a csv file
 			        
 			// Header
-			String[] headers = new String[5];
+			String[] headers = new String[3];
 			headers[0] = "DiscardSafety";
 			headers[1] = "DeadwoodPoint";
 			headers[2] = "Value";

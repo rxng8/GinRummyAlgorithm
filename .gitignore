@@ -7,3 +7,6 @@ reference/HandEstimationExperiment
 **/logs/
 **/.ipynb_checkpoints/*
 
+**.idea/
+
+**.iml/

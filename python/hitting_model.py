@@ -72,6 +72,60 @@ def build_model(input_shape):
     model.summary()
     return model
 
+def build_model_2(input_shape):
+    '''
+    input: in
+    output: out
+    '''
+    inp = Input(shape=input_shape)
+
+    tensor = Dense(512, activation='relu', kernel_initializer='random_normal') (inp)
+
+    tensor = Dense(256, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(128, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(64, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(32, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(16, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    output = Dense(1, activation='sigmoid', kernel_initializer='random_normal')(tensor)
+    
+    model = Model(inp, output)
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+
+    model.summary()
+    return model
+
+def build_model_3(input_shape):
+    '''
+    input: in
+    output: out
+    '''
+    inp = Input(shape=input_shape)
+
+    tensor = Dense(512, activation='relu', kernel_initializer='random_normal') (inp)
+
+    tensor = Dense(256, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(128, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(64, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(32, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    tensor = Dense(16, activation='relu', kernel_initializer='random_normal') (tensor)
+
+    output = Dense(1, activation='relu', kernel_initializer='random_normal')(tensor)
+    
+    model = Model(inp, output)
+    model.compile(optimizer='adam', loss='mse', metrics=['mse'])
+
+    model.summary()
+    return model
+
 # %%
 
 # (x_train_1, y_train_1, n_train_1), (x_val_1, y_val_1, n_val_1), n_match_1 = \
@@ -93,7 +147,7 @@ def build_model(input_shape):
 # %%
 
 (x_train, y_train, n_train), (x_val, y_val, n_val), n_match = \
-    import_csv("../java/MavenProject/dataset/hit_sp_20000_v6.csv", 0.9)
+    import_csv("../java/MavenProject/dataset/hit_sp_20000_v8.csv", 1)
 
 
 # %%
@@ -104,37 +158,44 @@ def build_model(input_shape):
 
 # %%
 
-# x_train.shape
-x_train[:6]
+X = x_train[:,:2:3]
+
 
 # %%
-input_shape = x_train[0].shape
+Y = x_train[:, 5:6]
+# %%
+input_shape = X[0].shape
 model = build_model(input_shape)
 
+# %%
+input_shape
+# %%
+
+y_train.shape
 
 # %%
-size = y_train.shape[0]
-batch_size = 10000
-history = model.fit(x = x_train[:size], \
-    y = y_train[:size],\
+size = Y.shape[0]
+batch_size = 1000
+history = model.fit(x = X[:size], \
+    y = Y[:size],\
     batch_size = batch_size,\
-    epochs=1,\
+    epochs=10,\
     verbose=1,\
     validation_split=0.75)
 
 
 # %%
-MODEL_PATH = '../java/MavenProject/src/main/java/model/'
-model.save(MODEL_PATH + 'hit_100_v6.h5')  # save everything in HDF5 format
+MODEL_PATH = '../java/MavenProject/src/main/resources/model/'
+model.save(MODEL_PATH + 'hit_100_v9.h5')  # save everything in HDF5 format
 model_json = model.to_json()  # save just the config. replace with "to_yaml" for YAML serialization
-with open(MODEL_PATH + "hit_100_v6_config.json", "w") as f:
+with open(MODEL_PATH + "hit_100_v9_config.json", "w") as f:
     f.write(model_json)
-model.save_weights(MODEL_PATH + 'hit_100_v6_weights.h5') # save just the weights.
+model.save_weights(MODEL_PATH + 'hit_100_v9_weights.h5') # save just the weights.
 
 # %%
 # New method of saving history
 
-filename = 'hit_100_v6'
+filename = 'hit_100_v7'
 
 # %%
 
@@ -172,8 +233,16 @@ plt.legend(['train', 'val'], loc='upper right')
 plt.show()
 
 # %%
-batch = 100
-r = np.random.randint(0,y_val.shape[0] - batch)
-y_pred = model.predict(x_val[r:r+batch])
+batch = 1
+r = np.random.randint(0,Y.shape[0] - batch)
+y_pred = model.predict(X[r:r+batch])
 print(y_pred.reshape((-1,)))
-print(y_val[r:r+batch].reshape((-1,)))
+print(y_train[r:r+batch].reshape((-1,)))
+
+# %%
+
+batch = size
+# r = np.random.randint(0,Y.shape[0] - batch)
+y_pred = model.predict(X[0:batch])
+# print(y_pred.reshape((-1,)))
+# print(y_train[r:r+batch].reshape((-1,)))

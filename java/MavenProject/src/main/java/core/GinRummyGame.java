@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Stack;
-import collector.*;
-import module.*;
+
 import player.*;
-import util.*;
+import util.WilsonInterval;
 
 /**
  * A class for modeling a game of Gin Rummy
@@ -323,64 +322,31 @@ public class GinRummyGame {
 	public static void main(String[] args) {
 		// Single verbose demonstration game
 //		setPlayVerbose(true);
-//		new GinRummyGame(new HittingPlayer(), new SimplePlayer()).play();
+//		new GinRummyGame(new HittingPlayer1(), new SimplePlayer()).play();
 		
-//		// Multiple non-verbose games quadrants
+		// Multiple non-verbose games quadrants
 		setPlayVerbose(false);
 		int numGames = 1000;
 		int numP1Wins = 0;
 
-		GinRummyGame game = new GinRummyGame(new DraftPlayer5(), new SimplePlayer());
+		GinRummyGame game = new GinRummyGame(new MediumPlayerKH(), new EstimatingPlayer());
 		long startMs = System.currentTimeMillis();
 		for (int i = 0; i < numGames; i++) {
 			int win = game.play();
 			numP1Wins += win;
 		}
-		
+
 		long totalMs = System.currentTimeMillis() - startMs;
 		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
 		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
-		
+
 		// Calculate Wilson interval
 		double[] interval = WilsonInterval.getWilsonInterval(numGames, numGames - numP1Wins, .9);
 		System.out.println("Win rate interval of player 0: " + Arrays.toString(interval));
-		
-//		// Multiple non-verbose games quadrants
-//		setPlayVerbose(false);
-//		int numGames = 1000;
-//		int numP1Wins = 0;
-//		int quadrant = numGames / 4;
-//		int first_quadrant = 0;
-//		int sec_quadrant = 0;
-//		int third_quadrant = 0;
-//		int fourth_quadrant = 0;
-//		GinRummyGame game = new GinRummyGame(new HittingPlayer(), new SimplePlayer());
-//		long startMs = System.currentTimeMillis();
-//		for (int i = 0; i < numGames; i++) {
-//			int win = game.play();
-//			numP1Wins += win;
-//			if (win != 0) {
-//				if (i < quadrant) {
-//					first_quadrant ++;
-//				} else if (i < 2 * quadrant) {
-//					sec_quadrant ++;
-//				} else if (i < 3 * quadrant) {
-//					third_quadrant ++;
-//				} else {
-//					fourth_quadrant ++;
-//				}
-//			}
-//		}
-//		
-//		long totalMs = System.currentTimeMillis() - startMs;		
-//		System.out.printf("%d games played in %d ms.\n", numGames, totalMs);
-//		System.out.printf("Games Won: P0:%d, P1:%d.\n", numGames - numP1Wins, numP1Wins);
-//		
-//		System.out.printf("Games Won in first quadrant: P0:%d, P1:%d.\n", quadrant - first_quadrant, first_quadrant);
-//		System.out.printf("Games Won in second quadrant: P0:%d, P1:%d.\n", quadrant - sec_quadrant, sec_quadrant);
-//		System.out.printf("Games Won in third quadrant: P0:%d, P1:%d.\n", quadrant - third_quadrant, third_quadrant);
-//		System.out.printf("Games Won in fourth quadrant: P0:%d, P1:%d.\n", quadrant - fourth_quadrant, fourth_quadrant);
-	
+
+		// Calculate Wilson interval
+		double[] intervalop = WilsonInterval.getWilsonInterval(numGames, numP1Wins, .9);
+		System.out.println("Win rate interval of player 1: " + Arrays.toString(intervalop));
 	}
 	
 }

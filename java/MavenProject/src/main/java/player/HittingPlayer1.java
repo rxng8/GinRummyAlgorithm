@@ -1,3 +1,4 @@
+
 package player;
 
 import java.util.ArrayList;
@@ -7,83 +8,80 @@ import core.*;
 import module.*;
 import util.*;
 
-
-public class MediumPlayerKH implements GinRummyPlayer {
+public class HittingPlayer1 implements GinRummyPlayer {
 	protected int playerNum;
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;
 	protected ArrayList<Card> cards = new ArrayList<Card>();
 	protected Random random = new Random();
 	protected boolean opponentKnocked = false;
-	Card faceUpCard, drawnCard; 
+	Card faceUpCard, drawnCard;
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
 
 	/**
 	 * Debug engine verbose
 	 */
 	public boolean VERBOSE = false;
-	
-	/**
-	 * Knocking threshold
-	 */
-	public static final float KNOCKING_THRESHOLD = 0.9f;
-	
+
 	/**
 	 * Hitting threshold
 	 */
-	public static final float HIT_CARD_VALUE_THRESHOLD = 21f; // Min 0, Max > 15
-	
+	private float HIT_CARD_VALUE_THRESHOLD; // Min 0, Max > 15
+
 	/**
 	 * current turn
 	 */
 	int turn;
-	
+
 	/**
 	 * HARD-CODED TURN WHEN THE GAME ENDS
 	 */
 	static int ENDGAME = 10;
-	
+
 	/**
 	 * HARDCODED PLAYING MODE: if agressive mode is true, then dont discard hitting cards.
 	 */
 	static boolean aggressiveMode = true;
-	
+
 	/**
-	 * Knocking Module
-	 */
-	KnockingModule knockEngine = new KnockingModule();
-	
-	/**
-	 * Hittig module
+	 * Hitting module
 	 */
 	HittingModule hitEngine = new HittingModule();
-	
-	
+
+	public HittingPlayer1() {
+		this.HIT_CARD_VALUE_THRESHOLD = 13f;
+	}
+
+	public HittingPlayer1(float HIT_CARD_VALUE_THRESHOLD) {
+		this.HIT_CARD_VALUE_THRESHOLD = HIT_CARD_VALUE_THRESHOLD;
+	}
+
 	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {
 		this.playerNum = playerNum;
 		this.startingPlayerNum = startingPlayerNum;
 		this.cards.clear();
-		for (Card card : cards)
+		for (Card card : cards) {
 			this.cards.add(card);
+		}
 		opponentKnocked = false;
 		drawDiscardBitstrings.clear();
-		
+
 		// Initialize hitting module
 		hitEngine.init();
-		
+
 		// clone hand
 		ArrayList<Card> hand = new ArrayList<Card>();
 		for (Card c : cards) {
 			hand.add(c);
 		}
-		
+
 		// set every cards in hand to false in case it's not reset yet
 		hitEngine.setOpKnown(hand, false);
-		
+
 		// Reset turn = 0;
 		turn = 0;
-		
+
 	}
 
 	@Override
@@ -114,7 +112,7 @@ public class MediumPlayerKH implements GinRummyPlayer {
 		int[] line = new int[3];
 		line[0] = turn;
 		line[1] = card.rank + 1;
-		line[2] = hitEngine.countHitMeld(cards, card);
+		line[2] = hitEngine.countHitMeldType(cards, card);
 		// Evaluate if we can pick the card or not based on the threshold
 		boolean canPick = false;
 		float cardValue = hitEngine.predict(line);
@@ -127,11 +125,11 @@ public class MediumPlayerKH implements GinRummyPlayer {
 	public void reportDraw(int playerNum, Card drawnCard) {
 
 		this.drawnCard = drawnCard;
-		
+
 		// Add to cards if playerNum is this player.
 		if (playerNum == this.playerNum) {
 			cards.add(drawnCard);
-			
+
 			// Set this card in op hand to false cuz it's in my hand
 			hitEngine.setOpKnown(drawnCard, false);
 		}
@@ -153,17 +151,18 @@ public class MediumPlayerKH implements GinRummyPlayer {
 			drawDiscard.add(card);
 			if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 				continue;
-			
-			// If turn left < 5, disable agressive mode
-			if (ENDGAME - turn < 5) aggressiveMode = false;
-			
-			// if in aggresive mode, omit discarding hitting card
-			if (aggressiveMode) {
-				if (hitEngine.isHittingCard(cards, card)) {
-					continue;
-				}
-			}
-			
+
+
+			int[] line = new int[3];
+			line[0] = turn;
+			line[1] = card.rank + 1;
+			line[2] = hitEngine.countHitMeldType(cards, card);
+			// Evaluate if we can pick the card or not based on the threshold
+			float cardValue = hitEngine.predict(line);
+			if (cardValue > 0.5) continue;
+
+
+
 			ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 			remainingCards.remove(card);
 			ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
@@ -176,7 +175,7 @@ public class MediumPlayerKH implements GinRummyPlayer {
 				candidateCards.add(card);
 			}
 		}
-		
+
 		// If everycard is hitting card, we discard the highest rank as usual
 		if (candidateCards.isEmpty()) {
 			for (Card card : cards) {
@@ -189,7 +188,19 @@ public class MediumPlayerKH implements GinRummyPlayer {
 				drawDiscard.add(card);
 				if (drawDiscardBitstrings.contains(GinRummyUtil.cardsToBitstring(drawDiscard)))
 					continue;
-				
+
+				// Form data to evaluate in model
+				int[] line = new int[3];
+				line[0] = turn;
+				line[1] = card.rank + 1;
+				line[2] = hitEngine.countHitMeld(cards, card);
+				// Evaluate if we can pick the card or not based on the threshold
+				boolean canPick = false;
+				float cardValue = hitEngine.predict(line);
+				if (cardValue > 0.5) canPick = true;
+
+
+
 				ArrayList<Card> remainingCards = (ArrayList<Card>) cards.clone();
 				remainingCards.remove(card);
 				ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(remainingCards);
@@ -203,7 +214,7 @@ public class MediumPlayerKH implements GinRummyPlayer {
 				}
 			}
 		}
-		
+
 		Card discard = candidateCards.get(random.nextInt(candidateCards.size()));
 		// Prevent future repeat of draw, discard pair.
 		ArrayList<Card> drawDiscard = new ArrayList<Card>();
@@ -219,7 +230,7 @@ public class MediumPlayerKH implements GinRummyPlayer {
 		if (playerNum == this.playerNum) {
 			cards.remove(discardedCard);
 			hitEngine.setDiscardKnown(discardedCard, true);
-			
+
 			// Count the number of hitting cards except for melds in hand
 
 			if (VERBOSE) {
@@ -246,24 +257,9 @@ public class MediumPlayerKH implements GinRummyPlayer {
 
 	@Override
 	public ArrayList<ArrayList<Card>> getFinalMelds() {
+		// Check if deadwood of maximal meld is low enough to go out.
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
-		float knock_prob = 0;
-		if (!bestMeldSets.isEmpty() && GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) <= 10) {
-			int deadwood, n_meld, n_hit, n_oppick;
-			deadwood = GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards);
-			n_meld = bestMeldSets.get(0).size();
-			n_hit = hitEngine.count_hitting(cards);
-			n_oppick = hitEngine.get_n_op_pick();
-			
-			int[] X = {turn, deadwood, n_meld, n_hit, n_oppick};
-			knock_prob = knockEngine.predict(X);
-			if (VERBOSE) {
-				System.out.printf("Current Deadwood: %d, Number of melds: %d, Number of hitting cards: %d, Opponent have picked %d card(s). So probs to knock is %.5f\n", deadwood, n_meld, n_hit, n_oppick, knock_prob);
-			}
-		}
-		
-		
-		if (!opponentKnocked && (bestMeldSets.isEmpty() || knock_prob < KNOCKING_THRESHOLD))
+		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD))
 			return null;
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
 	}
@@ -283,12 +279,12 @@ public class MediumPlayerKH implements GinRummyPlayer {
 	@Override
 	public void reportLayoff(int playerNum, Card layoffCard, ArrayList<Card> opponentMeld) {
 		// Ignored by simple player, but could affect strategy of more complex player.
-		
+
 	}
 
 	@Override
 	public void reportFinalHand(int playerNum, ArrayList<Card> hand) {
-		// Ignored by simple player, but could affect strategy of more complex player.		
+		// Ignored by simple player, but could affect strategy of more complex player.
 	}
-	
+
 }

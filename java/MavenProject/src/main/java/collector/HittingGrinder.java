@@ -1,33 +1,16 @@
 package collector;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Scanner;
 import java.util.Stack;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
-import javax.xml.crypto.Data;
-
-import org.bytedeco.javacpp.hdf5.H5FD_class_t.Truncate_H5FD_t_long_boolean;
 
 import com.opencsv.CSVWriter;
 import core.*;
 import module.*;
 import player.*;
-import util.*;
 
 
 public class HittingGrinder extends DataGrinder {
@@ -610,8 +593,8 @@ public class HittingGrinder extends DataGrinder {
 		int numGames = 1000;
 		HittingGrinder collector = new HittingGrinder();
 		
-		GinRummyPlayer p0 = new HittingPlayer(14);
-		GinRummyPlayer p1 = new HittingPlayer(6);
+		GinRummyPlayer p0 = new HittingPlayer1(14);
+		GinRummyPlayer p1 = new HittingPlayer1(6);
 		
 		collector.match(p0, p1, numGames);
 		

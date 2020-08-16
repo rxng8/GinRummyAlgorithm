@@ -13,9 +13,7 @@ import core.Card;
 import core.GinRummyPlayer;
 import core.GinRummyUtil;
 import player.EstimatingPlayer;
-import player.EstimatingPlayer0;
-import player.HittingPlayer;
-import player.SimplePlayer;
+import player.HittingPlayer1;
 
 /**
  * @author Tom
@@ -42,7 +40,7 @@ public class EPlayerWeightDataCollector {
 	/**
 	 * Two Gin Rummy players numbered according to their array index.
 	 */
-	private GinRummyPlayer[] players = {new HittingPlayer(), new HittingPlayer()};
+	private GinRummyPlayer[] players = {new HittingPlayer1(), new HittingPlayer1()};
 	
 	private EstimatingPlayer estimator = new EstimatingPlayer();
 	

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 import collector.GinRummyDataCollector;
 import core.Card;
+import org.nd4j.linalg.io.ClassPathResource;
+
 /**
  * 
  * @author Todd W. Neller
@@ -61,7 +63,7 @@ public class HandEstimator3 {
 	
 	public HandEstimator3(String filename) {
 		try {
-			ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
+			ObjectInputStream in = new ObjectInputStream(new FileInputStream(new ClassPathResource("./model/" + filename).getFile().getPath()));
 			rankCounts = (int[]) in.readObject();
 			heldVisits = (int[][][][]) in.readObject();
 			heldCounts = (int[][][][][][]) in.readObject();

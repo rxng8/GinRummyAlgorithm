@@ -9,14 +9,12 @@ import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.api.ops.impl.accum.CountZero;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.io.ClassPathResource;
 
 import java.util.HashSet;
-import collector.*;
+
 import core.*;
-import player.*;
 import util.*;
 /**
  * 
@@ -82,7 +80,7 @@ public class HittingModule extends Module {
 	/**
 	 * Input : turn, rank, isHittingCard, expected turn before end
 	 * Output: The card value.
-	 * @param args
+	 * @param X
 	 */
 	public float predict(int[] X) {
 		

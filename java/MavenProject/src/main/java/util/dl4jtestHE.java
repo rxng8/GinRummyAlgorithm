@@ -1,8 +1,5 @@
 package util;
-import collector.*;
 import core.*;
-import module.*;
-import player.*;
 /**
  * @author Alex Nguyen
  * Gettysburg College
@@ -19,12 +16,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.io.ClassPathResource;
@@ -439,10 +434,10 @@ public class dl4jtestHE {
 		}
 		
 		try {
-			String modelJson = new ClassPathResource("model/model_config.json").getFile().getPath();
+			String modelJson = new ClassPathResource("src/main/resources/model/model_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
-			String modelWeights = new ClassPathResource("model/model_weights.h5").getFile().getPath();
+			String modelWeights = new ClassPathResource("src/main/resources/model/model_weights.h5").getFile().getPath();
 			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
 			
 			

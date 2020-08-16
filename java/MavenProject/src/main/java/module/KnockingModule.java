@@ -1,12 +1,7 @@
 package module;
 
-import collector.*;
-import core.*;
-import player.*;
-import util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;

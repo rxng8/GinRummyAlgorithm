@@ -1,8 +1,6 @@
 package util;
-import collector.*;
 import core.*;
 import module.*;
-import player.*;
 /**
  * @author Alex Nguyen
  * Gettysburg College
@@ -455,10 +453,10 @@ public class dl4jtest {
 		try {
 //			String file_name = "lstm_200_200epoch";
 			String file_name = "lstm_100_500epoch";
-			String modelJson = new ClassPathResource("./model/" + file_name + "_config.json").getFile().getPath();
+			String modelJson = new ClassPathResource("src/main/resources/model/" + file_name + "_config.json").getFile().getPath();
 //			ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(modelJson);
 			
-			String modelWeights = new ClassPathResource("./model/" + file_name + "_weights.h5").getFile().getPath();
+			String modelWeights = new ClassPathResource("src/main/resources/model/" + file_name + "_weights.h5").getFile().getPath();
 			ComputationGraph network = KerasModelImport.importKerasModelAndWeights(modelJson, modelWeights);
 			
 			

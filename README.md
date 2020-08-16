@@ -42,6 +42,37 @@
 --------------- -->
 
 # Report:
+## Report 9, date: Aug 16, 2020
+
+1. Accuracy of card value data generation:
+- In the last few days I have done some experiement on generating play data concerning **Turn**, **Card Rank**, and **Number of meld hit** at each turn.
+
+- I then try to find the relation of each type of data to **The number of turn left**, **The distance from the card rank to 10 (Max deadwood)**, **The number of meld was potentially formed with known cards throughout each match**, respectively by collecting data points from about 6000 games.
+
+- Turn and turn-left relationship:
+
+    * The scatter plot of the relationship between turn and turn left. (x: turn, y: turn-left)
+    
+    ![TurnVal](./reference/turnval.png)
+
+    * The scatter plot of the relationship between turn and turn left PREDICTED (which works fine!)
+
+    ![TurnValPred](./reference/turnvalpred.png)
+
+- Card rank and rank distance relationship: For this, the function is heuristic so there is no need to find a regression function.
+
+- Meld hit and potential meld formed: this is actually a hard case because there is just no pattern.
+
+    * The scatter plot of the relationship between meld hit and meld formed with known cards in the end of a match. (x: meld hit, y: meld formed)
+
+    ![Meld](./reference/meldhitform.png)
+
+    * here is the prediction (which makes no sense)
+
+    ![MeldPred](./reference/meldhitformpred.png)
+
+2. Conclusion: I think that there woulbe no relationship between the number of meld formed and hit, so it is really hard calcluating the actual value of an actual card. Do you have any suggestion about the output that I have to generate?
+
 
 ## Report 8, date: July 14, 2020
 

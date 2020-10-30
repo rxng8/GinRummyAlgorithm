@@ -1,5 +1,7 @@
 # Algorithm of Reinforcement Learning for Imperfect Information Card Game: Gin Rummy
 
+## Author: Alex Nguyen - Gettysburg College
+
 <!-- ## Current Work and Code:
 
 

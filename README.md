@@ -1,6 +1,6 @@
 # Algorithm of Reinforcement Learning for Imperfect Information Card Game: Gin Rummy
 
-## Author: Viet Dung Nguyen - Gettysburg College
+Authors: Viet Dung Nguyen, Dung Doan - Gettysburg College
 
 <!-- ## Current Work and Code:
 
@@ -403,5 +403,5 @@ TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/the
 * Number of seed ? and dive deep down into the things. -->
 
 -----------
-## Author: Viet Dung Nguyen
+## Author: Viet Dung Nguyen, Dung Doan
 ## Gettysburg College

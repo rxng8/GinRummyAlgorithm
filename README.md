@@ -403,5 +403,5 @@ TECHNIQUE FOR POKER. https://www.digipen.edu/sites/default/files/public/docs/the
 * Number of seed ? and dive deep down into the things. -->
 
 -----------
-## Author: Alex Nguyen
+## Author: Viet Dung Nguyen
 ## Gettysburg College
